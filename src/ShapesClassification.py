@@ -149,14 +149,18 @@ class ShapesClassification:
         farVacuum = [(2, gmsh.model.occ.addDisk(
             *boundingBox.getCenter(), 
             farVacuumDiameter, farVacuumDiameter))]
-        
+
         gmsh.model.occ.synchronize()
+        self.open = dict([[0, gmsh.model.getBoundary(farVacuum)]])
 
         farVacuum = gmsh.model.occ.cut(
             farVacuum, nearVacuum, removeObject=True, removeTool=False)[0]
 
+
         nearVacuum = gmsh.model.occ.cut(
             nearVacuum, nonVacuumSurfaces, removeObject=True, removeTool=False)[0]
+        
+        gmsh.model.occ.synchronize()
         
         # -- Set mesh size for near vacuum region
         bb = BoundingBox(
@@ -167,7 +171,7 @@ class ShapesClassification:
         gmsh.model.mesh.setSize(innerRegion, minSide / 20)
         
         
-        self.open = dict([[0, gmsh.model.getBoundary(farVacuum)]])
+       
         gmsh.model.occ.synchronize()
 
         return dict([[0, nearVacuum], [1, farVacuum]])

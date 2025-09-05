@@ -246,10 +246,12 @@ class TestMesher(unittest.TestCase):
 
         pGs = gmsh.model.getPhysicalGroups()
         pGNames = [gmsh.model.getPhysicalName(*pG) for pG in pGs]
-        expectedNames = ['Conductor_0', 'Dielectric_0', 
+        expectedNames = ['Conductor_0', 
+                         'Dielectric_0', 
                          'OpenBoundary_0',
                          'Vacuum_0', 'Vacuum_1']
-        expectedEntities = [1, 1, 
+        expectedEntities = [1, 
+                            1, 
                             1,
                             1, 1]
         self.assertEqual(sorted(pGNames), sorted(expectedNames))
