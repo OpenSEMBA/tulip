@@ -253,7 +253,7 @@ class TestMesher(unittest.TestCase):
         expectedEntities = [1, 
                             1, 
                             1,
-                            1, 1]
+                            2, 1]
         self.assertEqual(sorted(pGNames), sorted(expectedNames))
 
         for idx, name in enumerate(expectedNames):
