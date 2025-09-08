@@ -1,0 +1,24 @@
+{
+   "geometries": [
+      {
+         "geometry": "Vacuum_0",
+         "area": 1066.539159843431
+      },
+      {
+         "geometry": "Vacuum_1",
+         "area": 67027.4826321312
+      },
+      {
+         "geometry": "Conductor_0",
+         "area": 3.141592653589793
+      },
+      {
+         "geometry": "Conductor_1",
+         "area": 314.1592653589793
+      },
+      {
+         "geometry": "OpenBoundary_0",
+         "area": 68411.3226499872
+      }
+   ]
+}

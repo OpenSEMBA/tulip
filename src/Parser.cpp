@@ -29,22 +29,20 @@ json readJSON(const std::string& fn)
 		std::runtime_error("Unable to open file: " + fn);
 	}
 
-	json j;
-	stream >> j;
-	return j;
+	return json::parse(stream);
 }
 
 Parser::Parser(const std::string& filename) :
 	filename_{filename},
-	json_{readJSON(filename)}
+	json_(std::move(readJSON(filename)))
 {}
 
 Materials readMaterials(const json& j)
 {
 	Materials res;
 	for (const auto& jMat : j.items()) {
-		auto name{ jMat.key() };
-		auto mat{ jMat.value() };
+		auto name = jMat.key();
+		auto mat = jMat.value();
 		auto type{ 
 			LABEL_TO_MATERIAL_TYPE.at(
 				mat.at("type").get<std::string>()
@@ -79,7 +77,7 @@ Materials readMaterials(const json& j)
 
 Model Parser::readModel() const
 {
-	const auto& j{ json_.at("model") };
+	const auto& j = json_.at("model");
 
 	auto directory = 
 		"./" + std::filesystem::path{filename_}.parent_path().string() + "/";
@@ -106,7 +104,7 @@ static void setIfExists(const json& j, T& entry, std::string labelToCheck)
 
 DriverOptions Parser::readDriverOptions() const
 {
-	const auto& j{ json_.at("analysis") };
+	const auto& j = json_.at("analysis");
 	
 	DriverOptions res;
 	setIfExists<int>(j,  res.solverOptions.order, "order");

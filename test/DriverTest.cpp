@@ -257,10 +257,7 @@ TEST_F(DriverTest, three_wires_ribbon)
 
 	auto out{ Driver::loadFromFile(fn).getPULMTL() };
 
-	// Tolerance is quite for this test. 
-	// I guess that Paul's method is not very exact for this case.
-	const double rTol{ 0.22 };
-
+	const double rTol{ 0.0025 };
 	ASSERT_EQ(CExpected.NumRows(), out.C.NumRows());
 	ASSERT_EQ(CExpected.NumCols(), out.C.NumCols());
 	for (int i{ 0 }; i < CExpected.NumRows(); i++) {
@@ -276,6 +273,41 @@ TEST_F(DriverTest, three_wires_ribbon)
 		for (int j{ 0 }; j < LExpected.NumCols(); j++) {
 			EXPECT_LE(relError(LExpected(i, j), out.L(i, j)), rTol) <<
 				"In L(" << i << ", " << j << ")";
+		}
+	}
+}
+
+TEST_F(DriverTest, three_wires_ribbon_generalized_capacitance)
+{
+	// Three wires ribbon open problem. 
+	// Comparison with Clayton Paul's book:  
+	// Analysis of multiconductor transmision lines. 2007.
+	// Sec. 5.2.3, p. 187.
+
+	const std::string CASE{ "three_wires_ribbon" };
+	auto fn{ casesFolder() + CASE + "/" + CASE + ".pulmtln.in.json" };
+
+	auto dr = Driver::loadFromFile(fn);
+
+	double gCExpectedData[9] = {
+	  26.2148,  -18.0249,  -5.03325,
+	 -18.0249,   37.8189, -18.0249,
+	  -5.03325, -18.0249,  26.2148
+	};
+	mfem::DenseMatrix gCExpected(3, 3);
+	gCExpected.UseExternalData(gCExpectedData, 3, 3);
+	gCExpected *= 1e-12;
+
+	auto gC = dr.getGeneralizedCMatrix();
+	gC *= EPSILON0_SI;
+
+	const double rTol{ 0.008 };
+	ASSERT_EQ(gCExpected.NumRows(), gC.NumRows());
+	ASSERT_EQ(gCExpected.NumCols(), gC.NumCols());
+	for (int i{ 0 }; i < gCExpected.NumRows(); i++) {
+		for (int j{ 0 }; j < gCExpected.NumCols(); j++) {
+			EXPECT_LE(relError(gCExpected(i, j), gC(i, j)), rTol) <<
+				"In gC(" << i << ", " << j << ")";
 		}
 	}
 }
@@ -509,7 +541,6 @@ TEST_F(DriverTest, lansink2024_fdtd_in_cell_parameters_around_conductor_1)
 	}
 }
 
-
 TEST_F(DriverTest, lansink2024_two_wires_using_multipolar_expansion)
 {
 	// From:
@@ -566,8 +597,7 @@ TEST_F(DriverTest, lansink2024_two_wires_using_multipolar_expansion)
 	EXPECT_NEAR(0.0, relError(expectedL11, computedL11), rTol);
 }
 
-
-TEST_F(DriverTest, lansink2024_two_wires_shifted_and_centered)
+TEST_F(DriverTest, lansink2024_fdtd_cell_shifted_and_centered)
 {
 	// From:
 	// Rotgerink, J.L. et al. (2024, September).
@@ -614,7 +644,6 @@ TEST_F(DriverTest, lansink2024_two_wires_shifted_and_centered)
 		EXPECT_TRUE(err < 1e-2);
 	}
 }
-
 
 TEST_F(DriverTest, lansink2024_single_wire_in_cell_parameters)
 {
@@ -692,4 +721,71 @@ TEST_F(DriverTest, lansink2024_single_wire_multipolar_in_cell_parameters)
 		EXPECT_NEAR(0.0, relError(expectedL00, computedL00), rTol);
 	}
 
+	// Check that multipolar expansion for the bare wire produces a 1 V at the boundary.
+	auto a0 = inCell.magnetic.at(0).ab[0].first;
+	auto Va = a0 / (2 * M_PI) * log(1.0 / 1e-3);
+	EXPECT_NEAR(1.0, Va, 1e-3);
+}
+
+TEST_F(DriverTest, getCFromGeneralizedC_two_wires_open)
+{
+	const std::string CASE{ "two_wires_open" };
+	auto fn{ casesFolder() + CASE + "/" + CASE + ".pulmtln.in.json" };
+
+	auto gC{ Driver::loadFromFile(fn).getGeneralizedCMatrix() };
+
+	double d = 50;
+	double rw1 = 2;
+	double rw2 = 2;
+
+	double CExpected{
+		2 * M_PI * EPSILON0_NATURAL /
+		std::acosh((d * d - rw1 * rw1 - rw2 * rw2) / (2 * rw1 * rw2))
+	};
+
+	auto C = Driver::getCFromGeneralizedC(gC, Model::Openness::open);
+
+	const double rTol{ 0.001 };
+	ASSERT_EQ(1, C.NumRows());
+	ASSERT_EQ(1, C.NumCols());
+	EXPECT_LE(relError(CExpected, C(0, 0)), rTol) <<
+		"In C(" << 0 << ", " << 0 << ")";
+}
+
+TEST_F(DriverTest, getCFromGeneralizedC_three_wires)
+{
+	// Three wires ribbon open problem. 
+	// Comparison with Clayton Paul's book:  
+	// Analysis of multiconductor transmision lines. 2007.
+	// Sec. 5.2.3, p. 187.
+
+	double gCData[9] = {
+	  26.2148,  -18.0249,  -5.03325,
+	 -18.0249,   37.8189, -18.0249,
+	  -5.03325, -18.0249,  26.2148
+	};
+	mfem::DenseMatrix gC(3, 3);
+	gC.UseExternalData(gCData, 3, 3);
+	gC *= 1e-12;
+
+
+	double CExpectedData[4] = {
+		  37.432, -18.716,
+		 -18.716,  24.982
+	};
+	mfem::DenseMatrix CExpected(2, 2);
+	CExpected.UseExternalData(CExpectedData, 2, 2);
+	CExpected *= 1e-12;
+
+	auto C = Driver::getCFromGeneralizedC(gC, Model::Openness::open);
+
+	const double rTol{ 0.001 };
+	ASSERT_EQ(CExpected.NumRows(), C.NumRows());
+	ASSERT_EQ(CExpected.NumCols(), C.NumCols());
+	for (int i{ 0 }; i < CExpected.NumRows(); i++) {
+		for (int j{ 0 }; j < CExpected.NumCols(); j++) {
+			EXPECT_LE(relError(CExpected(i, j), C(i, j)), rTol) <<
+				"In C(" << i << ", " << j << ")";
+		}
+	}
 }

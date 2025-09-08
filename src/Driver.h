@@ -28,12 +28,14 @@ public:
     static SolverInputs buildSolverInputsFromModel(
         const Model& model,
         bool ignoreDielectrics);
+    static DenseMatrix getCFromGeneralizedC(
+        const mfem::DenseMatrix& gC,
+        const Model::Openness&);
 
     void run();
 
-    DenseMatrix getCMatrix(
-        bool ignoreDielectrics = false, 
-        bool generalized = false);
+    DenseMatrix getGeneralizedCMatrix(bool ignoreDielectrics = false);
+    DenseMatrix getCMatrix();
     DenseMatrix getLMatrix();
     DenseMatrix getFloatingPotentialsMatrix(const bool ignoreDielectrics);
 

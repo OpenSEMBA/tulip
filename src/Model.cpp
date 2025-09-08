@@ -74,7 +74,7 @@ Materials filterOutMaterialsNotPresentInMesh(
 }
 
 Model::Model(
-	Mesh& mesh,  
+	Mesh&& mesh,  
 	const Materials& materials) :
 	mesh_{ std::make_unique<mfem::Mesh>(std::move(mesh)) }
 {

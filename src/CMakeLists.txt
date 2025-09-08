@@ -5,10 +5,6 @@ message(STATUS "Creating build system for ${LIBRARY_NAME}")
 
 find_package(nlohmann_json CONFIG REQUIRED)
 
-find_package(MFEM CONFIG REQUIRED)
-include_directories(${MFEM_INCLUDE_DIRS})
-
-
 find_package(Boost REQUIRED graph program_options)
 include_directories(${Boost_INCLUDE_DIRS})
 

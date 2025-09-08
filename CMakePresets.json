@@ -1,39 +1,55 @@
 {
-    "version": 6,
-    "cmakeMinimumRequired": {
-      "major": 3,
-      "minor": 21,
-      "patch": 0
-    },
-    "configurePresets": [
-      {
-        "name": "msbuild-vcpkg",
-        "displayName": "MSBuild (vcpkg toolchain) Configure Settings",
-        "description": "Configure with VS generators and with vcpkg toolchain",
-        "binaryDir": "${sourceDir}/builds/${presetName}",
-        "generator": "Visual Studio 17 2022",
-        "architecture": {
-          "strategy": "set",
-          "value": "x64"
+  "version": 6,
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 21,
+    "patch": 0
+  },
+  "configurePresets": [
+    {
+      "name": "default",
+      "hidden": true,
+      "binaryDir": "build/",
+      "cacheVariables": {
+        "CMAKE_TOOLCHAIN_FILE": {
+          "type": "FILEPATH",
+          "value": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake"
         },
-        "cacheVariables": {
-          "CMAKE_TOOLCHAIN_FILE": {
-            "type": "FILEPATH",
-            "value": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake"
-          },
-          "CMAKE_PREFIX_PATH": {
-            "type": "FILEPATH",
-            "value": "$env{MFEM_PACKAGE}"
-          }
+        "CMAKE_PREFIX_PATH": {
+          "type": "FILEPATH",
+          "value": "$env{MFEM_PACKAGE}"
         }
       }
-    ],
-    "buildPresets": [
-      {
-        "name": "msbuild-vcpkg-dbg",
-        "configurePreset": "msbuild-vcpkg",
-        "displayName": "Build MSBuild",
-        "description": "Build with MSBuild (VS)"
+    },
+    {
+      "name": "msbuild-vcpkg",
+      "inherits": "default",
+      "displayName": "MSBuild (vcpkg toolchain) Configure Settings",
+      "description": "Configure with VS generators and with vcpkg toolchain",
+      "binaryDir": "${sourceDir}/builds/${presetName}",
+      "generator": "Visual Studio 17 2022",
+      "architecture": {
+        "strategy": "set",
+        "value": "x64"
       }
-    ]
-  }
+    },
+    {
+      "name": "gnu",
+      "displayName": "GNU g++ compiler",
+      "inherits": "default",
+      "cacheVariables": {
+        "TULIP_USE_MFEM_AS_SUBDIRECTORY": true,
+        "MFEM_ENABLE_TESTING": false,
+        "MFEM_USE_OPENMP": true
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "msbuild-vcpkg-dbg",
+      "configurePreset": "msbuild-vcpkg",
+      "displayName": "Build MSBuild",
+      "description": "Build with MSBuild (VS)"
+    }
+  ]
+}

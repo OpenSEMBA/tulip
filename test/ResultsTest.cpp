@@ -22,9 +22,9 @@ TEST_F(ResultsTest, PULParameters_serialization_to_JSON)
 	p.L(0, 0) = 1.0; p.L(0, 1) = 2.0;
 	p.L(1, 0) = 3.0; p.L(1, 1) = 4.0;
 
-	json j{ p.toJSON() };
+	json j = p.toJSON();
 	
-	PULParameters r{ j };
+	PULParameters r(j);
 
 	EXPECT_EQ(p, r);
 }
@@ -51,9 +51,9 @@ TEST_F(ResultsTest, InCellPotentials_serialization_to_JSON)
 	p.magnetic[0].conductorPotentials[0] = 1.0;
 	p.magnetic[0].conductorPotentials[1] = 2.0;
 
-	json j{ p.toJSON() };
+	json j = p.toJSON();
 	
-	InCellPotentials r{ j };
+	InCellPotentials r(j);
 
 	EXPECT_EQ(p, r);
 
@@ -91,10 +91,8 @@ TEST_F(ResultsTest, InCellPotentials_serialization_to_JSON_2)
 	p.magnetic[1].conductorPotentials[0] = 1.0;
 	p.magnetic[1].conductorPotentials[1] = 2.0;
 
-	json j{ p.toJSON() };
-
-	InCellPotentials r{ j };
-
+	json j = p.toJSON();
+	InCellPotentials r(j);
 	EXPECT_EQ(p, r);
 
 }

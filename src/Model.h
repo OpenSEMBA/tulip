@@ -35,7 +35,7 @@ public:
 
 	Model() = default;
 	Model(
-		mfem::Mesh& mesh,          // Model gets ownership of mesh.
+		mfem::Mesh&& mesh,         // Model gets ownership of mesh.
 		const Materials& materials // Stores only materials present in mesh.
 	);
 

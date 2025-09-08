@@ -1,0 +1,17 @@
+{
+  "analysis": {
+    "order": 3,
+    "exportParaViewSolution": true,
+    "exportFolder": "Results/lansink2024_small_one_centered/"
+  },
+  "model": {
+    "materials": {
+      "Conductor_0":    {"type": "PEC", "tag": 1 },
+      "Conductor_1":    {"type": "PEC", "tag": 2 },
+      "OpenBoundary_0": {"type": "OpenBoundary", "tag": 3},
+      "Vacuum_0":       {"type": "Vacuum", "tag": 4},
+      "Vacuum_1":       {"type": "Vacuum", "tag": 5}
+    },  
+    "gmshFile": "lansink2024_small_one_centered.msh"
+  }
+}

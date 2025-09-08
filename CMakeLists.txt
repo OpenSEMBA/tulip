@@ -18,6 +18,14 @@ project(${PROJECT_NAME})
 
 set(CMAKE_CXX_STANDARD 17)
 
+option(TULIP_USE_MFEM_AS_SUBDIRECTORY "Uses MFEM as subdirectory rather than package" OFF)
+if (TULIP_USE_MFEM_AS_SUBDIRECTORY)
+   add_subdirectory(external/mfem-geg/)
+else ()
+	find_package(MFEM CONFIG REQUIRED)
+	include_directories(${MFEM_INCLUDE_DIRS})
+endif()
+
 include_directories(src/)
 
 add_subdirectory(src)

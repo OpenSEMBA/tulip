@@ -43,7 +43,7 @@ jobs:
     - name: Setup vcpkg (it does not install any package yet)
       uses: lukka/run-vcpkg@v11
       with:
-        vcpkgGitCommitId: 42bb0d9e8d4cf33485afb9ee2229150f79f61a1f
+        vcpkgGitCommitId: 120deac3062162151622ca4860575a33844ba10b
         vcpkgJsonGlob: 'pulmtln/vcpkg.json'
 
     - name: cache MFEM
@@ -114,15 +114,15 @@ jobs:
 
     - name: Create .tar file
       run: |
-        cd pulmtln && tar -czvf pulmtln-windows.tar.gz dist/*
+        cd pulmtln && tar -czvf tulip-windows.tar.gz dist/*
 
 
     - name: Generating release
       uses: "marvinpinto/action-automatic-releases@latest"
       with:
         repo_token: "${{ secrets.GITHUB_TOKEN }}"
-        automatic_release_tag: "latest-windows-pulmtln"
+        automatic_release_tag: "latest-windows-tulip"
         prerelease: false
-        title: "${{ steps.date.outputs.date }} Windows Pulmtln"
+        title: "${{ steps.date.outputs.date }} Windows TULIP"
         files: |
-          pulmtln/pulmtln-windows.tar.gz
+          pulmtln/tulip-windows.tar.gz

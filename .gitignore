@@ -67,3 +67,4 @@ __pycache__/
 /testData/lansink2024_single_wire/lansink2024_single_wire.areas.json
 /testData/lansink2024_fdtd_cell/calculations.py
 /testData/lansink2024/inCellPotentials.out.json
+/XMLGoogleTestResults.xml

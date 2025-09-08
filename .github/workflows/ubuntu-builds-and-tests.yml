@@ -1,0 +1,62 @@
+name: "Ubuntu | Build and tests"
+
+permissions:
+  actions: write
+
+on:
+  push:
+    branches:
+      - master
+      - dev
+  pull_request:
+    branches:
+      - dev
+    
+  workflow_dispatch:
+
+env:
+  PULMTLN_TOP_DIR: pulmtln
+  MFEM_TOP_DIR: mfem
+
+jobs:
+  builds-and-tests:
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+        target: [opt]
+        
+    name: ${{ matrix.os }}-${{ matrix.target }}
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+    - name: checkout PULMTLN
+      uses: actions/checkout@v3
+      with:
+        path: ${{ env.PULMTLN_TOP_DIR }}
+        ssh-key: ${{secrets.PULMTLN_SSH_KEY}}
+        submodules: 'recursive'
+
+    - name: getcmake
+      uses: lukka/get-cmake@latest
+
+    - name: Setup vcpkg (it does not install any package yet)
+      uses: lukka/run-vcpkg@v11
+      with:
+        vcpkgGitCommitId: 42bb0d9e8d4cf33485afb9ee2229150f79f61a1f
+        vcpkgJsonGlob: 'pulmtln/vcpkg.json'
+      
+    - name: Configuring PULMTLN
+      env: 
+        MFEM_PACKAGE: ${{ github.workspace }}/${{env.MFEM_TOP_DIR}}/build
+      run: |
+        cmake --preset "gnu" -S pulmtln -B pulmtln/build
+    
+    - name: Building PULMTLN
+      run: |
+        cmake --build pulmtln/build/ 
+
+    - name: test PULMTLN
+      run: cd pulmtln && build/bin/pulmtln_tests
+        
+    

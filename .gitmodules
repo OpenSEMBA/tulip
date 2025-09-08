@@ -1,7 +1,7 @@
 [submodule "external/mfem-geg"]
 	path = external/mfem-geg
-	url = git@github.com:opensemba/mfem.git
+	url = https://github.com/OpenSEMBA/mfem.git
 	ignore = dirty
 [submodule "external/step2gmsh"]
 	path = external/step2gmsh
-	url = git@github.com:OpenSEMBA/step2gmsh.git
+	url = https://github.com/OpenSEMBA/step2gmsh.git

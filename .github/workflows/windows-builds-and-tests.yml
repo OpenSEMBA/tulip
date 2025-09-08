@@ -1,4 +1,4 @@
-name: "Tests"
+name: "Windows | Build and tests"
 
 permissions:
   actions: write
@@ -47,7 +47,7 @@ jobs:
     - name: Setup vcpkg (it does not install any package yet)
       uses: lukka/run-vcpkg@v11
       with:
-        vcpkgGitCommitId: 42bb0d9e8d4cf33485afb9ee2229150f79f61a1f
+        vcpkgGitCommitId: 120deac3062162151622ca4860575a33844ba10b
         vcpkgJsonGlob: 'pulmtln/vcpkg.json'
 
     - name: cache MFEM 
@@ -80,9 +80,6 @@ jobs:
         metis-dir: ${{ env.METIS_TOP_DIR }}
         mfem-dir: ${{ env.MFEM_TOP_DIR }}
  
-    # - name: Setup tmate session
-    #   uses: mxschmitt/action-tmate@v3
-
     - name: Configuring PULMTLN
       env: 
         MFEM_PACKAGE: ${{ github.workspace }}/${{env.MFEM_TOP_DIR}}/build

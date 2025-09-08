@@ -101,6 +101,49 @@ Driver::Driver(Model&& model, const DriverOptions& opts) :
 	magnetic_ = solveForAllConductors(true);
 }
 
+mfem::DenseMatrix Driver::getCFromGeneralizedC(
+	const mfem::DenseMatrix& gC,
+	const Model::Openness& opennness)
+{
+	// Implements (5.21) from,
+	// Clayton Paul. Analysis of multiconductor transmision lines. 2007.
+	
+	
+	mfem::DenseMatrix C(gC.NumRows() - 1, gC.NumCols() - 1);
+
+	if (opennness == Model::Openness::closed) {
+		for (int i = 1; i < gC.NumRows(); ++i) {
+			for (int j = 1; j < gC.NumCols(); ++j) {
+				C(i - 1, j - 1) = gC(i, j);
+			}
+		}
+		return C;
+	}
+
+	double den = 0.0;
+	for (int i = 0; i < gC.NumRows(); ++i) {
+		for (int j = 0; j < gC.NumCols(); ++j) {
+			den += gC(i, j);
+		}
+	}
+
+	for (int i = 1; i <= C.NumRows(); ++i) {
+		for (int j = 1; j <= C.NumCols(); ++j) {
+			double rowSum = 0.0;
+			for (int k = 0; k < gC.NumCols(); ++k) {
+				rowSum += gC(i, k);
+			}
+			double colSum = 0.0;
+			for (int m = 0; m < gC.NumRows(); ++m) {
+				colSum += gC(m, j);
+			}
+			C(i - 1, j - 1) = gC(i, j) - rowSum * colSum / den;
+		}
+	}
+
+	return C;
+}
+
 SolvedProblem Driver::solveForAllConductors(bool ignoreDielectrics)
 {
 	SolvedProblem res;
@@ -152,13 +195,10 @@ SolverInputs Driver::buildSolverInputsFromModel(
 	return parameters;
 }
 
-DenseMatrix Driver::getCMatrix(
-	bool ignoreDielectrics,
-	bool generalized)
+DenseMatrix Driver::getGeneralizedCMatrix(bool ignoreDielectrics)
 {
-	// PUL capacitance matrix for a N conductors system as defined in:
+	// PUL generalized capacitance matrix for a N conductors system as defined in:
 	// "Clayton Paul's book: Analysis of Multiconductor Transmission Lines"
-	// - Standard C contains N-1 x N-1 entries
 	// - Generalized C contains N x N entries.
 
 	// Preconditions. 
@@ -169,13 +209,7 @@ DenseMatrix Driver::getCMatrix(
 			"The number of conductors must be at least 2 for closed problems.");
 	}
 
-	int CSize;
-	if (generalized) {
-		CSize = (int) conductors.size();
-	}
-	else {
-		CSize = (int) conductors.size() - 1;
-	}
+	int CSize = (int)conductors.size();
 	mfem::DenseMatrix C(CSize);
 
 	SolvedProblem* sP;
@@ -187,36 +221,32 @@ DenseMatrix Driver::getCMatrix(
 	}
 
 	for (const auto& [condI, bdrAttI] : conductors) {
-		if (condI == model_.getGroundConductorId() && !generalized) {
-			continue;
-		}
-
 		sP->solver->setSolution(sP->solutions[condI]);
-		
+
 		// Fills row
 		for (const auto& [condJ, bdrAttJ] : conductors) {
-			if (condJ == model_.getGroundConductorId() && !generalized) {
-				continue;
-			}
-
 			// C_ij = Q_j / V_i. V_i is always 1.0
-			double Q = sP->solver->getChargeInBoundary(conductors.at(condJ));
-			
-			if (generalized) {
-				C(condI, condJ) = Q;
-			}
-			else {
-				C(condI - 1, condJ - 1) = Q;
-			}
+			C(condI, condJ) = sP->solver->getChargeInBoundary(conductors.at(condJ));
 		}
 
-		exportFieldSolutions(opts_, *sP->solver, 
+		exportFieldSolutions(opts_, *sP->solver,
 			model_.getMaterials().get<PEC>(condI).name, ignoreDielectrics);
 	}
 
 	C.Symmetrize();
 
 	return C;
+}
+
+DenseMatrix Driver::getCMatrix()
+{
+	// PUL capacitance matrix for a N conductors system as defined in:
+	// "Clayton Paul's book: Analysis of Multiconductor Transmission Lines"
+	// - Standard C contains N-1 x N-1 entries
+	
+	auto gC = getGeneralizedCMatrix(false);
+	auto res{ getCFromGeneralizedC(gC, model_.determineOpenness()) };
+	return res;
 }
 
 DenseMatrix Driver::getLMatrix()
@@ -227,9 +257,9 @@ DenseMatrix Driver::getLMatrix()
 	// Inductance matrix can be computed from the 
 	// capacitance obtained ignoring dielectrics as
 	//          L = mu0 * eps0 * C^{-1}
-	auto res{ getCMatrix(true) };
+	auto gC = getGeneralizedCMatrix(true);
+	auto res{ getCFromGeneralizedC(gC, model_.determineOpenness()) };
 	res.Invert();
-	res *= MU0_NATURAL * EPSILON0_NATURAL;
 	return res;
 }
 
@@ -306,19 +336,20 @@ DenseMatrix Driver::getFloatingPotentialsMatrix(
 	}
 
 	// Determine C matrix.
-	bool useGeneralizedCMatrix;
-	switch (model_.determineOpenness()) {
+	mfem::DenseMatrix C;
+	auto openness = model_.determineOpenness();
+	switch (openness) {
 	case Model::Openness::closed:
-		useGeneralizedCMatrix = false;
+		C = getCFromGeneralizedC(
+				getGeneralizedCMatrix(ignoreDielectrics), openness);
 		break;
 	case Model::Openness::open:
-		useGeneralizedCMatrix = true;
+		C = getGeneralizedCMatrix(ignoreDielectrics);
 		break;
 	default:
 		throw std::runtime_error(
 			"Floating potentials not implemented for this kind of openness.");
 	}
-	mfem::DenseMatrix C{ getCMatrix(ignoreDielectrics, useGeneralizedCMatrix) };
 	
 	// Forms system of equations to determine floating potentials. 
 	// Q1 = C11*V1 + C21*V2 + ....
