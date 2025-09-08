@@ -238,6 +238,28 @@ class TestMesher(unittest.TestCase):
         for idx, name in enumerate(expectedNames):
             self.assertEqual(self.countEntitiesInPhysicalGroupWithName(name), expectedEntities[idx], name)
 
+    def test_conductor_and_outer_dielectric(self):
+        caseName = 'conductor_and_outer_dielectric'
+        Mesher().meshFromStep(self.inputFileFromCaseName(caseName), caseName)
+        
+        gmsh.write(caseName + '.vtk')
+
+        pGs = gmsh.model.getPhysicalGroups()
+        pGNames = [gmsh.model.getPhysicalName(*pG) for pG in pGs]
+        expectedNames = ['Conductor_0', 
+                         'Dielectric_0', 
+                         'OpenBoundary_0',
+                         'Vacuum_0', 'Vacuum_1']
+        expectedEntities = [1, 
+                            1, 
+                            1,
+                            2, 1]
+        self.assertEqual(sorted(pGNames), sorted(expectedNames))
+
+        for idx, name in enumerate(expectedNames):
+            self.assertEqual(self.countEntitiesInPhysicalGroupWithName(name), expectedEntities[idx], name)
+
+
     def test_lansink2024_single_wire_multipolar(self):
         caseName = 'lansink2024_single_wire_multipolar'
         Mesher().meshFromStep(self.inputFileFromCaseName(caseName), caseName)

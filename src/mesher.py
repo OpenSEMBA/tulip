@@ -21,7 +21,7 @@ class Mesher():
         "General.DrawBoundingBoxes": 1,
         "General.Axes": 1,
 
-        "Geometry.SurfaceType": 2,    # Diplay surfaces as solids rather than dashed lines.
+        "Geometry.SurfaceType": 2,    # Display surfaces as solids rather than dashed lines.
         # "Geometry.OCCBoundsUseStl": 1,
         # "Geometry.OCCSewFaces": 1,
         # "Geometry.Tolerance": 1e-3,
