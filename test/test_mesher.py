@@ -19,6 +19,11 @@ class TestMesher(unittest.TestCase):
         cls.dirPath = os.path.dirname(os.path.realpath(__file__)) + '/'
         cls.testdataPath = cls.dirPath + '/../testData/'
 
+    @classmethod
+    def tearDownClass(cls):
+        del cls.dirPath
+        del cls.testdataPath
+
     def setUp(self):
         gmsh.initialize()
 

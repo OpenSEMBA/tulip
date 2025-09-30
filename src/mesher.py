@@ -46,7 +46,8 @@ class Mesher():
 
         gmsh.model.add(caseName)
         allShapes = ShapesClassification(
-            gmsh.model.occ.importShapes(inputFile, highestDimOnly=False)
+            gmsh.model.occ.importShapes(inputFile, highestDimOnly=False),
+            inputFile.strip('.step') + '.json'
         )
 
         # --- Geometry manipulation ---

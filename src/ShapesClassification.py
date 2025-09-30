@@ -1,3 +1,5 @@
+from enum import Enum
+import json
 from typing import Any, Tuple, List, Dict
 
 import gmsh
@@ -7,21 +9,25 @@ import numpy as np
 
 class ShapesClassification:
     isOpenCase:bool
+    crossSectionData: Dict
+    pecs: Dict
+    dielectrics: Dict
 
 
-    def __init__(self, shapes):
+    def __init__(self, shapes, jsonFile:str):
         gmsh.model.occ.synchronize()
 
         self.allShapes = shapes
-        self.pecs = self.get_surfaces_with_label(shapes, "Conductor_")
-        self.dielectrics = self.get_surfaces_with_label(shapes, "Dielectric_")
-        self.open = self.get_surfaces_with_label(shapes, "OpenBoundary_")
+        with open(jsonFile) as f:
+            jsonData = json.load(f)
+        self.crossSectionData = jsonData['CrossSection']
+        self.pecs = self.get_pecs(shapes)
+        self.dielectrics = self.get_dielectrics(shapes)
+        self.shieldReference = dict()
         self.vacuum = dict()
 
         self.isOpenCase = self.isOpenProblem()
 
-        if len(self.open) > 1:
-            raise ValueError("Only one open region is allowed.")
 
     @staticmethod
     def getNumberFromName(entity_name: str, label: str):
@@ -29,22 +35,43 @@ class ShapesClassification:
         num = int(entity_name[ini:])
         return num
 
-    @staticmethod
-    def get_surfaces_with_label(entity_tags, label: str):
-        surfaces = dict()
+    def get_pecs(self, entity_tags):
+        pecNames = self.__getGeometryNamesByMaterialType('PEC')
+        pecs = dict()
         for s in entity_tags:
-            name = gmsh.model.get_entity_name(*s)
-            if s[0] != 2 or label not in name:
+            name = gmsh.model.get_entity_name(*s).split('/')[-1]
+            if s[0] != 2 or name not in pecNames:
                 continue
-            num = ShapesClassification.getNumberFromName(name, label)
-            surfaces[num] = [s]
+            pecs[name] = [s]
 
-        return surfaces
+        return pecs
+    
+    def get_dielectrics(self, entity_tags):
+        dielectricNames = self.__getGeometryNamesByMaterialType('Dielectric')
+        dielectrics = dict()
+        for s in entity_tags:
+            name = gmsh.model.get_entity_name(*s).split('/')[-1]
+            if s[0] != 2 or name not in dielectricNames:
+                continue
+            dielectrics[name] = [s]
+
+        return dielectrics
+    
+    def __getGeometryNamesByMaterialType(self, materialType:str) -> List[str]:
+        names = [
+            geometry['name'] 
+            for geometry in self.crossSectionData 
+            if geometry['material']['type'] == materialType
+        ]
+        return names
 
     def isOpenProblem(self):
         elements = list(chain(self.pecs.values()))
+        isOpenCase = True
         for idx, element in enumerate(elements):
-            for otheridx, otherElement in enumerate(elements[idx+1:]):
+            intersectWithAll = True
+            intersect = []
+            for otheridx, otherElement in enumerate(elements):
                 if element != otherElement:
                     intersect = gmsh.model.occ.intersect(
                         element, 
@@ -52,10 +79,15 @@ class ShapesClassification:
                         removeObject=False,
                         tag=300+otheridx,
                         removeTool=False
-                    )[0]
-                    if intersect:
-                        return False   
-        return True
+                    )[0]    
+                if len(intersect) == 0:
+                    intersectWithAll = False
+                else:
+                    isOpenCase = False
+            if intersectWithAll:
+                print(element, otherElement)
+                self.shieldReference = {list(self.pecs.keys())[idx] : element}
+        return isOpenCase
     
     def removeConductorsFromDielectrics(self):
         for num, diel in self.dielectrics.items():
