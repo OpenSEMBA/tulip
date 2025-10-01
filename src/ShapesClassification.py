@@ -1,18 +1,24 @@
 from enum import Enum
 import json
+import math
+from time import sleep
 from typing import Any, Tuple, List, Dict
 
 import gmsh
+
+from src.Graph import Graph
 from .BoundingBox import BoundingBox
 from itertools import chain
 import numpy as np
 
 class ShapesClassification:
+    _ROUND_VALUE:int = 6
+
     isOpenCase:bool
     crossSectionData: Dict
     pecs: Dict
     dielectrics: Dict
-
+    nestedGraph: Graph
 
     def __init__(self, shapes, jsonFile:str):
         gmsh.model.occ.synchronize()
@@ -25,7 +31,7 @@ class ShapesClassification:
         self.dielectrics = self.get_dielectrics(shapes)
         self.shieldReference = dict()
         self.vacuum = dict()
-
+        self.nestedGraph = self.__getNestedGraph()
         self.isOpenCase = self.isOpenProblem()
 
 
@@ -35,7 +41,7 @@ class ShapesClassification:
         num = int(entity_name[ini:])
         return num
 
-    def get_pecs(self, entity_tags):
+    def get_pecs(self, entity_tags) -> Dict[str, Dict[str,any]]:
         pecNames = self.__getGeometryNamesByMaterialType('PEC')
         pecs = dict()
         for s in entity_tags:
@@ -46,7 +52,7 @@ class ShapesClassification:
 
         return pecs
     
-    def get_dielectrics(self, entity_tags):
+    def get_dielectrics(self, entity_tags) -> Dict[str, Dict[str,any]]:
         dielectricNames = self.__getGeometryNamesByMaterialType('Dielectric')
         dielectrics = dict()
         for s in entity_tags:
@@ -64,30 +70,11 @@ class ShapesClassification:
             if geometry['material']['type'] == materialType
         ]
         return names
-
-    def isOpenProblem(self):
-        elements = list(chain(self.pecs.values()))
-        isOpenCase = True
-        for idx, element in enumerate(elements):
-            intersectWithAll = True
-            intersect = []
-            for otheridx, otherElement in enumerate(elements):
-                if element != otherElement:
-                    intersect = gmsh.model.occ.intersect(
-                        element, 
-                        otherElement,
-                        removeObject=False,
-                        tag=300+otheridx,
-                        removeTool=False
-                    )[0]    
-                if len(intersect) == 0:
-                    intersectWithAll = False
-                else:
-                    isOpenCase = False
-            if intersectWithAll:
-                print(element, otherElement)
-                self.shieldReference = {list(self.pecs.keys())[idx] : element}
-        return isOpenCase
+    
+    def isOpenProblem(self) -> None:
+        if len(self.nestedGraph.roots) > 1:
+            return True
+        return False
     
     def removeConductorsFromDielectrics(self):
         for num, diel in self.dielectrics.items():
@@ -208,4 +195,26 @@ class ShapesClassification:
 
         return dict([[0, nearVacuum], [1, farVacuum]])
     
-    
+    def __getNestedGraph(self):
+        gmsh.model.occ.synchronize()
+        graph = Graph()
+        for key in self.pecs.keys():
+            graph.add_node(key)
+        for i, keyA in enumerate(self.pecs.keys()):
+            for j, keyB in enumerate(self.pecs.keys()):
+                if i < j:
+                    inter = gmsh.model.occ.intersect(
+                        self.pecs[keyA], 
+                        self.pecs[keyB],
+                        removeObject=False,
+                        removeTool=False
+                    )
+                    if len(inter[1][0]) == 0: #comprueba las intersecciones en las que interfiere el objeto
+                        continue
+                    else:
+                        if inter[1][0] == self.pecs[keyA]:
+                            graph.add_edge(keyB, keyA)
+                        elif inter[1][0] == self.pecs[keyB]:
+                            graph.add_edge(keyA, keyB)
+        graph.prune_to_longest_paths()
+        return graph

@@ -1,7 +1,10 @@
+from copy import copy
 import os
+from typing import Dict, List, Tuple
 import unittest
 import gmsh
 import json
+
 
 from src.ShapesClassification import ShapesClassification
 
@@ -52,14 +55,20 @@ class TestShapesClassification(unittest.TestCase):
             'RightDielectric': [(2,4)],
             'LeftDielectric': [(2,5)],
         }
-        expectedShieldReference = {
-            'ExternalShield': [(2,2)],
-        }
         self.assertListEqual(self.shapeClassification.allShapes, expectedShapes)
         self.assertDictEqual(self.shapeClassification.pecs, expectedPecs)
         self.assertDictEqual(self.shapeClassification.dielectrics, expectedDielectrics)
-        self.assertDictEqual(self.shapeClassification.shieldReference, expectedShieldReference)
         self.assertFalse(self.shapeClassification.isOpenCase)
+
+    def testFusedConductors(self) -> None:
+        case = 'FusedConductor'
+        filepath = self.inputFileFromCaseName(case)
+        self.initShapeClassification(filepath)
+
+    def testComplexNesting(self) -> None:
+        case = 'ComplexNesting'
+        filepath = self.inputFileFromCaseName(case)
+        self.initShapeClassification(filepath)
 
     def testDielectricUnshieldedPairClassification(self) -> None:
         case = 'DielectricUnshieldedPair'
@@ -71,16 +80,14 @@ class TestShapesClassification(unittest.TestCase):
             (0, 1),(0, 1),(0, 2),(0, 2),(0, 3),(0, 3),(0, 4),(0, 4),
         ]
         expectedPecs = {
-            'RightConductor': [(2,1)],
-            'LeftConductor': [(2,2)],
+            'LeftConductor': [(2, 2)],
+            'RightConductor': [(2, 1)],
         }
         expectedDielectrics = {
             'RightDielectric': [(2,3)],
             'LeftDielectric': [(2,4)],
         }
-        expectedShieldReference = {}
         self.assertListEqual(self.shapeClassification.allShapes, expectedShapes)
         self.assertDictEqual(self.shapeClassification.pecs, expectedPecs)
         self.assertDictEqual(self.shapeClassification.dielectrics, expectedDielectrics)
-        self.assertDictEqual(self.shapeClassification.shieldReference, expectedShieldReference)
         self.assertTrue(self.shapeClassification.isOpenCase)
