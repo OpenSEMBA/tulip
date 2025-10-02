@@ -74,6 +74,19 @@ class TestGraph(unittest.TestCase):
         self.graph.prune_to_longest_paths()
         self.assertListEqual(sorted(self.graph.edges), sorted(expectedEdges))
 
+    def testGetNodesByLevel(self) -> None:
+        self.graph.nodes = ['A' ,'B', 'C', 'D', 'E', 'F', 'G']
+        self.graph.edges = [
+            ('A', 'B'), ('A', 'D'),
+            ('B', 'C'),
+            ('C', 'E'),
+            ('F', 'G')
+        ]
+
+        expectedList = ['A', 'F', 'B', 'D', 'G', 'C', 'E']
+        sortedNodes = self.graph.getNodesByLevels()
+        self.assertListEqual(sortedNodes, expectedList)
+
     def testGetRoots(self) -> None:
         self.graph.nodes = ['A' ,'B', 'C', 'D', 'E', 'F', 'G']
         self.graph.edges = [

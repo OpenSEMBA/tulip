@@ -1,4 +1,5 @@
-from typing import List, Tuple
+from collections import defaultdict, deque
+from typing import Dict, List, Tuple
 
 class Graph:
     def __init__(self):
@@ -90,6 +91,29 @@ class Graph:
 
         self._nodes = list(new_nodes)
         self._edges = list(new_edges)
+
+    def getAdyacencyTree(self) -> Dict:
+        tree = defaultdict(list)
+        for root in self.roots:
+            tree[''].append(root)
+        for parent, child in self._edges:
+            tree[parent].append(child)
+        return tree
+    
+    def getNodesByLevels(self) -> List:
+        adyacencyTree = self.getAdyacencyTree()
+        qeue = deque([('',0)])
+        nodeList = []
+        while qeue:
+            node,level = qeue.popleft()
+            nodeList.append(node)
+            for child in adyacencyTree[node]:
+                qeue.append((child, level+1))
+        return nodeList[1:] #Removes case 0 that is not part of nodes
+
+    def _reorderData(self) -> None:
+        self._edges = sorted(self._edges)
+        self._nodes = sorted(self._nodes)
 
     def __str__(self):
         return f"Graph(Nodes: {self._nodes},\n Edges: {self._edges})"

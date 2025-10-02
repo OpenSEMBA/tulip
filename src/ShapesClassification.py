@@ -15,9 +15,9 @@ class ShapesClassification:
     _ROUND_VALUE:int = 6
 
     isOpenCase:bool
-    crossSectionData: Dict
-    pecs: Dict
-    dielectrics: Dict
+    crossSectionData: Dict[str,List[Dict[str,any]]]
+    pecs: Dict[str,List[Tuple[int,int]]]
+    dielectrics: Dict[str,List[Tuple[int,int]]]
     nestedGraph: Graph
 
     def __init__(self, shapes, jsonFile:str):
@@ -29,11 +29,10 @@ class ShapesClassification:
         self.crossSectionData = jsonData['CrossSection']
         self.pecs = self.get_pecs(shapes)
         self.dielectrics = self.get_dielectrics(shapes)
-        self.shieldReference = dict()
         self.vacuum = dict()
+        self.open = dict()
         self.nestedGraph = self.__getNestedGraph()
         self.isOpenCase = self.isOpenProblem()
-
 
     @staticmethod
     def getNumberFromName(entity_name: str, label: str):
@@ -72,7 +71,10 @@ class ShapesClassification:
         return names
     
     def isOpenProblem(self) -> None:
-        if len(self.nestedGraph.roots) > 1:
+        roots = self.nestedGraph.roots 
+        if len(roots) > 1: #Más de un componente pec/pec pec/dielectric dielectric/dielectric etc da al exterior
+            return True
+        if roots[0] in self.dielectrics.keys(): #El único root es un dielectrico
             return True
         return False
     
@@ -80,7 +82,7 @@ class ShapesClassification:
         for num, diel in self.dielectrics.items():
             pec_surfs = []
             for num2, pec_surf in self.pecs.items():
-                if num2 == 0 and not self.isOpenCase:
+                if (num2 in self.nestedGraph.roots) and (not self.isOpenCase):
                     continue
                 pec_surfs.extend(pec_surf)
             self.dielectrics[num] = gmsh.model.occ.cut(diel, pec_surfs, removeTool=False)[0]
@@ -88,51 +90,32 @@ class ShapesClassification:
         gmsh.model.occ.synchronize()
 
     def ensureDielectricsDoNotOverlap(self):
-        for n1, diel1 in self.dielectrics.items():
-            others = list(
-                chain(
-                    *[x[1] for x in self.dielectrics.items() if x[0] != n1]
-                )
-            )
+        for currentKey in self.dielectrics.keys():
+
+            others = list(chain(*[tag for key, tag in self.dielectrics.items() if currentKey != key]))
 
             if len(others) == 0:
                 continue
 
-            self.dielectrics[n1] = gmsh.model.occ.cut(
-                self.dielectrics[n1], others, removeObject=True, removeTool=False)[0]
+            self.dielectrics[currentKey] = gmsh.model.occ.cut(
+                self.dielectrics[currentKey], others, removeObject=True, removeTool=False
+                )[0]
 
         gmsh.model.occ.synchronize()
 
     def buildVacuumDomain(self):
-        if self.isOpenCase and len(self.open) == 0:
+        if self.isOpenCase:
             self.vacuum = self._buildDefaultVacuumDomain()
-        elif self.isOpenCase and len(self.open) > 0:
-            self.vacuum = self._buildVacuumDomainFromOpenBoundary()
         else:
             self.vacuum = self._buildClosedVacuumDomain()
         return self.vacuum
     
-    def _buildVacuumDomainFromOpenBoundary(self) -> Dict[int, List[int]]:
-        dom = self.open[0]
-        
-        surfsToRemove = []
-        for num, surf in self.pecs.items():
-            surfsToRemove.extend(surf)
-
-        for _, surf in self.dielectrics.items():
-            surfsToRemove.extend(surf)
-
-        dom = gmsh.model.occ.cut(
-            dom, surfsToRemove, removeObject=False, removeTool=False)[0]
-        gmsh.model.occ.synchronize()
-
-        return dict([[0, dom]])
-    
     def _buildClosedVacuumDomain(self) -> Tuple[int, int]:
-        dom = self.pecs[0]
+        root = self.nestedGraph.roots[0]
+        dom = self.pecs[root]
         surfsToRemove = []
         for num, surf in self.pecs.items():
-            if num == 0:
+            if num == root:
                 continue
             surfsToRemove.extend(surf)
 
@@ -141,7 +124,7 @@ class ShapesClassification:
         dom = gmsh.model.occ.cut(
             dom, surfsToRemove, removeObject=False, removeTool=False)[0]
         gmsh.model.occ.synchronize()
-        return dict([[0, dom]])
+        return dict([['Vacuum_0', dom]])
     
     def _buildDefaultVacuumDomain(self):
         NEAR_REGION_BOUNDING_BOX_SCALING_FACTOR = 1.25
@@ -170,7 +153,7 @@ class ShapesClassification:
             farVacuumDiameter, farVacuumDiameter))]
 
         gmsh.model.occ.synchronize()
-        self.open = dict([[0, gmsh.model.getBoundary(farVacuum)]])
+        self.open = dict([['OpenBoundary_0', gmsh.model.getBoundary(farVacuum)]])
 
         farVacuum = gmsh.model.occ.cut(
             farVacuum, nearVacuum, removeObject=True, removeTool=False)[0]
@@ -189,32 +172,47 @@ class ShapesClassification:
         innerRegion = gmsh.model.getBoundary(nearVacuum, recursive=True)
         gmsh.model.mesh.setSize(innerRegion, minSide / 20)
         
-        
-       
         gmsh.model.occ.synchronize()
 
-        return dict([[0, nearVacuum], [1, farVacuum]])
+        return dict([['Vacuum_0', nearVacuum], ['Vacuum_1', farVacuum]])
     
     def __getNestedGraph(self):
         gmsh.model.occ.synchronize()
         graph = Graph()
-        for key in self.pecs.keys():
+        elements:Dict = {}
+        elements = {**self.pecs, **self.dielectrics}
+        for key in elements:
             graph.add_node(key)
-        for i, keyA in enumerate(self.pecs.keys()):
-            for j, keyB in enumerate(self.pecs.keys()):
+        for i, keyA in enumerate(elements):
+            for j, keyB in enumerate(elements):
                 if i < j:
                     inter = gmsh.model.occ.intersect(
-                        self.pecs[keyA], 
-                        self.pecs[keyB],
+                        elements[keyA], 
+                        elements[keyB],
                         removeObject=False,
                         removeTool=False
                     )
                     if len(inter[1][0]) == 0: #comprueba las intersecciones en las que interfiere el objeto
                         continue
                     else:
-                        if inter[1][0] == self.pecs[keyA]:
+                        if inter[1][0] == elements[keyA]:
                             graph.add_edge(keyB, keyA)
-                        elif inter[1][0] == self.pecs[keyB]:
+                        elif inter[1][0] == elements[keyB]:
                             graph.add_edge(keyA, keyB)
         graph.prune_to_longest_paths()
+        graph._reorderData()
         return graph
+    
+    def getComponentsMappedByLevel(self) -> Dict[str,str]:
+        sortedNodes = self.nestedGraph.getNodesByLevels()
+        mappedElements = []
+        conductors = []
+        dielectrics = []
+        for node in sortedNodes:
+            if node in self.pecs.keys():
+                conductors.append((node, 'Conductor_{}'.format(len(conductors))))
+            if node in self.dielectrics.keys():
+                dielectrics.append((node, 'Dielectric_{}'.format(len(dielectrics))))
+        mappedElements.extend(conductors)
+        mappedElements.extend(dielectrics)
+        return {element[0]:element[1] for element in mappedElements}

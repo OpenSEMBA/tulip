@@ -30,6 +30,14 @@ class TestMesher(unittest.TestCase):
     def tearDown(self):
         gmsh.finalize()
 
+    def assertPhysicalGroup(self,expectedNames, expectedEntities):
+        pGs = gmsh.model.getPhysicalGroups()
+        pGNames = [gmsh.model.getPhysicalName(*pG) for pG in pGs]
+        self.assertEqual(sorted(pGNames), sorted(expectedNames))
+
+        for idx, name in enumerate(expectedNames):
+            self.assertEqual(self.countEntitiesInPhysicalGroupWithName(name), expectedEntities[idx], name)
+
     def countEntitiesInPhysicalGroupWithName(self, name: str):
         return len(
             gmsh.model.getEntitiesForPhysicalGroup(
@@ -63,7 +71,7 @@ class TestMesher(unittest.TestCase):
         self.assertEqual(len(pGs), 4)
 
         pGNames = [gmsh.model.getPhysicalName(*pG) for pG in pGs]
-        expectedNames = ['Conductor_0', 'Conductor_1', 'Dielectric_1', 'Vacuum_0']
+        expectedNames = ['Conductor_0', 'Conductor_1', 'Dielectric_0', 'Vacuum_0']
         self.assertEqual(sorted(pGNames), sorted(expectedNames))
 
         for name in expectedNames:
@@ -72,8 +80,8 @@ class TestMesher(unittest.TestCase):
     def test_mesh_from_step_with_empty_coax(self):
         caseName = 'empty_coax'
         Mesher().meshFromStep(self.inputFileFromCaseName(caseName), caseName)
-        gmsh.write(caseName + '.msh')
-        gmsh.write(caseName + '.vtk')
+       #gmsh.write(caseName + '.msh')
+       #gmsh.write(caseName + '.vtk')
 
         pGs = gmsh.model.getPhysicalGroups()
         pGNames = [gmsh.model.getPhysicalName(*pG) for pG in pGs]
@@ -97,33 +105,46 @@ class TestMesher(unittest.TestCase):
 
     def test_mesh_from_step_with_two_wires_open(self):
         caseName = 'two_wires_open'
+
         Mesher().meshFromStep(self.inputFileFromCaseName(caseName), caseName)
-        
-        gmsh.write(caseName + '.vtk')
+       #gmsh.write(caseName + '.vtk')
 
         pGs = gmsh.model.getPhysicalGroups()
         pGNames = [gmsh.model.getPhysicalName(*pG) for pG in pGs]
-        expectedNames = ['Conductor_0', 'Conductor_1', 'OpenBoundary_0', 'Vacuum_0']
+        expectedNames = ['Conductor_0', 'Conductor_1', 'OpenBoundary_0', 'Vacuum_0', 'Vacuum_1']
         self.assertEqual(sorted(pGNames), sorted(expectedNames))
 
-        expectedEntities = [1,1,1,1]
+        expectedEntities = [1,1,1,1,1]
 
         for idx, name in enumerate(expectedNames):
             self.assertEqual(self.countEntitiesInPhysicalGroupWithName(name), expectedEntities[idx], name)
+
+    def test_mesh_dielectric_pair_open(self) -> None:
+        caseName = 'DielectricUnshieldedPair'
+        expectedNames = [
+            'Conductor_0', 'Conductor_1',
+            'Dielectric_0', 'Dielectric_1',
+            'OpenBoundary_0', 'Vacuum_0', 'Vacuum_1']
+        expectedEntities = [1,1,1,1,1,1,1]
+
+        Mesher().meshFromStep(self.inputFileFromCaseName(caseName), caseName)
+       #gmsh.write(caseName + '.vtk')
+
+        self.assertPhysicalGroup(expectedNames, expectedEntities)
+        
 
     def test_mesh_from_step_with_five_wires(self):
         expectedNames = [
             'Conductor_0', 'Conductor_1',
             'Conductor_2', 'Conductor_3',
             'Conductor_4', 'Conductor_5',
-            'Dielectric_1', 'Dielectric_2', 
-            'Dielectric_3', 'Dielectric_4', 
-            'Dielectric_5', 'Vacuum_0',
+            'Dielectric_0', 'Dielectric_1', 
+            'Dielectric_2', 'Dielectric_3', 
+            'Dielectric_4', 'Vacuum_0'
         ]
 
         caseName = 'five_wires'
         Mesher().meshFromStep(self.inputFileFromCaseName(caseName), caseName)
-        
         pGs = gmsh.model.getPhysicalGroups()
         pGNames = [gmsh.model.getPhysicalName(*pG) for pG in pGs]
         self.assertEqual(sorted(pGNames), sorted(expectedNames))
@@ -135,7 +156,7 @@ class TestMesher(unittest.TestCase):
         caseName = 'three_wires_ribbon'
         Mesher().meshFromStep(self.inputFileFromCaseName(caseName), caseName)
         
-        gmsh.write(caseName + '.vtk')
+       #gmsh.write(caseName + '.vtk')
 
         pGs = gmsh.model.getPhysicalGroups()
         pGNames = [gmsh.model.getPhysicalName(*pG) for pG in pGs]
@@ -143,13 +164,13 @@ class TestMesher(unittest.TestCase):
             'Conductor_0', 'Conductor_1', 'Conductor_2', 
             'OpenBoundary_0',
             'Dielectric_0', 'Dielectric_1', 'Dielectric_2', 
-            'Vacuum_0'
+            'Vacuum_0', 'Vacuum_1'
         ]
         expectedEntities = [1,1,1,
                             1,
                             1,1,1,
-                            1]
-
+                            1,1]
+        self.maxDiff = None
         self.assertEqual(sorted(pGNames), sorted(expectedNames))
 
         for idx, name in enumerate(expectedNames):
@@ -180,7 +201,7 @@ class TestMesher(unittest.TestCase):
         pGNames = [gmsh.model.getPhysicalName(*pG) for pG in pGs]
         expectedNames = ['Conductor_0', 'Conductor_1', 'Conductor_2', 'Conductor_3',
                          'OpenBoundary_0',  
-                         'Dielectric_1', 'Dielectric_2', 'Dielectric_3',  
+                         'Dielectric_1', 'Dielectric_2', 'Dielectric_0',  
                          'Vacuum_0']
         expectedEntities = [4, 1, 1, 1, 
                             1,
@@ -190,49 +211,17 @@ class TestMesher(unittest.TestCase):
         for idx, name in enumerate(expectedNames):
             self.assertEqual(self.countEntitiesInPhysicalGroupWithName(name), expectedEntities[idx], name)
 
-    def test_partially_filled_coax_step_shapes(self):
-        caseName = 'partially_filled_coax'
-        stepShapes = ShapesClassification(
-            gmsh.model.occ.importShapes(
-                self.testdataPath + caseName + '/' + caseName + '.step'
-            )
-        )
-
-        self.assertEqual(len(stepShapes.pecs), 2)
-        self.assertEqual(len(stepShapes.dielectrics), 1)
-
-    def test_five_wires_step_shapes(self):
-        caseName = 'five_wires'
-        stepShapes = ShapesClassification(
-            gmsh.model.occ.importShapes(
-                self.testdataPath + caseName + '/' + caseName + '.step'
-            )
-        )
-
-        self.assertEqual(len(stepShapes.pecs), 6)
-        self.assertEqual(len(stepShapes.dielectrics), 5)
-
-    def test_three_wires_ribbon_step_shapes(self):
-        caseName = 'three_wires_ribbon'
-        stepShapes = ShapesClassification(
-            gmsh.model.occ.importShapes(
-                self.testdataPath + caseName + '/' + caseName + '.step'
-            )
-        )
-
-        self.assertEqual(len(stepShapes.open), 1)
-        self.assertEqual(len(stepShapes.pecs), 3)
-        self.assertEqual(len(stepShapes.dielectrics), 3)
+    
 
     def test_unshielded_multiwire(self):
         caseName = 'unshielded_multiwire'
         Mesher().meshFromStep(self.inputFileFromCaseName(caseName), caseName)
         
-        gmsh.write(caseName + '.vtk')
+        #gmsh.write(caseName + '.vtk')
 
         pGs = gmsh.model.getPhysicalGroups()
         pGNames = [gmsh.model.getPhysicalName(*pG) for pG in pGs]
-        expectedNames = ['Conductor_0', 'Conductor_1',  'Dielectric_1', 
+        expectedNames = ['Conductor_0', 'Conductor_1',  'Dielectric_0', 
                          'OpenBoundary_0',
                          'Vacuum_0', 'Vacuum_1']
         expectedEntities = [1, 1, 1,
@@ -247,7 +236,7 @@ class TestMesher(unittest.TestCase):
         caseName = 'conductor_and_outer_dielectric'
         Mesher().meshFromStep(self.inputFileFromCaseName(caseName), caseName)
         
-        gmsh.write(caseName + '.vtk')
+        #gmsh.write(caseName + '.vtk')
 
         pGs = gmsh.model.getPhysicalGroups()
         pGNames = [gmsh.model.getPhysicalName(*pG) for pG in pGs]
@@ -269,8 +258,8 @@ class TestMesher(unittest.TestCase):
         caseName = 'lansink2024_single_wire_multipolar'
         Mesher().meshFromStep(self.inputFileFromCaseName(caseName), caseName)
         
-        gmsh.write(caseName + '.msh')
-        gmsh.write(caseName + '.vtk')
+       #gmsh.write(caseName + '.msh')
+       #gmsh.write(caseName + '.vtk')
 
         pGs = gmsh.model.getPhysicalGroups()
         pGNames = [gmsh.model.getPhysicalName(*pG) for pG in pGs]

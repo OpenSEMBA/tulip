@@ -31,7 +31,7 @@ class TestShapesClassification(unittest.TestCase):
         return self.testdataPath + caseName + '/' + caseName + ".step"
 
     def initShapeClassification(self, inputFile:str) -> None:
-        jsonFile = inputFile.strip('.step') + '.json'
+        jsonFile = os.path.splitext(inputFile)[0] +'.json'
         self.shapeClassification = ShapesClassification(
             gmsh.model.occ.importShapes(inputFile, highestDimOnly=False),
             jsonFile
@@ -91,3 +91,28 @@ class TestShapesClassification(unittest.TestCase):
         self.assertDictEqual(self.shapeClassification.pecs, expectedPecs)
         self.assertDictEqual(self.shapeClassification.dielectrics, expectedDielectrics)
         self.assertTrue(self.shapeClassification.isOpenCase)
+
+    def test_partially_filled_coax_step_shapes(self):
+        case = 'partially_filled_coax'
+        filepath = self.inputFileFromCaseName(case)
+        self.initShapeClassification(filepath)
+
+        self.assertEqual(len(self.shapeClassification.pecs), 2)
+        self.assertEqual(len(self.shapeClassification.dielectrics), 1)
+
+    def test_five_wires_step_shapes(self):
+        case = 'five_wires'
+        filepath = self.inputFileFromCaseName(case)
+        self.initShapeClassification(filepath)
+
+        self.assertEqual(len(self.shapeClassification.pecs), 6)
+        self.assertEqual(len(self.shapeClassification.dielectrics), 5)
+
+    def test_three_wires_ribbon_step_shapes(self):
+        case = 'three_wires_ribbon'
+        filepath = self.inputFileFromCaseName(case)
+        self.initShapeClassification(filepath)
+
+        self.assertEqual(len(self.shapeClassification.open), 0)
+        self.assertEqual(len(self.shapeClassification.pecs), 3)
+        self.assertEqual(len(self.shapeClassification.dielectrics), 3)
