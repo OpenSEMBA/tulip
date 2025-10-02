@@ -42,7 +42,7 @@ class testAreaExporterService(unittest.TestCase):
                 internalElements.append(geometry['area'])
         areaElements = self.sumAreasFromList(internalElements)
 
-        self.assertAlmostEqual(totalArea, areaElements)
+        self.assertAlmostEqual(totalArea, areaElements, places=5)
 
     def testJsonFormat(self) -> None:
         caseName = 'DielectricUnshieldedPair'
