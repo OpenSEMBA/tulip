@@ -1,0 +1,30 @@
+{
+    "CrossSection":[
+        {
+            "name":"RightConductor",
+            "material":{
+                "type":"PEC"
+            }
+        },
+        {
+            "name":"LeftConductor",
+            "material":{
+                "type":"PEC"
+            }
+        },
+        {
+            "name":"LeftDielectric",
+            "material":{
+                "type":"Dielectric",
+                "permittivity": 2.0
+            }
+        },
+        {
+            "name":"RightDielectric",
+            "material":{
+                "type":"Dielectric",
+                "permittivity":2.0
+            }
+        }
+    ]
+}

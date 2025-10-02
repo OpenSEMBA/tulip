@@ -1,4 +1,5 @@
-from typing import Tuple
+import os
+from typing import List, Tuple
 import gmsh
 from pathlib import Path
 from typing import Dict
@@ -31,8 +32,8 @@ class Mesher():
         caseName = Path(inputFile).stem
 
         gmsh.initialize()
-        self.meshFromStep(inputFile, caseName, self.DEFAULT_MESHING_OPTIONS)
-        self.exportGeometryAreas(caseName)
+        mappedElements = self.meshFromStep(inputFile, caseName, self.DEFAULT_MESHING_OPTIONS)
+        self.exportGeometryAreas(caseName, mappedElements)
         gmsh.write(caseName + '.msh')
         gmsh.write(caseName + '.vtk') # vtk export is just for debugging. 
         if runGui:
@@ -40,13 +41,14 @@ class Mesher():
 
         gmsh.finalize()
 
-    def meshFromStep(self, inputFile: str, caseName: str, meshingOptions=None):
+    def meshFromStep(self, inputFile: str, caseName: str, meshingOptions=None) -> Dict[str,str]:
         if meshingOptions is None:
             meshingOptions = Mesher.DEFAULT_MESHING_OPTIONS
 
         gmsh.model.add(caseName)
         allShapes = ShapesClassification(
-            gmsh.model.occ.importShapes(inputFile, highestDimOnly=False)
+            gmsh.model.occ.importShapes(inputFile, highestDimOnly=False),
+            os.path.splitext(inputFile)[0] +'.json'
         )
 
         # --- Geometry manipulation ---
@@ -55,33 +57,40 @@ class Mesher():
         vacuumDomain = allShapes.buildVacuumDomain()
         # -- Boundaries
         pecBoundaries = self.extractBoundaries(allShapes.pecs)
+        mappedComponents = allShapes.getComponentsMappedByLevel()
 
+        for domain in vacuumDomain.keys():
+            mappedComponents[domain] = domain
+        for openRegion in allShapes.open.keys():
+            mappedComponents[openRegion] = openRegion
+        components = {
+            **pecBoundaries,
+            **allShapes.dielectrics,
+            **allShapes.open,
+            **vacuumDomain,
+        }
+        
         self.buildPhysicalModel(
-            pecBoundaries, 
-            allShapes.dielectrics,
-            allShapes.open,
-            vacuumDomain
+            components,
+            mappedComponents
         )
         
         for [opt, val] in meshingOptions.items():
             gmsh.option.setNumber(opt, val)
 
-        # --- Mesh generation ---
-        
         gmsh.model.mesh.generate(2)
+        return mappedComponents
 
-    def exportGeometryAreas(self, caseName:str):
+
+    def exportGeometryAreas(self, caseName:str, mappedElements:Dict[str,str]):
         exporter = AreaExporterService()
-        exporter.addPhysicalModelOfDimension(dimension=2)
-        exporter.addPhysicalModelOfDimension(dimension=1)
+        exporter.addPhysicalModelOfDimension(mappedElements, dimension=2)
+        exporter.addPhysicalModelOfDimension(mappedElements, dimension=1)
         exporter.exportToJson(caseName)
             
 
-    def buildPhysicalModel(self, pecBoundaries, dielectrics, openRegion, vacuumDomain):
-        self._addPhysicalGroup("Conductor_", pecBoundaries, dimensionTag=1)
-        self._addPhysicalGroup("OpenBoundary_", openRegion, dimensionTag=1)
-        self._addPhysicalGroup("Vacuum_", vacuumDomain, dimensionTag=2)
-        self._addPhysicalGroup("Dielectric_", dielectrics, dimensionTag=2)
+    def buildPhysicalModel(self, components:Dict[str,List[Tuple[int,int]]], labeMapping:Dict[str,str]):
+        self._createPhysicalGroups(components, labeMapping)
 
         allEnts = gmsh.model.get_entities()
         entsInPG = []
@@ -95,13 +104,13 @@ class Mesher():
         gmsh.model.occ.synchronize()
 
 
-    def _addPhysicalGroup(self, physicalGroupName:str, objsDict:Dict, dimensionTag=1):
-        for num, objs in objsDict.items():
-            name = physicalGroupName + str(num)
-            tags = [x[1] for x in objs]
-            gmsh.model.addPhysicalGroup(dimensionTag, tags, name=name)
+    def _createPhysicalGroups(self, objsDict:Dict[str,List[Tuple[int,int]]], labelMapping:Dict[str,str]):
+        for name, elements in objsDict.items():
+            mappedName = labelMapping[name]
+            dimensionTag = elements[0][0]
+            tags = [x[1] for x in elements]
+            gmsh.model.addPhysicalGroup(dimensionTag, tags, name=mappedName)
             
-
     @staticmethod
     def getPhysicalGroupWithName(name: str):
         pGs = gmsh.model.getPhysicalGroups()
