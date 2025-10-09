@@ -19,6 +19,13 @@ struct Box {
 			(point[1] >= min[1] && point[1] <= max[1]);
 	}
 
+	void displace(const std::array<double,2>& point) {
+		for (int i = 0; i < 2; ++i) {
+			min[i] += point[i];
+			max[i] += point[i];
+		}
+	}
+
 	bool operator==(const Box& rhs) const
 	{
 		return min == rhs.min && max == rhs.max;

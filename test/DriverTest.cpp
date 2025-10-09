@@ -789,3 +789,76 @@ TEST_F(DriverTest, getCFromGeneralizedC_three_wires)
 		}
 	}
 }
+
+TEST_F(DriverTest, lansink2024_small_one_centered_fdtd_cell_vs_multipolar)
+{
+	// In-cell capacitances centered in conductor 0
+	// Using meshed FDTD cell.
+	InCellPotentials fdtdCellPotentials;
+	{
+		const std::string CASE{ "lansink2024_small_one_centered_fdtd_cell" };
+		fdtdCellPotentials = Driver::loadFromFile(
+			casesFolder() + CASE + "/" + CASE + ".pulmtln.in.json").getInCellPotentials();
+	}
+	auto fdtdCellComputedC00 = fdtdCellPotentials.getCapacitanceUsingInnerRegion(0, 0);
+	auto fdtdCellComputedC01 = fdtdCellPotentials.getCapacitanceUsingInnerRegion(0, 1);
+
+	// Using multipolar expansion.
+	InCellPotentials multipolarPotentials;
+	{
+		const std::string CASE{ "lansink2024_small_one_centered" };
+		multipolarPotentials = Driver::loadFromFile(
+			casesFolder() + CASE + "/" + CASE + ".pulmtln.in.json").getInCellPotentials();
+	}
+	Box fdtdCell{ {-0.1, -0.1}, {0.1, 0.1} };
+	auto multipolarComputedC00 = multipolarPotentials.getCapacitanceOnBox(0, 0, fdtdCell);
+	auto multipolarComputedC01 = multipolarPotentials.getCapacitanceOnBox(0, 1, fdtdCell);
+
+	// Compares results
+	EXPECT_NEAR(fdtdCellComputedC00, multipolarComputedC00, 0.03e-12);
+	EXPECT_NEAR(fdtdCellComputedC01, multipolarComputedC01, 0.03e-12);
+	EXPECT_LE(relError(fdtdCellComputedC00, multipolarComputedC00), 0.002);
+	EXPECT_LE(relError(fdtdCellComputedC01, multipolarComputedC01), 0.002);
+
+	saveToJSONFile(multipolarPotentials.toJSON(), 
+		"lansink2024_small_one_centered.inCellPotentials.out.json");
+}
+
+TEST_F(DriverTest, lansink2024_small_one_centered_different_integration_centers)
+{
+	// In-cell capacitances centered in conductor 0
+	InCellPotentials multipolarPotentials;
+		const std::string CASE{ "lansink2024_small_one_centered" };
+	
+	multipolarPotentials = Driver::loadFromFile(
+		casesFolder() + CASE + "/" + CASE + ".pulmtln.in.json").getInCellPotentials();
+
+	mfem::DenseMatrix geometricC(2,2);
+	Box fdtdCellCenteredOnConductor0{ {-0.1, -0.1}, {0.1, 0.1} };
+	{
+		geometricC(0, 0) = multipolarPotentials.getCapacitanceOnBox(0, 0, fdtdCellCenteredOnConductor0);
+		geometricC(0, 1) = multipolarPotentials.getCapacitanceOnBox(0, 1, fdtdCellCenteredOnConductor0);
+	}
+	{
+		Box fdtdCellCenteredOnConductor1{ {-0.12, -0.1}, {0.08, 0.1} };
+		geometricC(1, 0) = multipolarPotentials.getCapacitanceOnBox(1, 0, fdtdCellCenteredOnConductor1);
+		geometricC(1, 1) = multipolarPotentials.getCapacitanceOnBox(1, 1, fdtdCellCenteredOnConductor1);
+	}
+
+	mfem::DenseMatrix chargeCenteredC(2, 2);
+	for (int i = 0; i < 2; i++) {
+		Box chargeCenteredCell{ fdtdCellCenteredOnConductor0 };
+		chargeCenteredCell.displace(multipolarPotentials.electric.at(i).expansionCenter);
+		for (int j = 0; j < 2; j++) {
+			chargeCenteredC(i,j) = multipolarPotentials.getCapacitanceOnBox(i, j, chargeCenteredCell);
+		}
+	}
+	
+	// Compares results
+	for (int i = 0; i < 2; i++) {
+		for (int j = 0; j < 2; j++) {
+			EXPECT_NEAR(geometricC(i,j), chargeCenteredC(i,j), 0.1e-11);
+		}
+	}
+
+}

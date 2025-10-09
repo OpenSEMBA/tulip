@@ -1,0 +1,17 @@
+{
+  "analysis": {
+    "order": 3,
+    "exportParaViewSolution": true,
+    "exportFolder": "Results/lansink2024_small_one_centered_fdtd_cell/"
+  },
+  "model": {
+    "materials": {
+      "Conductor_0":    {"type": "PEC", "tag": 1, "area": 3.141592653589793 },
+      "Conductor_1":    {"type": "PEC", "tag": 2, "area": 314.1592653589793 },
+      "OpenBoundary_0": {"type": "OpenBoundary", "tag": 3},
+      "Vacuum_0":       {"type": "Vacuum", "tag": 5},
+      "Vacuum_1":       {"type": "Vacuum", "tag": 4}
+    },
+    "gmshFile": "lansink2024_small_one_centered_fdtd_cell.msh"
+  }
+}
