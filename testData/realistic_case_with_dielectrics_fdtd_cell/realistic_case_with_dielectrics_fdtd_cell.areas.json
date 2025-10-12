@@ -1,0 +1,334 @@
+{
+   "geometries": [
+      {
+         "geometry": "Dielectric_31",
+         "label": "Inner_region",
+         "area": 98.360988
+      },
+      {
+         "geometry": "Dielectric_0",
+         "label": "Dielectric_000",
+         "area": 0.753982
+      },
+      {
+         "geometry": "Dielectric_1",
+         "label": "Dielectric_001",
+         "area": 0.753982
+      },
+      {
+         "geometry": "Dielectric_2",
+         "label": "Dielectric_002",
+         "area": 0.753982
+      },
+      {
+         "geometry": "Dielectric_3",
+         "label": "Dielectric_003",
+         "area": 0.753982
+      },
+      {
+         "geometry": "Dielectric_4",
+         "label": "Dielectric_004",
+         "area": 0.753982
+      },
+      {
+         "geometry": "Dielectric_5",
+         "label": "Dielectric_005",
+         "area": 0.753982
+      },
+      {
+         "geometry": "Dielectric_6",
+         "label": "Dielectric_006",
+         "area": 0.753982
+      },
+      {
+         "geometry": "Dielectric_7",
+         "label": "Dielectric_007",
+         "area": 0.753982
+      },
+      {
+         "geometry": "Dielectric_8",
+         "label": "Dielectric_008",
+         "area": 0.753982
+      },
+      {
+         "geometry": "Dielectric_9",
+         "label": "Dielectric_009",
+         "area": 0.753982
+      },
+      {
+         "geometry": "Dielectric_10",
+         "label": "Dielectric_010",
+         "area": 0.753982
+      },
+      {
+         "geometry": "Dielectric_11",
+         "label": "Dielectric_011",
+         "area": 0.753982
+      },
+      {
+         "geometry": "Dielectric_12",
+         "label": "Dielectric_012",
+         "area": 0.753982
+      },
+      {
+         "geometry": "Dielectric_13",
+         "label": "Dielectric_013",
+         "area": 0.753982
+      },
+      {
+         "geometry": "Dielectric_30",
+         "label": "Dielectric_030",
+         "area": 5.026548
+      },
+      {
+         "geometry": "Dielectric_14",
+         "label": "Dielectric_014",
+         "area": 0.257611
+      },
+      {
+         "geometry": "Dielectric_15",
+         "label": "Dielectric_015",
+         "area": 0.257611
+      },
+      {
+         "geometry": "Dielectric_16",
+         "label": "Dielectric_016",
+         "area": 0.257611
+      },
+      {
+         "geometry": "Dielectric_17",
+         "label": "Dielectric_017",
+         "area": 0.257611
+      },
+      {
+         "geometry": "Dielectric_18",
+         "label": "Dielectric_018",
+         "area": 0.257611
+      },
+      {
+         "geometry": "Dielectric_19",
+         "label": "Dielectric_019",
+         "area": 0.257611
+      },
+      {
+         "geometry": "Dielectric_20",
+         "label": "Dielectric_020",
+         "area": 0.257611
+      },
+      {
+         "geometry": "Dielectric_21",
+         "label": "Dielectric_021",
+         "area": 0.257611
+      },
+      {
+         "geometry": "Dielectric_22",
+         "label": "Dielectric_022",
+         "area": 0.257611
+      },
+      {
+         "geometry": "Dielectric_23",
+         "label": "Dielectric_023",
+         "area": 0.257611
+      },
+      {
+         "geometry": "Dielectric_24",
+         "label": "Dielectric_024",
+         "area": 0.257611
+      },
+      {
+         "geometry": "Dielectric_25",
+         "label": "Dielectric_025",
+         "area": 0.612611
+      },
+      {
+         "geometry": "Dielectric_26",
+         "label": "Dielectric_026",
+         "area": 0.612611
+      },
+      {
+         "geometry": "Dielectric_27",
+         "label": "Dielectric_027",
+         "area": 0.612611
+      },
+      {
+         "geometry": "Dielectric_28",
+         "label": "Dielectric_028",
+         "area": 0.612611
+      },
+      {
+         "geometry": "Dielectric_29",
+         "label": "Dielectric_029",
+         "area": 0.612611
+      },
+      {
+         "geometry": "Vacuum_0",
+         "label": "Vacuum_0",
+         "area": 201.432577
+      },
+      {
+         "geometry": "Vacuum_1",
+         "label": "Vacuum_1",
+         "area": 25653.616428
+      },
+      {
+         "geometry": "Conductor_0",
+         "label": "Conductor_000",
+         "area": 4.154756
+      },
+      {
+         "geometry": "Conductor_1",
+         "label": "Conductor_001",
+         "area": 4.154756
+      },
+      {
+         "geometry": "Conductor_2",
+         "label": "Conductor_002",
+         "area": 4.154756
+      },
+      {
+         "geometry": "Conductor_3",
+         "label": "Conductor_003",
+         "area": 4.154756
+      },
+      {
+         "geometry": "Conductor_4",
+         "label": "Conductor_004",
+         "area": 4.154756
+      },
+      {
+         "geometry": "Conductor_5",
+         "label": "Conductor_005",
+         "area": 4.154756
+      },
+      {
+         "geometry": "Conductor_6",
+         "label": "Conductor_006",
+         "area": 4.154756
+      },
+      {
+         "geometry": "Conductor_7",
+         "label": "Conductor_007",
+         "area": 4.154756
+      },
+      {
+         "geometry": "Conductor_8",
+         "label": "Conductor_008",
+         "area": 4.154756
+      },
+      {
+         "geometry": "Conductor_9",
+         "label": "Conductor_009",
+         "area": 4.154756
+      },
+      {
+         "geometry": "Conductor_10",
+         "label": "Conductor_010",
+         "area": 4.154756
+      },
+      {
+         "geometry": "Conductor_11",
+         "label": "Conductor_011",
+         "area": 4.154756
+      },
+      {
+         "geometry": "Conductor_12",
+         "label": "Conductor_012",
+         "area": 4.154756
+      },
+      {
+         "geometry": "Conductor_13",
+         "label": "Conductor_013",
+         "area": 4.154756
+      },
+      {
+         "geometry": "Conductor_14",
+         "label": "Conductor_014",
+         "area": 0.40715
+      },
+      {
+         "geometry": "Conductor_15",
+         "label": "Conductor_015",
+         "area": 0.40715
+      },
+      {
+         "geometry": "Conductor_16",
+         "label": "Conductor_016",
+         "area": 0.40715
+      },
+      {
+         "geometry": "Conductor_17",
+         "label": "Conductor_017",
+         "area": 0.40715
+      },
+      {
+         "geometry": "Conductor_18",
+         "label": "Conductor_018",
+         "area": 0.40715
+      },
+      {
+         "geometry": "Conductor_19",
+         "label": "Conductor_019",
+         "area": 0.40715
+      },
+      {
+         "geometry": "Conductor_20",
+         "label": "Conductor_020",
+         "area": 0.40715
+      },
+      {
+         "geometry": "Conductor_21",
+         "label": "Conductor_021",
+         "area": 0.40715
+      },
+      {
+         "geometry": "Conductor_22",
+         "label": "Conductor_022",
+         "area": 0.40715
+      },
+      {
+         "geometry": "Conductor_23",
+         "label": "Conductor_023",
+         "area": 0.40715
+      },
+      {
+         "geometry": "Conductor_24",
+         "label": "Conductor_024",
+         "area": 0.40715
+      },
+      {
+         "geometry": "Conductor_25",
+         "label": "Conductor_025",
+         "area": 1.038689
+      },
+      {
+         "geometry": "Conductor_26",
+         "label": "Conductor_026",
+         "area": 1.038689
+      },
+      {
+         "geometry": "Conductor_27",
+         "label": "Conductor_027",
+         "area": 1.038689
+      },
+      {
+         "geometry": "Conductor_28",
+         "label": "Conductor_028",
+         "area": 1.038689
+      },
+      {
+         "geometry": "Conductor_29",
+         "label": "Conductor_029",
+         "area": 1.038689
+      },
+      {
+         "geometry": "Conductor_30",
+         "label": "Conductor_030",
+         "area": 15.904313
+      },
+      {
+         "geometry": "OpenBoundary_0",
+         "label": "OpenBoundary_0",
+         "area": 26058.632063
+      }
+   ]
+}

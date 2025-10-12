@@ -1,0 +1,268 @@
+{
+   "geometries": [
+      {
+         "geometry": "Vacuum_0",
+         "area": 201.43257712824737
+      },
+      {
+         "geometry": "Vacuum_0",
+         "area": 98.36098832922256
+      },
+      {
+         "geometry": "Vacuum_1",
+         "area": 25653.616427941233
+      },
+      {
+         "geometry": "Dielectric_0",
+         "area": 0.7539822368615505
+      },
+      {
+         "geometry": "Dielectric_1",
+         "area": 0.7539822368615505
+      },
+      {
+         "geometry": "Dielectric_2",
+         "area": 0.7539822368615505
+      },
+      {
+         "geometry": "Dielectric_3",
+         "area": 0.7539822368615505
+      },
+      {
+         "geometry": "Dielectric_4",
+         "area": 0.7539822368615505
+      },
+      {
+         "geometry": "Dielectric_5",
+         "area": 0.7539822368615505
+      },
+      {
+         "geometry": "Dielectric_6",
+         "area": 0.7539822368615505
+      },
+      {
+         "geometry": "Dielectric_7",
+         "area": 0.7539822368615505
+      },
+      {
+         "geometry": "Dielectric_8",
+         "area": 0.7539822368615505
+      },
+      {
+         "geometry": "Dielectric_9",
+         "area": 0.7539822368615505
+      },
+      {
+         "geometry": "Dielectric_10",
+         "area": 0.7539822368615505
+      },
+      {
+         "geometry": "Dielectric_11",
+         "area": 0.7539822368615505
+      },
+      {
+         "geometry": "Dielectric_12",
+         "area": 0.7539822368615505
+      },
+      {
+         "geometry": "Dielectric_13",
+         "area": 0.7539822368615505
+      },
+      {
+         "geometry": "Dielectric_31",
+         "area": 5.026548245743726
+      },
+      {
+         "geometry": "Dielectric_14",
+         "area": 0.257610597594363
+      },
+      {
+         "geometry": "Dielectric_15",
+         "area": 0.257610597594363
+      },
+      {
+         "geometry": "Dielectric_16",
+         "area": 0.257610597594363
+      },
+      {
+         "geometry": "Dielectric_17",
+         "area": 0.257610597594363
+      },
+      {
+         "geometry": "Dielectric_18",
+         "area": 0.257610597594363
+      },
+      {
+         "geometry": "Dielectric_19",
+         "area": 0.257610597594363
+      },
+      {
+         "geometry": "Dielectric_20",
+         "area": 0.257610597594363
+      },
+      {
+         "geometry": "Dielectric_21",
+         "area": 0.257610597594363
+      },
+      {
+         "geometry": "Dielectric_22",
+         "area": 0.257610597594363
+      },
+      {
+         "geometry": "Dielectric_23",
+         "area": 0.257610597594363
+      },
+      {
+         "geometry": "Dielectric_24",
+         "area": 0.257610597594363
+      },
+      {
+         "geometry": "Dielectric_25",
+         "area": 0.61261056745001
+      },
+      {
+         "geometry": "Dielectric_26",
+         "area": 0.61261056745001
+      },
+      {
+         "geometry": "Dielectric_27",
+         "area": 0.61261056745001
+      },
+      {
+         "geometry": "Dielectric_28",
+         "area": 0.61261056745001
+      },
+      {
+         "geometry": "Dielectric_29",
+         "area": 0.61261056745001
+      },
+      {
+         "geometry": "Conductor_0",
+         "area": 4.1547562843725006
+      },
+      {
+         "geometry": "Conductor_1",
+         "area": 4.1547562843725006
+      },
+      {
+         "geometry": "Conductor_2",
+         "area": 4.1547562843725006
+      },
+      {
+         "geometry": "Conductor_3",
+         "area": 4.1547562843725006
+      },
+      {
+         "geometry": "Conductor_4",
+         "area": 4.1547562843725006
+      },
+      {
+         "geometry": "Conductor_5",
+         "area": 4.1547562843725006
+      },
+      {
+         "geometry": "Conductor_6",
+         "area": 4.1547562843725006
+      },
+      {
+         "geometry": "Conductor_7",
+         "area": 4.1547562843725006
+      },
+      {
+         "geometry": "Conductor_8",
+         "area": 4.1547562843725006
+      },
+      {
+         "geometry": "Conductor_9",
+         "area": 4.1547562843725006
+      },
+      {
+         "geometry": "Conductor_10",
+         "area": 4.1547562843725006
+      },
+      {
+         "geometry": "Conductor_11",
+         "area": 4.1547562843725006
+      },
+      {
+         "geometry": "Conductor_12",
+         "area": 4.1547562843725006
+      },
+      {
+         "geometry": "Conductor_13",
+         "area": 4.1547562843725006
+      },
+      {
+         "geometry": "Conductor_14",
+         "area": 0.407150407905237
+      },
+      {
+         "geometry": "Conductor_15",
+         "area": 0.407150407905237
+      },
+      {
+         "geometry": "Conductor_16",
+         "area": 0.407150407905237
+      },
+      {
+         "geometry": "Conductor_17",
+         "area": 0.407150407905237
+      },
+      {
+         "geometry": "Conductor_18",
+         "area": 0.407150407905237
+      },
+      {
+         "geometry": "Conductor_19",
+         "area": 0.407150407905237
+      },
+      {
+         "geometry": "Conductor_20",
+         "area": 0.407150407905237
+      },
+      {
+         "geometry": "Conductor_21",
+         "area": 0.407150407905237
+      },
+      {
+         "geometry": "Conductor_22",
+         "area": 0.407150407905237
+      },
+      {
+         "geometry": "Conductor_23",
+         "area": 0.407150407905237
+      },
+      {
+         "geometry": "Conductor_24",
+         "area": 0.407150407905237
+      },
+      {
+         "geometry": "Conductor_25",
+         "area": 1.0386890710931251
+      },
+      {
+         "geometry": "Conductor_26",
+         "area": 1.0386890710931251
+      },
+      {
+         "geometry": "Conductor_27",
+         "area": 1.0386890710931251
+      },
+      {
+         "geometry": "Conductor_28",
+         "area": 1.0386890710931251
+      },
+      {
+         "geometry": "Conductor_29",
+         "area": 1.0386890710931251
+      },
+      {
+         "geometry": "Conductor_30",
+         "area": 15.904312808798327
+      },
+      {
+         "geometry": "OpenBoundary_0",
+         "area": 26058.63206300375
+      }
+   ]
+}
