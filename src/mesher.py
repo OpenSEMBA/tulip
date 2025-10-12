@@ -14,7 +14,7 @@ class Mesher():
     
         "Mesh.MshFileVersion": 2.2,   # Required for MFEM compatibility
         "Mesh.MeshSizeFromCurvature": 50,
-        "Mesh.ElementOrder": 3,
+        "Mesh.ElementOrder": 1,
         "Mesh.ScalingFactor": 1e-3,
         "Mesh.SurfaceFaces": 1,
         "Mesh.MeshSizeMax": 40,
