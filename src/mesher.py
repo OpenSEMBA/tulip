@@ -28,6 +28,37 @@ class Mesher():
         # "Geometry.Tolerance": 1e-3,
     }
 
+    @staticmethod
+    def findDuplicateNodes() -> \
+        Tuple[bool, Dict[Tuple[float, float, float], List[int]]]:
+        """
+        Check if any two nodes in the *current* Gmsh model share the same coordinates.
+        Uses exact (bit-for-bit) coordinate equality.
+
+        Returns
+        -------
+        has_duplicates : bool
+            True if any duplicate node groups are found.
+        groups : dict
+            Mapping from coordinate key -> list of node tags that share that location.
+            The key is the exact (x, y, z) tuple.
+        """
+        node_tags, node_coords, _ = gmsh.model.mesh.getNodes()
+
+        def key_exact(i: int) -> Tuple[float, float, float]:
+            return (node_coords[3*i], node_coords[3*i+1], node_coords[3*i+2])
+
+        groups: Dict[Tuple[float, float, float], List[int]] = {}
+
+        # Exact mode only
+        for idx, tag in enumerate(node_tags):
+            k = key_exact(idx)
+            groups.setdefault(k, []).append(tag)
+        # Keep only groups with more than one node
+        groups = {k: v for k, v in groups.items() if len(v) > 1}
+        return (len(groups) > 0, groups)
+
+
     def runFromInput(self, inputFile, runGui=False):
         caseName = Path(inputFile).stem
 
@@ -79,6 +110,11 @@ class Mesher():
             gmsh.option.setNumber(opt, val)
 
         gmsh.model.mesh.generate(2)
+        gmsh.model.mesh.removeDuplicateNodes()
+
+        has_dups, _ = self.findDuplicateNodes()
+        assert not has_dups
+
         return mappedComponents
 
 

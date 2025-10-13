@@ -50,56 +50,7 @@ class TestMesher(unittest.TestCase):
 
     def inputFileFromCaseName(self, caseName):
         return self.testdataPath + caseName + '/' + caseName + ".step"
-    
-    def find_duplicate_nodes(tol: Optional[float] = None) -> \
-        Tuple[bool, Dict[Tuple[float, float, float], List[int]]]:
-        """
-        Check if any two nodes in the *current* Gmsh model share the same coordinates.
-
-        Parameters
-        ----------
-        tol : float or None
-            - None  -> exact (bit-for-bit) coordinate equality
-            - float -> near-duplicate check using a grid of size `tol`
-
-        Returns
-        -------
-        has_duplicates : bool
-            True if any duplicate (or near-duplicate) node groups are found.
-        groups : dict
-            Mapping from coordinate key -> list of node tags that share that location.
-            - For exact mode, the key is the exact (x, y, z) tuple.
-            - For tol mode, the key is the *rounded* (x, y, z) tuple (grid index).
-        """
-        node_tags, node_coords, _ = gmsh.model.mesh.getNodes()
-
-        def key_exact(i: int) -> Tuple[float, float, float]:
-            return (node_coords[3*i], node_coords[3*i+1], node_coords[3*i+2])
-
-        def key_tol(i: int, t: float) -> Tuple[int, int, int]:
-            x, y, z = node_coords[3*i], node_coords[3*i+1], node_coords[3*i+2]
-            return (round(x / t), round(y / t), round(z / t))
-
-        groups: Dict[Tuple[float, float, float], List[int]] = {}
-        groups_tol: Dict[Tuple[int, int, int], List[int]] = {}
-
-        if tol is None:
-            # Exact mode
-            for idx, tag in enumerate(node_tags):
-                k = key_exact(idx)
-                groups.setdefault(k, []).append(tag)
-            # Keep only groups with more than one node
-            groups = {k: v for k, v in groups.items() if len(v) > 1}
-            return (len(groups) > 0, groups)
-
-        else:
-            # Tolerance (grid rounding) mode
-            for idx, tag in enumerate(node_tags):
-                k = key_tol(idx, tol)
-                groups_tol.setdefault(k, []).append(tag)
-            groups_tol = {k: v for k, v in groups_tol.items() if len(v) > 1}
-            return (len(groups_tol) > 0, groups_tol)
-
+   
     def test_get_number_from_entity_name(self):
         self.assertEqual(
             ShapesClassification.getNumberFromName(
@@ -117,10 +68,18 @@ class TestMesher(unittest.TestCase):
 
     def test_mesh_from_step_with_partially_filled_coax(self):
         caseName = 'partially_filled_coax'
-        Mesher().meshFromStep(self.inputFileFromCaseName(caseName), caseName)
 
-        has_dups, _ = TestMesher.find_duplicate_nodes()
-        assert not has_dups
+        meshing_options = copy.deepcopy(Mesher.DEFAULT_MESHING_OPTIONS)
+        meshing_options["Mesh.ElementOrder"] = 3
+
+        Mesher().meshFromStep(
+            self.inputFileFromCaseName(caseName), 
+            caseName,
+            meshing_options)
+
+        # For debugging
+        gmsh.write(caseName + '.msh')
+        gmsh.write(caseName + '.vtk')
 
         pGs = gmsh.model.getPhysicalGroups()
         self.assertEqual(len(pGs), 4)
@@ -137,11 +96,8 @@ class TestMesher(unittest.TestCase):
     def test_mesh_from_step_with_empty_coax(self):
         caseName = 'empty_coax'
         Mesher().meshFromStep(self.inputFileFromCaseName(caseName), caseName)
-       # gmsh.write(caseName + '.msh')
-       # gmsh.write(caseName + '.vtk')
-
-        has_dups, _ = TestMesher.find_duplicate_nodes()
-        assert not has_dups
+        gmsh.write(caseName + '.msh')
+        gmsh.write(caseName + '.vtk')
 
         pGs = gmsh.model.getPhysicalGroups()
         pGNames = [gmsh.model.getPhysicalName(*pG) for pG in pGs]
@@ -155,9 +111,6 @@ class TestMesher(unittest.TestCase):
     def test_mesh_from_step_with_two_wires_coax(self):
         caseName = 'two_wires_coax'
         Mesher().meshFromStep(self.inputFileFromCaseName(caseName), caseName)
-
-        has_dups, _ = TestMesher.find_duplicate_nodes()
-        assert not has_dups
 
         pGs = gmsh.model.getPhysicalGroups()
         pGNames = [gmsh.model.getPhysicalName(*pG) for pG in pGs]
@@ -174,9 +127,6 @@ class TestMesher(unittest.TestCase):
 
         Mesher().meshFromStep(self.inputFileFromCaseName(caseName), caseName)
        # gmsh.write(caseName + '.vtk')
-
-        has_dups, _ = TestMesher.find_duplicate_nodes()
-        assert not has_dups
 
         pGs = gmsh.model.getPhysicalGroups()
         pGNames = [gmsh.model.getPhysicalName(*pG) for pG in pGs]
@@ -201,9 +151,6 @@ class TestMesher(unittest.TestCase):
         Mesher().meshFromStep(self.inputFileFromCaseName(caseName), caseName)
        # gmsh.write(caseName + '.vtk')
 
-        has_dups, _ = TestMesher.find_duplicate_nodes()
-        assert not has_dups
-
         self.assertPhysicalGroup(expectedNames, expectedEntities)
 
     def test_mesh_from_step_with_five_wires(self):
@@ -219,9 +166,6 @@ class TestMesher(unittest.TestCase):
         caseName = 'five_wires'
         Mesher().meshFromStep(self.inputFileFromCaseName(caseName), caseName)
 
-        has_dups, _ = TestMesher.find_duplicate_nodes()
-        assert not has_dups
-
         pGs = gmsh.model.getPhysicalGroups()
         pGNames = [gmsh.model.getPhysicalName(*pG) for pG in pGs]
         self.assertEqual(sorted(pGNames), sorted(expectedNames))
@@ -235,9 +179,6 @@ class TestMesher(unittest.TestCase):
         Mesher().meshFromStep(self.inputFileFromCaseName(caseName), caseName)
 
        # gmsh.write(caseName + '.vtk')
-
-        has_dups, _ = TestMesher.find_duplicate_nodes()
-        assert not has_dups
 
         pGs = gmsh.model.getPhysicalGroups()
         pGNames = [gmsh.model.getPhysicalName(*pG) for pG in pGs]
@@ -262,9 +203,6 @@ class TestMesher(unittest.TestCase):
         caseName = 'nested_coax'
         Mesher().meshFromStep(self.inputFileFromCaseName(caseName), caseName)
 
-        has_dups, _ = TestMesher.find_duplicate_nodes()
-        assert not has_dups
-
         pGs = gmsh.model.getPhysicalGroups()
         pGNames = [gmsh.model.getPhysicalName(*pG) for pG in pGs]
         expectedNames = ['Conductor_0',
@@ -287,9 +225,6 @@ class TestMesher(unittest.TestCase):
         # gmsh.write(caseName + '.vtk')
         # gmsh.fltk.run()
 
-        has_dups, _ = TestMesher.find_duplicate_nodes()
-        assert not has_dups
-
         pGs = gmsh.model.getPhysicalGroups()
         pGNames = [gmsh.model.getPhysicalName(*pG) for pG in pGs]
         expectedNames = ['Conductor_0', 'Conductor_1', 'Conductor_2', 'Conductor_3',
@@ -311,9 +246,6 @@ class TestMesher(unittest.TestCase):
 
         # gmsh.write(caseName + '.vtk')
 
-        has_dups, _ = TestMesher.find_duplicate_nodes()
-        assert not has_dups
-
         pGs = gmsh.model.getPhysicalGroups()
         pGNames = [gmsh.model.getPhysicalName(*pG) for pG in pGs]
         expectedNames = ['Conductor_0', 'Conductor_1',  'Dielectric_0',
@@ -334,9 +266,6 @@ class TestMesher(unittest.TestCase):
 
         gmsh.write(caseName + '.vtk')
         gmsh.write(caseName + '.msh')
-
-        has_dups, _ = TestMesher.find_duplicate_nodes()
-        assert not has_dups
 
         pGs = gmsh.model.getPhysicalGroups()
         pGNames = [gmsh.model.getPhysicalName(*pG) for pG in pGs]
@@ -368,9 +297,6 @@ class TestMesher(unittest.TestCase):
         gmsh.write(caseName + '.vtk')
         gmsh.write(caseName + '.msh')
 
-        has_dups, _ = TestMesher.find_duplicate_nodes()
-        assert not has_dups
-
         pGs = gmsh.model.getPhysicalGroups()
         pGNames = [gmsh.model.getPhysicalName(*pG) for pG in pGs]
 
@@ -400,9 +326,6 @@ class TestMesher(unittest.TestCase):
 
         gmsh.write(caseName + '.msh')
         gmsh.write(caseName + '.vtk')
-
-        has_dups, _ = TestMesher.find_duplicate_nodes()
-        assert not has_dups
 
         pGs = gmsh.model.getPhysicalGroups()
         pGNames = [gmsh.model.getPhysicalName(*pG) for pG in pGs]
