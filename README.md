@@ -16,6 +16,13 @@ Install requirements with
 
 ## Usage
 
+Step2gmsh requires two diferent files: 
+- A json file where material properties are described for each geometry
+- A step file with all the geometry info
+
+Both files must have the same label and share folder path.
+An example of those files can be found in [Five wires case](testData/five_wires/)
+
 Launch from command line as
 
 ```shell
