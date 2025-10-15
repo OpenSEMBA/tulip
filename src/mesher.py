@@ -85,12 +85,12 @@ class Mesher():
         # --- Geometry manipulation ---
         allShapes.ensureDielectricsDoNotOverlap()
         allShapes.removeConductorsFromDielectrics()
-        vacuumDomain = allShapes.buildVacuumDomain()
+        allShapes.vacuum = allShapes.buildVacuumDomain()
         allShapes.pecs = self.extractBoundaries(allShapes.pecs)
 
         # --- Mapping
         mappedComponents = allShapes.getMappedComponents()
-        self.buildPhysicalModel(mappedComponents)
+        self.buildPhysicalModel(allShapes, mappedComponents)
 
 
         # --- Meshing
@@ -113,13 +113,13 @@ class Mesher():
         exporter.exportToJson(caseName)
             
 
-    def buildPhysicalModel(self, components:Dict[str,List[Tuple[int,int]]], labelMapping:Dict[str,str]):
+    def buildPhysicalModel(self, shapes:ShapesClassification, labelMapping:Dict[str,str]):
 
         components = {
-            **self.allShapes.pecs,
-            **self.allShapes.dielectrics,
-            **self.allShapes.open,
-            **self.allShapes.vacuum,
+            **shapes.pecs,
+            **shapes.dielectrics,
+            **shapes.open,
+            **shapes.vacuum,
         }
 
         self._createPhysicalGroups(components, labelMapping)

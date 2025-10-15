@@ -156,11 +156,13 @@ class ShapesClassification:
         if self.isOpenBoundaryDefined():
             name, vacuum = next(iter(self.open.items()))
             
-            self.open = dict([[name, gmsh.model.getBoundary(vacuum)]])
-            
             vacuum = gmsh.model.occ.cut(vacuum, nonVacuumSurfaces,
                 removeObject=True, removeTool=False)[0]
             gmsh.model.occ.synchronize()
+
+            vacuumBoundaries = gmsh.model.getBoundary(vacuum)
+            externalVacuumBoundaries = [dt for dt in vacuumBoundaries if dt[1]>0]
+            self.open = dict([[name, externalVacuumBoundaries]])
 
             return dict([['Vacuum_0', vacuum]])
         else:            
@@ -244,9 +246,11 @@ class ShapesClassification:
         mappedElements.extend(conductors)
         mappedElements.extend(dielectrics)
 
-        for domain in self.allShapes.vacuum.keys():
-            mappedElements[domain] = domain
-        for openBoundary in self.allShapes.open.keys():
-            mappedElements[openBoundary] = 'OpenBoundary_0'
+        mappedComponents = {element[0]:element[1] for element in mappedElements}
 
-        return {element[0]:element[1] for element in mappedElements}
+        for domain in self.vacuum.keys():
+            mappedComponents[domain] = domain
+        for openBoundary in self.open.keys():
+            mappedComponents[openBoundary] = 'OpenBoundary_0'
+
+        return mappedComponents
