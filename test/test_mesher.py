@@ -50,7 +50,7 @@ class TestMesher(unittest.TestCase):
 
     def inputFileFromCaseName(self, caseName):
         return self.testdataPath + caseName + '/' + caseName + ".step"
-   
+
     def test_get_number_from_entity_name(self):
         self.assertEqual(
             ShapesClassification.getNumberFromName(
@@ -73,7 +73,7 @@ class TestMesher(unittest.TestCase):
         meshing_options["Mesh.ElementOrder"] = 3
 
         Mesher().meshFromStep(
-            self.inputFileFromCaseName(caseName), 
+            self.inputFileFromCaseName(caseName),
             caseName,
             meshing_options)
 
@@ -150,6 +150,27 @@ class TestMesher(unittest.TestCase):
 
         Mesher().meshFromStep(self.inputFileFromCaseName(caseName), caseName)
        # gmsh.write(caseName + '.vtk')
+
+        self.assertPhysicalGroup(expectedNames, expectedEntities)
+
+    def test_mesh_dielectric_pair_open_defined_boundary(self) -> None:
+        caseName = 'DielectricUnshieldedPairDefinedBoundary'
+    
+        meshing_options = copy.deepcopy(Mesher.DEFAULT_MESHING_OPTIONS)
+        meshing_options["Mesh.ElementOrder"] = 1
+        
+        Mesher().meshFromStep(
+            self.inputFileFromCaseName(caseName), 
+            caseName,
+            meshingOptions=meshing_options)
+
+        gmsh.write(caseName + '.vtk')
+        
+        expectedNames = [
+            'Conductor_0', 'Conductor_1',
+            'Dielectric_0', 'Dielectric_1',
+            'OpenBoundary_0', 'Vacuum_0']
+        expectedEntities = [1, 1, 1, 1, 1, 1]
 
         self.assertPhysicalGroup(expectedNames, expectedEntities)
 
@@ -289,7 +310,7 @@ class TestMesher(unittest.TestCase):
         meshing_options["Mesh.ElementOrder"] = 1
 
         Mesher().meshFromStep(
-            self.inputFileFromCaseName(caseName), 
+            self.inputFileFromCaseName(caseName),
             caseName,
             meshingOptions=meshing_options)
 
@@ -313,12 +334,11 @@ class TestMesher(unittest.TestCase):
                          'Dielectric_15', 'Dielectric_16', 'Dielectric_17', 'Dielectric_18', 'Dielectric_19',
                          'Dielectric_20', 'Dielectric_21', 'Dielectric_22', 'Dielectric_23', 'Dielectric_24',
                          'Dielectric_25', 'Dielectric_26', 'Dielectric_27', 'Dielectric_28', 'Dielectric_29',
-                         'Dielectric_30', 'Dielectric_31', # There is one more dielectric because it is separated by the external dielectric.
+                         # There is one more dielectric because it is separated by the external dielectric.
+                         'Dielectric_30', 'Dielectric_31',
                          'OpenBoundary_0',
                          'Vacuum_0', 'Vacuum_1']
         self.assertEqual(sorted(pGNames), sorted(expectedNames))
-
-
 
     def test_lansink2024_single_wire_multipolar(self):
         caseName = 'lansink2024_single_wire_multipolar'

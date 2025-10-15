@@ -29,8 +29,8 @@ class ShapesClassification:
         self.crossSectionData = jsonData['CrossSection']
         self.pecs = self.get_pecs(shapes)
         self.dielectrics = self.get_dielectrics(shapes)
+        self.open = self.get_open_boundaries(shapes)
         self.vacuum = dict()
-        self.open = dict()
         self.nestedGraph = self.__getNestedGraph()
         self.isOpenCase = self.isOpenProblem()
 
@@ -62,6 +62,19 @@ class ShapesClassification:
 
         return dielectrics
     
+    def get_open_boundaries(self, entity_tags) -> Dict[str, List[Tuple[int,int]]]:
+        openBoundaryNames = self.__getGeometryNamesByMaterialType('OpenBoundary')
+        open_boundaries = dict()
+        for s in entity_tags:
+            name = gmsh.model.get_entity_name(*s).split('/')[-1]
+            if s[0] != 2 or name not in openBoundaryNames: 
+                continue
+            open_boundaries[name] = [s]
+
+        assert len(open_boundaries) <= 1
+
+        return open_boundaries
+    
     def __getGeometryNamesByMaterialType(self, materialType:str) -> List[str]:
         names = [
             geometry['name'] 
@@ -70,11 +83,16 @@ class ShapesClassification:
         ]
         return names
     
-    def isOpenProblem(self) -> None:
+    def isOpenBoundaryDefined(self) -> bool:
+        return len(self.open) > 0
+    
+    def isOpenProblem(self) -> bool:
         roots = self.nestedGraph.roots 
-        if len(roots) > 1: #Más de un componente pec/pec pec/dielectric dielectric/dielectric etc da al exterior
+        if len(self.open) == 1:
             return True
-        if roots[0] in self.dielectrics.keys(): #El único root es un dielectrico
+        if len(roots) > 1: 
+            return True
+        if roots[0] in self.dielectrics.keys(): 
             return True
         return False
     
@@ -105,7 +123,7 @@ class ShapesClassification:
 
     def buildVacuumDomain(self):
         if self.isOpenCase:
-            self.vacuum = self._buildDefaultVacuumDomain()
+            self.vacuum = self._buildOpenVacuumDomain()
         else:
             self.vacuum = self._buildClosedVacuumDomain()
         return self.vacuum
@@ -126,7 +144,7 @@ class ShapesClassification:
         gmsh.model.occ.synchronize()
         return dict([['Vacuum_0', dom]])
     
-    def _buildDefaultVacuumDomain(self):
+    def _buildOpenVacuumDomain(self):
         NEAR_REGION_BOUNDING_BOX_SCALING_FACTOR = 1.15
         FAR_REGION_DISK_SCALING_FACTOR = 4.0
         nonVacuumSurfaces = []
@@ -134,53 +152,63 @@ class ShapesClassification:
             nonVacuumSurfaces.extend(surf)
         for _, surf in self.dielectrics.items():
             nonVacuumSurfaces.extend(surf)
+
+        if self.isOpenBoundaryDefined():
+            name, vacuum = next(iter(self.open.items()))
             
-        boundingBox = BoundingBox.getBoundingBoxFromGroup(nonVacuumSurfaces)
+            self.open = dict([[name, gmsh.model.getBoundary(vacuum)]])
+            
+            vacuum = gmsh.model.occ.cut(vacuum, nonVacuumSurfaces,
+                removeObject=True, removeTool=False)[0]
+            gmsh.model.occ.synchronize()
 
-    
-        bbMaxLength = np.max(boundingBox.getLengths())
-        nearVacuumBoxSize = bbMaxLength*NEAR_REGION_BOUNDING_BOX_SCALING_FACTOR
-        nVOrigin = tuple(
-            np.subtract(boundingBox.getCenter(), 
-                        (nearVacuumBoxSize/2.0, nearVacuumBoxSize/2.0, 0.0)))
-        nearVacuum = [
-            (2, gmsh.model.occ.addRectangle(*nVOrigin, *(nearVacuumBoxSize,)*2))
-        ]
+            return dict([['Vacuum_0', vacuum]])
+        else:            
+            boundingBox = BoundingBox.getBoundingBoxFromGroup(nonVacuumSurfaces)
 
-        farVacuumDiameter = FAR_REGION_DISK_SCALING_FACTOR * boundingBox.getDiagonal()
-        farVacuum = [(2, gmsh.model.occ.addDisk(
-            *boundingBox.getCenter(), 
-            farVacuumDiameter, farVacuumDiameter))]
+            bbMaxLength = np.max(boundingBox.getLengths())
+            nearVacuumBoxSize = bbMaxLength*NEAR_REGION_BOUNDING_BOX_SCALING_FACTOR
+            nVOrigin = tuple(
+                np.subtract(boundingBox.getCenter(), 
+                            (nearVacuumBoxSize/2.0, nearVacuumBoxSize/2.0, 0.0)))
+            nearVacuum = [
+                (2, gmsh.model.occ.addRectangle(*nVOrigin, *(nearVacuumBoxSize,)*2))
+            ]
 
-        gmsh.model.occ.synchronize()
-        self.open = dict([['OpenBoundary_0', gmsh.model.getBoundary(farVacuum)]])
+            farVacuumDiameter = FAR_REGION_DISK_SCALING_FACTOR * boundingBox.getDiagonal()
+            farVacuum = [(2, gmsh.model.occ.addDisk(
+                *boundingBox.getCenter(), 
+                farVacuumDiameter, farVacuumDiameter))]
 
-        farVacuum = gmsh.model.occ.cut(
-            farVacuum, nearVacuum, removeObject=True, removeTool=False)[0]
+            gmsh.model.occ.synchronize()
+            self.open = dict([['OpenBoundary_0', gmsh.model.getBoundary(farVacuum)]])
 
-
-        nearVacuum = gmsh.model.occ.cut(
-            nearVacuum, nonVacuumSurfaces, removeObject=True, removeTool=False)[0]
+            farVacuum = gmsh.model.occ.cut(
+                farVacuum, nearVacuum, removeObject=True, removeTool=False)[0]
+            nearVacuum = gmsh.model.occ.cut(
+                nearVacuum, nonVacuumSurfaces, removeObject=True, removeTool=False)[0]
         
-        gmsh.model.occ.synchronize()
-        
-        # -- Set mesh size for near vacuum region
-        bb = BoundingBox(
-            gmsh.model.getBoundingBox(2, nearVacuum[0][1]))
-        minSide = np.min(np.array([bb.getLengths()[0], bb.getLengths()[1]]))
+            gmsh.model.occ.synchronize()
+            
+            # -- Set mesh size for near vacuum region
+            bb = BoundingBox(
+                gmsh.model.getBoundingBox(2, nearVacuum[0][1]))
+            minSide = np.min(np.array([bb.getLengths()[0], bb.getLengths()[1]]))
 
-        innerRegion = gmsh.model.getBoundary(nearVacuum, recursive=True)
-        gmsh.model.mesh.setSize(innerRegion, minSide / 20)
-        
-        gmsh.model.occ.synchronize()
+            innerRegion = gmsh.model.getBoundary(nearVacuum, recursive=True)
+            gmsh.model.mesh.setSize(innerRegion, minSide / 20)
+            
+            gmsh.model.occ.synchronize()
 
-        return dict([['Vacuum_0', nearVacuum], ['Vacuum_1', farVacuum]])
+            return dict([['Vacuum_0', nearVacuum], ['Vacuum_1', farVacuum]])
+        
+
     
     def __getNestedGraph(self):
         gmsh.model.occ.synchronize()
         graph = Graph()
         elements:Dict = {}
-        elements = {**self.pecs, **self.dielectrics}
+        elements = {**self.pecs, **self.dielectrics, **self.open}
         for key in elements:
             graph.add_node(key)
         for i, keyA in enumerate(elements):
@@ -192,7 +220,7 @@ class ShapesClassification:
                         removeObject=False,
                         removeTool=False
                     )
-                    if len(inter[1][0]) == 0: #comprueba las intersecciones en las que interfiere el objeto
+                    if len(inter[1][0]) == 0: 
                         continue
                     else:
                         if inter[1][0] == elements[keyA]:
@@ -203,7 +231,7 @@ class ShapesClassification:
         graph._reorderData()
         return graph
     
-    def getComponentsMappedByLevel(self) -> Dict[str,str]:
+    def getMappedComponents(self) -> Dict[str,str]:
         sortedNodes = self.nestedGraph.getNodesByLevels()
         mappedElements = []
         conductors = []
@@ -215,4 +243,10 @@ class ShapesClassification:
                 dielectrics.append((node, 'Dielectric_{}'.format(len(dielectrics))))
         mappedElements.extend(conductors)
         mappedElements.extend(dielectrics)
+
+        for domain in self.allShapes.vacuum.keys():
+            mappedElements[domain] = domain
+        for openBoundary in self.allShapes.open.keys():
+            mappedElements[openBoundary] = 'OpenBoundary_0'
+
         return {element[0]:element[1] for element in mappedElements}

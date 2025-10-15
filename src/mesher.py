@@ -86,26 +86,14 @@ class Mesher():
         allShapes.ensureDielectricsDoNotOverlap()
         allShapes.removeConductorsFromDielectrics()
         vacuumDomain = allShapes.buildVacuumDomain()
-        # -- Boundaries
-        pecBoundaries = self.extractBoundaries(allShapes.pecs)
-        mappedComponents = allShapes.getComponentsMappedByLevel()
+        allShapes.pecs = self.extractBoundaries(allShapes.pecs)
 
-        for domain in vacuumDomain.keys():
-            mappedComponents[domain] = domain
-        for openRegion in allShapes.open.keys():
-            mappedComponents[openRegion] = openRegion
-        components = {
-            **pecBoundaries,
-            **allShapes.dielectrics,
-            **allShapes.open,
-            **vacuumDomain,
-        }
-        
-        self.buildPhysicalModel(
-            components,
-            mappedComponents
-        )
-        
+        # --- Mapping
+        mappedComponents = allShapes.getMappedComponents()
+        self.buildPhysicalModel(mappedComponents)
+
+
+        # --- Meshing
         for [opt, val] in meshingOptions.items():
             gmsh.option.setNumber(opt, val)
 
@@ -125,8 +113,16 @@ class Mesher():
         exporter.exportToJson(caseName)
             
 
-    def buildPhysicalModel(self, components:Dict[str,List[Tuple[int,int]]], labeMapping:Dict[str,str]):
-        self._createPhysicalGroups(components, labeMapping)
+    def buildPhysicalModel(self, components:Dict[str,List[Tuple[int,int]]], labelMapping:Dict[str,str]):
+
+        components = {
+            **self.allShapes.pecs,
+            **self.allShapes.dielectrics,
+            **self.allShapes.open,
+            **self.allShapes.vacuum,
+        }
+
+        self._createPhysicalGroups(components, labelMapping)
 
         allEnts = gmsh.model.get_entities()
         entsInPG = []
