@@ -127,7 +127,7 @@ class ShapesClassification:
         return dict([['Vacuum_0', dom]])
     
     def _buildDefaultVacuumDomain(self):
-        NEAR_REGION_BOUNDING_BOX_SCALING_FACTOR = 1.25
+        NEAR_REGION_BOUNDING_BOX_SCALING_FACTOR = 1.15
         FAR_REGION_DISK_SCALING_FACTOR = 4.0
         nonVacuumSurfaces = []
         for _, surf in self.pecs.items():
