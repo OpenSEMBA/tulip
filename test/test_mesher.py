@@ -140,7 +140,7 @@ class TestMesher(unittest.TestCase):
             self.assertEqual(self.countEntitiesInPhysicalGroupWithName(
                 name), expectedEntities[idx], name)
 
-    def test_mesh_dielectric_pair_open(self) -> None:
+    def test_mesh_dielectric_unshielded_pair(self) -> None:
         caseName = 'DielectricUnshieldedPair'
         expectedNames = [
             'Conductor_0', 'Conductor_1',
@@ -149,11 +149,13 @@ class TestMesher(unittest.TestCase):
         expectedEntities = [1, 1, 1, 1, 1, 1, 1]
 
         Mesher().meshFromStep(self.inputFileFromCaseName(caseName), caseName)
-       # gmsh.write(caseName + '.vtk')
+        
+        gmsh.write(caseName + '.vtk')
+        gmsh.write(caseName + '.msh')
 
         self.assertPhysicalGroup(expectedNames, expectedEntities)
 
-    def test_mesh_dielectric_pair_open_defined_boundary(self) -> None:
+    def test_mesh_dielectric_unshielded_pair_defined_boundary(self) -> None:
         caseName = 'DielectricUnshieldedPairDefinedBoundary'
     
         meshing_options = copy.deepcopy(Mesher.DEFAULT_MESHING_OPTIONS)
@@ -187,6 +189,8 @@ class TestMesher(unittest.TestCase):
         caseName = 'five_wires'
         Mesher().meshFromStep(self.inputFileFromCaseName(caseName), caseName)
 
+        gmsh.write(caseName + '.vtk')
+        
         pGs = gmsh.model.getPhysicalGroups()
         pGNames = [gmsh.model.getPhysicalName(*pG) for pG in pGs]
         self.assertEqual(sorted(pGNames), sorted(expectedNames))

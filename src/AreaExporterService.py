@@ -19,21 +19,23 @@ class AreaExporterService:
         }
         self.computedAreas['geometries'].append(geometry)
 
-    def addPhysicalModelOfDimension(self, mappedElements:Dict[str,str],  dimension=2):
-        physicalGroups = gmsh.model.getPhysicalGroups(dimension)
+    def addPhysicalModelForConductors(self, mappedElements:Dict[str,str]):
+        physicalGroups = gmsh.model.getPhysicalGroups(1)
         for physicalGroup in physicalGroups:
             entityTags = gmsh.model.getEntitiesForPhysicalGroup(*physicalGroup)
             geometryName = gmsh.model.getPhysicalName(*physicalGroup)
-            label = ''
-            for key, geometry in mappedElements.items():
-                if geometry == geometryName:
-                    label = key
-            for tag in entityTags:
-                if dimension == 1:
-                    rad = gmsh.model.occ.getMass(dimension, tag) / (2*np.pi)
-                    area = rad*rad*np.pi
-                if dimension == 2:
-                    area = gmsh.model.occ.getMass(dimension, tag)
+            if geometryName.startswith("Conductor_"):                
+                loop = gmsh.model.geo.addCurveLoop(entityTags)
+                surface = gmsh.model.geo.addPlaneSurface([loop])
+                gmsh.model.geo.synchronize()
+                area = gmsh.model.occ.getMass(2, surface)
+                gmsh.model.occ.remove([(2, surface)])
+                
+                label = ''
+                for key, geometry in mappedElements.items():
+                    if geometry == geometryName:
+                        label = key
+                        break
                 if geometryName != AreaExporterService._EMPTY_NAME_CASE:
                     self.addComputedArea(geometryName, label, area)
 

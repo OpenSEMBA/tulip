@@ -40,7 +40,8 @@ class ShapesClassification:
         num = int(entity_name[ini:])
         return num
 
-    def get_entities_by_material_type(self, entity_tags, material_type: str, entity_dim: int = 2) -> Dict[str, List[Tuple[int,int]]]:
+    def get_entities_by_material_type(self, entity_tags, material_type: str, entity_dim: int = 2) \
+        -> Dict[str, List[Tuple[int,int]]]:
         """
         Generic method to extract entities by material type from the cross-section data.
         
