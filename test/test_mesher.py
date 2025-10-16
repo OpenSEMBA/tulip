@@ -335,10 +335,9 @@ class TestMesher(unittest.TestCase):
                          'Dielectric_15', 'Dielectric_16', 'Dielectric_17', 'Dielectric_18', 'Dielectric_19',
                          'Dielectric_20', 'Dielectric_21', 'Dielectric_22', 'Dielectric_23', 'Dielectric_24',
                          'Dielectric_25', 'Dielectric_26', 'Dielectric_27', 'Dielectric_28', 'Dielectric_29',
-                         # There is one more dielectric because it is separated by the external dielectric.
                          'Dielectric_30', 'Dielectric_31',
                          'OpenBoundary_0',
-                         'Vacuum_0', 'Vacuum_1']
+                         'Vacuum_0']
         self.assertEqual(sorted(pGNames), sorted(expectedNames))
 
     def test_lansink2024_single_wire_multipolar(self):

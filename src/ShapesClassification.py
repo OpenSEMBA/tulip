@@ -47,7 +47,7 @@ class ShapesClassification:
             name = gmsh.model.get_entity_name(*s).split('/')[-1]
             if s[0] != 2 or name not in pecNames:
                 continue
-            pecs[name] = [s]
+            pecs.setdefault(name,[]).append(s)
 
         return pecs
     
@@ -58,7 +58,7 @@ class ShapesClassification:
             name = gmsh.model.get_entity_name(*s).split('/')[-1]
             if s[0] != 2 or name not in dielectricNames:
                 continue
-            dielectrics[name] = [s]
+            dielectrics.setdefault(name,[]).append(s)
 
         return dielectrics
     
@@ -69,10 +69,7 @@ class ShapesClassification:
             name = gmsh.model.get_entity_name(*s).split('/')[-1]
             if s[0] != 2 or name not in openBoundaryNames: 
                 continue
-            open_boundaries[name] = [s]
-
-        assert len(open_boundaries) <= 1
-
+            open_boundaries.setdefault(name,[]).append(s)
         return open_boundaries
     
     def __getGeometryNamesByMaterialType(self, materialType:str) -> List[str]:
@@ -97,10 +94,11 @@ class ShapesClassification:
         return False
     
     def removeConductorsFromDielectrics(self):
+        conductorsOnlyGraph = self.getConductorOnlyGraph()
         for num, diel in self.dielectrics.items():
             pec_surfs = []
             for num2, pec_surf in self.pecs.items():
-                if (num2 in self.nestedGraph.roots) and (not self.isOpenCase):
+                if (num2 in conductorsOnlyGraph.roots) and (not self.isOpenCase):
                     continue
                 pec_surfs.extend(pec_surf)
             self.dielectrics[num] = gmsh.model.occ.cut(diel, pec_surfs, removeTool=False)[0]
@@ -232,6 +230,37 @@ class ShapesClassification:
         graph.prune_to_longest_paths()
         graph._reorderData()
         return graph
+    
+    def getConductorOnlyGraph(self) -> Graph:
+        """
+        Creates a new graph containing only conductor nodes by removing all dielectric nodes
+        from the nested graph and preserving conductor relationships.
+        
+        Returns:
+            Graph: A new graph with only conductor nodes and their direct connections
+        """
+        conductor_graph = Graph()
+        
+        for conductor_name in self.pecs.keys():
+            if conductor_name in self.nestedGraph.nodes:
+                conductor_graph.add_node(conductor_name)
+        
+        for edge in self.nestedGraph.edges:
+            source, destination = edge
+            
+            if source in self.pecs.keys() and destination in self.pecs.keys():
+                conductor_graph.add_edge(source, destination)
+            
+            elif source in self.pecs.keys() and destination in self.dielectrics.keys():
+                # Look for conductor nodes that are children of this dielectric
+                for child_edge in self.nestedGraph.edges:
+                    child_source, child_dest = child_edge
+                    if child_source == destination and child_dest in self.pecs.keys():
+                        conductor_graph.add_edge(source, child_dest)
+        
+        conductor_graph.prune_to_longest_paths()
+        conductor_graph._reorderData()
+        return conductor_graph
     
     def getMappedComponents(self) -> Dict[str,str]:
         

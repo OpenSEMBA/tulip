@@ -116,3 +116,39 @@ class TestShapesClassification(unittest.TestCase):
         self.assertEqual(len(self.shapeClassification.open), 0)
         self.assertEqual(len(self.shapeClassification.pecs), 3)
         self.assertEqual(len(self.shapeClassification.dielectrics), 3)
+
+    def test_conductor_only_graph_dielectric_unshielded(self):
+        case = 'DielectricUnshieldedPair'
+        filepath = self.inputFileFromCaseName(case)
+        self.initShapeClassification(filepath)
+        
+        original_graph = self.shapeClassification.nestedGraph
+        conductor_graph = self.shapeClassification.getConductorOnlyGraph()
+        
+        conductor_names = set(self.shapeClassification.pecs.keys())
+        graph_nodes = set(conductor_graph.nodes)
+        
+        # All nodes in conductor graph should be conductors
+        self.assertTrue(graph_nodes.issubset(conductor_names))
+        
+        # The graph should contain all conductors that were in the original graph
+        original_conductor_nodes = set(original_graph.nodes).intersection(conductor_names)
+        self.assertEqual(graph_nodes, original_conductor_nodes)
+        
+        # Verify no dielectric nodes remain
+        dielectric_nodes = set(self.shapeClassification.dielectrics.keys())
+        self.assertTrue(graph_nodes.isdisjoint(dielectric_nodes))
+
+    def test_conductor_only_graph_five_wires(self):
+        case = 'five_wires'
+        filepath = self.inputFileFromCaseName(case)
+        self.initShapeClassification(filepath)
+        
+        conductor_graph = self.shapeClassification.getConductorOnlyGraph()
+        graph_nodes = set(conductor_graph.nodes)
+              
+        conductor_names = set(self.shapeClassification.pecs.keys())
+        dielectric_names = set(self.shapeClassification.dielectrics.keys())
+        
+        self.assertTrue(graph_nodes.issubset(conductor_names))
+        self.assertTrue(graph_nodes.isdisjoint(dielectric_names))
