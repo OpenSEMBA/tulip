@@ -20,16 +20,14 @@ class AreaExporterService:
         self.computedAreas['geometries'].append(geometry)
 
     def addPhysicalModelForConductors(self, mappedElements:Dict[str,str]):
-        physicalGroups = gmsh.model.getPhysicalGroups(1)
+        physicalGroups = gmsh.model.getPhysicalGroups(2)
         for physicalGroup in physicalGroups:
             entityTags = gmsh.model.getEntitiesForPhysicalGroup(*physicalGroup)
             geometryName = gmsh.model.getPhysicalName(*physicalGroup)
-            if geometryName.startswith("Conductor_"):                
-                loop = gmsh.model.geo.addCurveLoop(entityTags)
-                surface = gmsh.model.geo.addPlaneSurface([loop])
-                gmsh.model.geo.synchronize()
-                area = gmsh.model.occ.getMass(2, surface)
-                gmsh.model.occ.remove([(2, surface)])
+            if geometryName.startswith("Conductor_") and geometryName[10:].isdigit():
+                area = 0.0
+                for tag in entityTags:
+                    area += gmsh.model.occ.getMass(2, tag)
                 
                 label = ''
                 for key, geometry in mappedElements.items():
