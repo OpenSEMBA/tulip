@@ -234,16 +234,19 @@ class ShapesClassification:
         return graph
     
     def getMappedComponents(self) -> Dict[str,str]:
-        sortedNodes = self.nestedGraph.getNodesByLevels()
+        
         mappedElements = []
+        
         conductors = []
-        dielectrics = []
+        sortedNodes = self.nestedGraph.getNodesByLevels()
         for node in sortedNodes:
             if node in self.pecs.keys():
                 conductors.append((node, 'Conductor_{}'.format(len(conductors))))
-            if node in self.dielectrics.keys():
-                dielectrics.append((node, 'Dielectric_{}'.format(len(dielectrics))))
         mappedElements.extend(conductors)
+        
+        dielectrics = []
+        for node in self.dielectrics.keys():
+            dielectrics.append((node, 'Dielectric_{}'.format(len(dielectrics))))
         mappedElements.extend(dielectrics)
 
         mappedComponents = {element[0]:element[1] for element in mappedElements}

@@ -317,6 +317,7 @@ class TestMesher(unittest.TestCase):
         # For debugging.
         gmsh.write(caseName + '.vtk')
         gmsh.write(caseName + '.msh')
+        # gmsh.fltk.run()
 
         pGs = gmsh.model.getPhysicalGroups()
         pGNames = [gmsh.model.getPhysicalName(*pG) for pG in pGs]
