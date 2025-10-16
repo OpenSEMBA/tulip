@@ -1,10 +1,12 @@
 *.FCStd1
 *.pyc
-*.msh
 .vscode/
 .pytest_cache/
 .idea/
 tmpFolder/
 venv/
 gmshDoc/
+
+*.msh
 *.vtk
+*.areas.json

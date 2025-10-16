@@ -30,8 +30,7 @@ class testAreaExporterService(unittest.TestCase):
         caseName = 'five_wires'
         mappedElements = Mesher().meshFromStep(self.inputFileFromCaseName(caseName), caseName)
         areaExporter = AreaExporterService()
-        areaExporter.addPhysicalModelOfDimension(mappedElements=mappedElements, dimension=1)
-        areaExporter.addPhysicalModelOfDimension(mappedElements=mappedElements, dimension=2)
+        areaExporter.addPhysicalModelForConductors(mappedElements=mappedElements)
         geometries = areaExporter.computedAreas['geometries']
 
         internalElements = []
@@ -48,9 +47,8 @@ class testAreaExporterService(unittest.TestCase):
         caseName = 'DielectricUnshieldedPair'
         mappedElements = Mesher().meshFromStep(self.inputFileFromCaseName(caseName), caseName)
         areaExporter = AreaExporterService()
-        areaExporter.addPhysicalModelOfDimension(mappedElements=mappedElements, dimension=1)
-        areaExporter.addPhysicalModelOfDimension(mappedElements=mappedElements, dimension=2)
-
+        areaExporter.addPhysicalModelForConductors(mappedElements=mappedElements)
+        
         expectedDict = {
             'geometries': [
                 {
@@ -61,32 +59,8 @@ class testAreaExporterService(unittest.TestCase):
                 {
                     'area': 201.06193,
                     'geometry': 'Conductor_0',
-                    'label': 'LeftConductor'},
-                {
-                    'area': 312048.117187,
-                    'geometry': 'OpenBoundary_0',
-                    'label': 'OpenBoundary_0'
-                },
-                {
-                    'area': 603.185789,
-                    'geometry': 'Dielectric_1',
-                    'label': 'RightDielectric'
-                },
-                {
-                    'area': 603.185789,
-                    'geometry': 'Dielectric_0',
-                    'label': 'LeftDielectric'
-                },
-                {
-                    'area': 6491.504606,
-                    'geometry': 'Vacuum_0',
-                    'label': 'Vacuum_0'
-                },
-                {
-                    'area': 303948.117142,
-                    'geometry': 'Vacuum_1',
-                    'label': 'Vacuum_1'
-                }
+                    'label': 'LeftConductor'
+                }            
             ]
         }
         self.maxDiff = None
