@@ -268,8 +268,29 @@ class TestMesher(unittest.TestCase):
                          'OpenBoundary_0',
                          'Vacuum_0', 'Vacuum_1']
         expectedEntities = [1, 1, 1,
-                            1,
                             1, 1]
+        self.assertEqual(sorted(pGNames), sorted(expectedNames))
+
+        for idx, name in enumerate(expectedNames):
+            self.assertEqual(self.countEntitiesInPhysicalGroupWithName(name), expectedEntities[idx], name)
+
+    def test_unshielded_nesting(self):
+        caseName = 'UnshieldedNested'
+        Mesher().meshFromStep(self.inputFileFromCaseName(caseName), caseName)
+        
+       #gmsh.write(caseName + '.msh')
+       #gmsh.write(caseName + '.vtk')
+
+        pGs = gmsh.model.getPhysicalGroups()
+        pGNames = [gmsh.model.getPhysicalName(*pG) for pG in pGs]
+        expectedNames = ['Conductor_0', 
+                         'Conductor_1',
+                         'Conductor_2',
+                         'OpenBoundary_0',
+                         'Vacuum_0', 'Vacuum_1']
+        expectedEntities = [2, 1, 1,
+                            1,
+                            2, 1]
         self.assertEqual(sorted(pGNames), sorted(expectedNames))
 
         for idx, name in enumerate(expectedNames):
