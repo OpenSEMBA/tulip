@@ -40,37 +40,35 @@ class ShapesClassification:
         num = int(entity_name[ini:])
         return num
 
-    def get_pecs(self, entity_tags) -> Dict[str, Dict[str,any]]:
-        pecNames = self.__getGeometryNamesByMaterialType('PEC')
-        pecs = dict()
+    def get_entities_by_material_type(self, entity_tags, material_type: str, entity_dim: int = 2) -> Dict[str, List[Tuple[int,int]]]:
+        """
+        Generic method to extract entities by material type from the cross-section data.
+        
+        Args:
+            entity_tags: List of entity tags from gmsh
+            material_type: The material type to filter by (e.g., 'PEC', 'Dielectric', 'OpenBoundary')
+            entity_dim: The entity dimension to filter by (default: 2 for surfaces)
+            
+        Returns:
+            Dictionary mapping entity names to lists of entity tags
+        """
+        material_names = self.__getGeometryNamesByMaterialType(material_type)
+        entities = dict()
         for s in entity_tags:
             name = gmsh.model.get_entity_name(*s).split('/')[-1]
-            if s[0] != 2 or name not in pecNames:
+            if s[0] != entity_dim or name not in material_names:
                 continue
-            pecs.setdefault(name,[]).append(s)
-
-        return pecs
+            entities.setdefault(name, []).append(s)
+        return entities
     
-    def get_dielectrics(self, entity_tags) -> Dict[str, Dict[str,any]]:
-        dielectricNames = self.__getGeometryNamesByMaterialType('Dielectric')
-        dielectrics = dict()
-        for s in entity_tags:
-            name = gmsh.model.get_entity_name(*s).split('/')[-1]
-            if s[0] != 2 or name not in dielectricNames:
-                continue
-            dielectrics.setdefault(name,[]).append(s)
-
-        return dielectrics
+    def get_pecs(self, entity_tags) -> Dict[str, List[Tuple[int,int]]]:
+        return self.get_entities_by_material_type(entity_tags, 'PEC')
+    
+    def get_dielectrics(self, entity_tags) -> Dict[str, List[Tuple[int,int]]]:
+        return self.get_entities_by_material_type(entity_tags, 'Dielectric')
     
     def get_open_boundaries(self, entity_tags) -> Dict[str, List[Tuple[int,int]]]:
-        openBoundaryNames = self.__getGeometryNamesByMaterialType('OpenBoundary')
-        open_boundaries = dict()
-        for s in entity_tags:
-            name = gmsh.model.get_entity_name(*s).split('/')[-1]
-            if s[0] != 2 or name not in openBoundaryNames: 
-                continue
-            open_boundaries.setdefault(name,[]).append(s)
-        return open_boundaries
+        return self.get_entities_by_material_type(entity_tags, 'OpenBoundary')
     
     def __getGeometryNamesByMaterialType(self, materialType:str) -> List[str]:
         names = [
