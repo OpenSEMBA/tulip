@@ -33,8 +33,19 @@ class AreaExporterService:
                     label = key
                     break
             
- 
-            self.addComputedArea(geometryName, label, area)
+            # Find surface that has these curves as boundaries
+            allSurfaces = gmsh.model.getEntities(2)
+            foundSurface = None
+            for surface in allSurfaces:
+                boundary = gmsh.model.getBoundary([surface], oriented=False, recursive=False)
+                boundaryTags = set(tag for dim, tag in boundary)
+                if set(entityTags) == boundaryTags:
+                    foundSurface = surface
+                    break
+            
+            if foundSurface:
+                area = gmsh.model.occ.getMass(2, foundSurface[1])
+                self.addComputedArea(geometryName, label, area)
     
     def exportToJson(self, exportFileName:str):
         with open(exportFileName + ".areas.json", 'w') as f:

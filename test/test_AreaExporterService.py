@@ -34,43 +34,47 @@ class testAreaExporterService(unittest.TestCase):
         mappedElements = Mesher().meshFromStep(
             self.inputFileFromCaseName(caseName), caseName)
         areaExporter = AreaExporterService()
-        areaExporter.addPhysicalModelForConductors(mappedElements=mappedElements)
+        areaExporter.addPhysicalModelForConductors(
+            mappedElements=mappedElements)
         geometries = areaExporter.computedAreas['geometries']
 
         expectedDict = {
-            'geometries': [
+            "geometries": [
                 {
-                    'area': 28.274334,
-                    'geometry': 'Conductor_0',
-                    'label': 'Conductor_0'
+                    "geometry": "Conductor_0",
+                    "label": "Conductor_0",
+                    "area": 28.274334
                 },
                 {
-                    'area': 0.785398,
-                    'geometry': 'Conductor_5',
-                    'label': 'Conductor_1'
+                    "geometry": "Conductor_5",
+                    "label": "Conductor_1",
+                    "area": 2.010619
                 },
                 {
-                    'area': 2.010619,
-                    'geometry': 'Conductor_1',
-                    'label': 'Conductor_002'
+                    "geometry": "Conductor_1",
+                    "label": "Conductor_002",
+                    "area": 0.785398
                 },
                 {
-                    'area': 0.785398,
-                    'geometry': 'Conductor_2',
-                    'label': 'Conductor_003'
+                    "geometry": "Conductor_2",
+                    "label": "Conductor_003",
+                    "area": 0.785398
                 },
                 {
-                    'area': 0.785398,
-                    'geometry': 'Conductor_3',
-                    'label': 'Conductor_004'
+                    "geometry": "Conductor_3",
+                    "label": "Conductor_004",
+                    "area": 0.785398
                 },
                 {
-                    'area': 0.785398,
-                    'geometry': 'Conductor_4',
-                    'label': 'Conductor_005'
-                },
+                    "geometry": "Conductor_4",
+                    "label": "Conductor_005",
+                    "area": 0.785398
+                }
             ]
         }
+
+        import json
+        print(json.dumps(areaExporter.computedAreas, indent=4))
 
         self.maxDiff = None
         self.assertDictEqual(areaExporter.computedAreas, expectedDict)

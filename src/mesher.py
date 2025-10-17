@@ -108,8 +108,7 @@ class Mesher():
 
     def exportGeometryAreas(self, caseName:str, mappedElements:Dict[str,str]):
         exporter = AreaExporterService()
-        exporter.addPhysicalModelOfDimension(mappedElements, dimension=2)
-        exporter.addPhysicalModelOfDimension(mappedElements, dimension=1)
+        exporter.addPhysicalModelForConductors(mappedElements)
         exporter.exportToJson(caseName)
             
 
