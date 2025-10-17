@@ -16,19 +16,26 @@ Install requirements with
 
 ## Usage
 
+Step2gmsh requires two diferent files: 
+- A json file where material properties are described for each geometry
+- A step file with all the geometry info
+
+Both files must have the same label and share folder path.
+An example of those files can be found in [Five wires case](testData/five_wires/)
+
 Launch from command line as
 
 ```shell
     python src/step2gmsh.py <-i path_to_step_file>
 ```
 
-The tested input step files have been generated with [FreeCAD](https://www.freecad.org/). The geometrical entities within the step file must be separated in layers. The operations which are performed of the different layers depend on their name.
+The tested input step files have been generated with [FreeCAD](https://www.freecad.org/). The geometrical entities within the step file must be separated in layers. The operations performed on the different layers depend on their material asignment registered in the json file.
 
-- A layer named `Conductor_N` with `N` being an integer represents a perfect conductor. `Conductor_0` is a special case of which represents the ground and defines the global domain. For layers named `Conductor_N` with `N` different to zero their areas will be substracted from the computational domain and removed.
-- Layers named as `Dielectric_N` are used to identify regions which will have a material assigned.
+- A layer with a `PEC material`, represent a perfect conductor. In case one of the layers surrounds the rest of elements, it will be asigned as ground and defines the global domain for the rest of conductors. Internally, this will be represented as Conductor_0. The areas of the rest of conductors different to zero will be substracted from the computational domain and removed. In open cases, Conductor_0 is just another conductor and the domain is defined using the bounding box of the layers.
+- Layers registered as `Dielectric` are used to identify regions which will have a material assigned.
 - Open and semi-open problems can be defined using a single layer called `OpenBoundary`.
 
-Below is shown an example of a closed case with 6 conductors and 5 dielectrics, the external boundary corresponds to `Conductor_0`. The case is modeled with FreeCAD and can be found in the `testData/five_wires` folder together with the exported as a step file. The resulting mesh after applying `step2gmsh` is shown below.
+Below is shown an example of a closed case with 6 conductors and 5 dielectrics, the external boundary corresponds to `Conductor_0`. The case is modeled with FreeCAD and can be found in the [testData/five_wires](testData/five_wires/) folder together with the exported as a step file. The resulting mesh after applying `step2gmsh` is shown below.
 
 ![Five wires example as modeled with FreeCAD](doc/fig/five_wires_freecad.png)
 ![Five wires example meshed with gmsh](doc/fig/five_wires_gmsh.png)

@@ -1,0 +1,22 @@
+{
+    "CrossSection":[
+        {
+            "name":"Conductor_2",
+            "material":{
+                "type":"PEC"
+            }
+        },
+        {
+            "name":"Conductor_1",
+            "material":{
+                "type":"PEC"
+            }
+        },
+        {
+            "name":"ExtraConductor",
+            "material":{
+                "type":"PEC"
+            }
+        }
+    ]
+}
