@@ -1,12 +1,6 @@
 {
     "CrossSection":[
         {
-            "name":"ExternalShield",
-            "material":{
-                "type":"PEC"
-            }
-        },
-        {
             "name":"RightConductor",
             "material":{
                 "type":"PEC"
@@ -28,6 +22,12 @@
             "name":"RightDielectric",
             "material":{
                 "type":"Dielectric"
+            }
+        },
+        {
+            "name":"ExternalShield",
+            "material":{
+                "type":"OpenBoundary"
             }
         }
     ]

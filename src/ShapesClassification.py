@@ -29,8 +29,8 @@ class ShapesClassification:
         self.crossSectionData = jsonData['CrossSection']
         self.pecs = self.get_pecs(shapes)
         self.dielectrics = self.get_dielectrics(shapes)
+        self.open = self.get_open_boundaries(shapes)
         self.vacuum = dict()
-        self.open = dict()
         self.nestedGraph = self.__getNestedGraph()
         self.isOpenCase = self.isOpenProblem()
 
@@ -40,27 +40,36 @@ class ShapesClassification:
         num = int(entity_name[ini:])
         return num
 
-    def get_pecs(self, entity_tags) -> Dict[str, Dict[str,any]]:
-        pecNames = self.__getGeometryNamesByMaterialType('PEC')
-        pecs = dict()
+    def get_entities_by_material_type(self, entity_tags, material_type: str, entity_dim: int = 2) \
+        -> Dict[str, List[Tuple[int,int]]]:
+        """
+        Generic method to extract entities by material type from the cross-section data.
+        
+        Args:
+            entity_tags: List of entity tags from gmsh
+            material_type: The material type to filter by (e.g., 'PEC', 'Dielectric', 'OpenBoundary')
+            entity_dim: The entity dimension to filter by (default: 2 for surfaces)
+            
+        Returns:
+            Dictionary mapping entity names to lists of entity tags
+        """
+        material_names = self.__getGeometryNamesByMaterialType(material_type)
+        entities = dict()
         for s in entity_tags:
             name = gmsh.model.get_entity_name(*s).split('/')[-1]
-            if s[0] != 2 or name not in pecNames:
+            if s[0] != entity_dim or name not in material_names:
                 continue
-            pecs[name] = [s]
-
-        return pecs
+            entities.setdefault(name, []).append(s)
+        return entities
     
-    def get_dielectrics(self, entity_tags) -> Dict[str, Dict[str,any]]:
-        dielectricNames = self.__getGeometryNamesByMaterialType('Dielectric')
-        dielectrics = dict()
-        for s in entity_tags:
-            name = gmsh.model.get_entity_name(*s).split('/')[-1]
-            if s[0] != 2 or name not in dielectricNames:
-                continue
-            dielectrics[name] = [s]
-
-        return dielectrics
+    def get_pecs(self, entity_tags) -> Dict[str, List[Tuple[int,int]]]:
+        return self.get_entities_by_material_type(entity_tags, 'PEC')
+    
+    def get_dielectrics(self, entity_tags) -> Dict[str, List[Tuple[int,int]]]:
+        return self.get_entities_by_material_type(entity_tags, 'Dielectric')
+    
+    def get_open_boundaries(self, entity_tags) -> Dict[str, List[Tuple[int,int]]]:
+        return self.get_entities_by_material_type(entity_tags, 'OpenBoundary')
     
     def __getGeometryNamesByMaterialType(self, materialType:str) -> List[str]:
         names = [
@@ -70,19 +79,25 @@ class ShapesClassification:
         ]
         return names
     
-    def isOpenProblem(self) -> None:
+    def isOpenBoundaryDefined(self) -> bool:
+        return len(self.open) > 0
+    
+    def isOpenProblem(self) -> bool:
         roots = self.nestedGraph.roots 
-        if len(roots) > 1: #Más de un componente pec/pec pec/dielectric dielectric/dielectric etc da al exterior
+        if len(self.open) == 1:
             return True
-        if roots[0] in self.dielectrics.keys(): #El único root es un dielectrico
+        if len(roots) > 1: 
+            return True
+        if roots[0] in self.dielectrics.keys(): 
             return True
         return False
     
     def removeConductorsFromDielectrics(self):
+        conductorsOnlyGraph = self.getConductorOnlyGraph()
         for num, diel in self.dielectrics.items():
             pec_surfs = []
             for num2, pec_surf in self.pecs.items():
-                if (num2 in self.nestedGraph.roots) and (not self.isOpenCase):
+                if (num2 in conductorsOnlyGraph.roots) and (not self.isOpenCase):
                     continue
                 pec_surfs.extend(pec_surf)
             self.dielectrics[num] = gmsh.model.occ.cut(diel, pec_surfs, removeTool=False)[0]
@@ -105,7 +120,7 @@ class ShapesClassification:
 
     def buildVacuumDomain(self):
         if self.isOpenCase:
-            self.vacuum = self._buildDefaultVacuumDomain()
+            self.vacuum = self._buildOpenVacuumDomain()
         else:
             self.vacuum = self._buildClosedVacuumDomain()
         return self.vacuum
@@ -126,61 +141,73 @@ class ShapesClassification:
         gmsh.model.occ.synchronize()
         return dict([['Vacuum_0', dom]])
     
-    def _buildDefaultVacuumDomain(self):
-        NEAR_REGION_BOUNDING_BOX_SCALING_FACTOR = 1.25
+    def _buildOpenVacuumDomain(self):
+        NEAR_REGION_BOUNDING_BOX_SCALING_FACTOR = 1.15
         FAR_REGION_DISK_SCALING_FACTOR = 4.0
         nonVacuumSurfaces = []
         for _, surf in self.pecs.items():
             nonVacuumSurfaces.extend(surf)
         for _, surf in self.dielectrics.items():
             nonVacuumSurfaces.extend(surf)
+
+        if self.isOpenBoundaryDefined():
+            name, vacuum = next(iter(self.open.items()))
             
-        boundingBox = BoundingBox.getBoundingBoxFromGroup(nonVacuumSurfaces)
+            vacuum = gmsh.model.occ.cut(vacuum, nonVacuumSurfaces,
+                removeObject=True, removeTool=False)[0]
+            gmsh.model.occ.synchronize()
 
-    
-        bbMaxLength = np.max(boundingBox.getLengths())
-        nearVacuumBoxSize = bbMaxLength*NEAR_REGION_BOUNDING_BOX_SCALING_FACTOR
-        nVOrigin = tuple(
-            np.subtract(boundingBox.getCenter(), 
-                        (nearVacuumBoxSize/2.0, nearVacuumBoxSize/2.0, 0.0)))
-        nearVacuum = [
-            (2, gmsh.model.occ.addRectangle(*nVOrigin, *(nearVacuumBoxSize,)*2))
-        ]
+            vacuumBoundaries = gmsh.model.getBoundary(vacuum)
+            externalVacuumBoundaries = [dt for dt in vacuumBoundaries if dt[1]>0]
+            self.open = dict([[name, externalVacuumBoundaries]])
 
-        farVacuumDiameter = FAR_REGION_DISK_SCALING_FACTOR * boundingBox.getDiagonal()
-        farVacuum = [(2, gmsh.model.occ.addDisk(
-            *boundingBox.getCenter(), 
-            farVacuumDiameter, farVacuumDiameter))]
+            return dict([['Vacuum_0', vacuum]])
+        else:            
+            boundingBox = BoundingBox.getBoundingBoxFromGroup(nonVacuumSurfaces)
 
-        gmsh.model.occ.synchronize()
-        self.open = dict([['OpenBoundary_0', gmsh.model.getBoundary(farVacuum)]])
+            bbMaxLength = np.max(boundingBox.getLengths())
+            nearVacuumBoxSize = bbMaxLength*NEAR_REGION_BOUNDING_BOX_SCALING_FACTOR
+            nVOrigin = tuple(
+                np.subtract(boundingBox.getCenter(), 
+                            (nearVacuumBoxSize/2.0, nearVacuumBoxSize/2.0, 0.0)))
+            nearVacuum = [
+                (2, gmsh.model.occ.addRectangle(*nVOrigin, *(nearVacuumBoxSize,)*2))
+            ]
 
-        farVacuum = gmsh.model.occ.cut(
-            farVacuum, nearVacuum, removeObject=True, removeTool=False)[0]
+            farVacuumDiameter = FAR_REGION_DISK_SCALING_FACTOR * boundingBox.getDiagonal()
+            farVacuum = [(2, gmsh.model.occ.addDisk(
+                *boundingBox.getCenter(), 
+                farVacuumDiameter, farVacuumDiameter))]
 
+            gmsh.model.occ.synchronize()
+            self.open = dict([['OpenBoundary_0', gmsh.model.getBoundary(farVacuum)]])
 
-        nearVacuum = gmsh.model.occ.cut(
-            nearVacuum, nonVacuumSurfaces, removeObject=True, removeTool=False)[0]
+            farVacuum = gmsh.model.occ.cut(
+                farVacuum, nearVacuum, removeObject=True, removeTool=False)[0]
+            nearVacuum = gmsh.model.occ.cut(
+                nearVacuum, nonVacuumSurfaces, removeObject=True, removeTool=False)[0]
         
-        gmsh.model.occ.synchronize()
-        
-        # -- Set mesh size for near vacuum region
-        bb = BoundingBox(
-            gmsh.model.getBoundingBox(2, nearVacuum[0][1]))
-        minSide = np.min(np.array([bb.getLengths()[0], bb.getLengths()[1]]))
+            gmsh.model.occ.synchronize()
+            
+            # -- Set mesh size for near vacuum region
+            bb = BoundingBox(
+                gmsh.model.getBoundingBox(2, nearVacuum[0][1]))
+            minSide = np.min(np.array([bb.getLengths()[0], bb.getLengths()[1]]))
 
-        innerRegion = gmsh.model.getBoundary(nearVacuum, recursive=True)
-        gmsh.model.mesh.setSize(innerRegion, minSide / 20)
-        
-        gmsh.model.occ.synchronize()
+            innerRegion = gmsh.model.getBoundary(nearVacuum, recursive=True)
+            gmsh.model.mesh.setSize(innerRegion, minSide / 20)
+            
+            gmsh.model.occ.synchronize()
 
-        return dict([['Vacuum_0', nearVacuum], ['Vacuum_1', farVacuum]])
+            return dict([['Vacuum_0', nearVacuum], ['Vacuum_1', farVacuum]])
+        
+
     
     def __getNestedGraph(self):
         gmsh.model.occ.synchronize()
         graph = Graph()
         elements:Dict = {}
-        elements = {**self.pecs, **self.dielectrics}
+        elements = {**self.pecs, **self.dielectrics, **self.open}
         for key in elements:
             graph.add_node(key)
         for i, keyA in enumerate(elements):
@@ -192,7 +219,7 @@ class ShapesClassification:
                         removeObject=False,
                         removeTool=False
                     )
-                    if len(inter[1][0]) == 0: #comprueba las intersecciones en las que interfiere el objeto
+                    if len(inter[1][0]) == 0: 
                         continue
                     else:
                         if inter[1][0] == elements[keyA]:
@@ -203,16 +230,58 @@ class ShapesClassification:
         graph._reorderData()
         return graph
     
-    def getComponentsMappedByLevel(self) -> Dict[str,str]:
-        sortedNodes = self.nestedGraph.getNodesByLevels()
+    def getConductorOnlyGraph(self) -> Graph:
+        """
+        Creates a new graph containing only conductor nodes by removing all dielectric nodes
+        from the nested graph and preserving conductor relationships.
+        
+        Returns:
+            Graph: A new graph with only conductor nodes and their direct connections
+        """
+        conductor_graph = Graph()
+        
+        for conductor_name in self.pecs.keys():
+            if conductor_name in self.nestedGraph.nodes:
+                conductor_graph.add_node(conductor_name)
+        
+        for edge in self.nestedGraph.edges:
+            source, destination = edge
+            
+            if source in self.pecs.keys() and destination in self.pecs.keys():
+                conductor_graph.add_edge(source, destination)
+            
+            elif source in self.pecs.keys() and destination in self.dielectrics.keys():
+                # Look for conductor nodes that are children of this dielectric
+                for child_edge in self.nestedGraph.edges:
+                    child_source, child_dest = child_edge
+                    if child_source == destination and child_dest in self.pecs.keys():
+                        conductor_graph.add_edge(source, child_dest)
+        
+        conductor_graph.prune_to_longest_paths()
+        conductor_graph._reorderData()
+        return conductor_graph
+    
+    def getMappedComponents(self) -> Dict[str,str]:
+        
         mappedElements = []
+        
         conductors = []
-        dielectrics = []
+        sortedNodes = self.nestedGraph.getNodesByLevels()
         for node in sortedNodes:
             if node in self.pecs.keys():
                 conductors.append((node, 'Conductor_{}'.format(len(conductors))))
-            if node in self.dielectrics.keys():
-                dielectrics.append((node, 'Dielectric_{}'.format(len(dielectrics))))
         mappedElements.extend(conductors)
+        
+        dielectrics = []
+        for node in self.dielectrics.keys():
+            dielectrics.append((node, 'Dielectric_{}'.format(len(dielectrics))))
         mappedElements.extend(dielectrics)
-        return {element[0]:element[1] for element in mappedElements}
+
+        mappedComponents = {element[0]:element[1] for element in mappedElements}
+
+        for domain in self.vacuum.keys():
+            mappedComponents[domain] = domain
+        for openBoundary in self.open.keys():
+            mappedComponents[openBoundary] = 'OpenBoundary_0'
+
+        return mappedComponents

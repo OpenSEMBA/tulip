@@ -15,8 +15,7 @@
         {
             "name":"Dielectric_1",
             "material":{
-                "type":"Dielectric",
-                "permittivity": 2.0
+                "type":"Dielectric"
             }
         }
     ]

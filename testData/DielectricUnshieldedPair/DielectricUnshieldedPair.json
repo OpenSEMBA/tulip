@@ -15,15 +15,13 @@
         {
             "name":"LeftDielectric",
             "material":{
-                "type":"Dielectric",
-                "permittivity": 2.0
+                "type":"Dielectric"
             }
         },
         {
             "name":"RightDielectric",
             "material":{
-                "type":"Dielectric",
-                "permittivity":2.0
+                "type":"Dielectric"
             }
         }
     ]

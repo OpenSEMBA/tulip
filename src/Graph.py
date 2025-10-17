@@ -59,7 +59,6 @@ class Graph:
     def getChildNodes(self) -> List:
         return [edge[-1] for edge in self._edges]
     
-    #Necesita una revisión pero por ahora hace lo que necesito
     def prune_to_longest_paths(self):
         connections = self.get_connections()
         roots = [n for n in self._nodes if n not in self.getChildNodes()]

@@ -5,10 +5,12 @@ import numpy as np
 import gmsh
 from src.mesher import Mesher
 from src.AreaExporterService import AreaExporterService
+
+
 class testAreaExporterService(unittest.TestCase):
     @staticmethod
-    def sumAreasFromList(areas:List[float]):
-        total:float = 0
+    def sumAreasFromList(areas: List[float]):
+        total: float = 0
         for area in areas:
             total += area
         return total
@@ -23,33 +25,67 @@ class testAreaExporterService(unittest.TestCase):
 
     def tearDown(self):
         gmsh.finalize()
+
     def inputFileFromCaseName(self, caseName) -> None:
         return self.testdataPath + caseName + '/' + caseName + ".step"
 
     def testAreaExporterReturnsTrueValues(self):
         caseName = 'five_wires'
-        mappedElements = Mesher().meshFromStep(self.inputFileFromCaseName(caseName), caseName)
+        mappedElements = Mesher().meshFromStep(
+            self.inputFileFromCaseName(caseName), caseName)
         areaExporter = AreaExporterService()
-        areaExporter.addPhysicalModelOfDimension(mappedElements=mappedElements, dimension=1)
-        areaExporter.addPhysicalModelOfDimension(mappedElements=mappedElements, dimension=2)
+        areaExporter.addPhysicalModelForConductors(
+            mappedElements=mappedElements)
         geometries = areaExporter.computedAreas['geometries']
 
-        internalElements = []
-        for geometry in geometries:
-            if geometry['geometry'] == "Conductor_0":
-                totalArea = geometry['area']
-            else:
-                internalElements.append(geometry['area'])
-        areaElements = self.sumAreasFromList(internalElements)
+        expectedDict = {
+            "geometries": [
+                {
+                    "geometry": "Conductor_0",
+                    "label": "Conductor_0",
+                    "area": 28.274334
+                },
+                {
+                    "geometry": "Conductor_5",
+                    "label": "Conductor_1",
+                    "area": 2.010619
+                },
+                {
+                    "geometry": "Conductor_1",
+                    "label": "Conductor_002",
+                    "area": 0.785398
+                },
+                {
+                    "geometry": "Conductor_2",
+                    "label": "Conductor_003",
+                    "area": 0.785398
+                },
+                {
+                    "geometry": "Conductor_3",
+                    "label": "Conductor_004",
+                    "area": 0.785398
+                },
+                {
+                    "geometry": "Conductor_4",
+                    "label": "Conductor_005",
+                    "area": 0.785398
+                }
+            ]
+        }
 
-        self.assertAlmostEqual(totalArea, areaElements, places=5)
+        import json
+        print(json.dumps(areaExporter.computedAreas, indent=4))
+
+        self.maxDiff = None
+        self.assertDictEqual(areaExporter.computedAreas, expectedDict)
 
     def testJsonFormat(self) -> None:
         caseName = 'DielectricUnshieldedPair'
-        mappedElements = Mesher().meshFromStep(self.inputFileFromCaseName(caseName), caseName)
+        mappedElements = Mesher().meshFromStep(
+            self.inputFileFromCaseName(caseName), caseName)
         areaExporter = AreaExporterService()
-        areaExporter.addPhysicalModelOfDimension(mappedElements=mappedElements, dimension=1)
-        areaExporter.addPhysicalModelOfDimension(mappedElements=mappedElements, dimension=2)
+        areaExporter.addPhysicalModelForConductors(
+            mappedElements=mappedElements)
 
         expectedDict = {
             'geometries': [
@@ -61,31 +97,7 @@ class testAreaExporterService(unittest.TestCase):
                 {
                     'area': 201.06193,
                     'geometry': 'Conductor_0',
-                    'label': 'LeftConductor'},
-                {
-                    'area': 312048.117187,
-                    'geometry': 'OpenBoundary_0',
-                    'label': 'OpenBoundary_0'
-                },
-                {
-                    'area': 603.185789,
-                    'geometry': 'Dielectric_1',
-                    'label': 'RightDielectric'
-                },
-                {
-                    'area': 603.185789,
-                    'geometry': 'Dielectric_0',
-                    'label': 'LeftDielectric'
-                },
-                {
-                    'area': 6491.504606,
-                    'geometry': 'Vacuum_0',
-                    'label': 'Vacuum_0'
-                },
-                {
-                    'area': 303948.117142,
-                    'geometry': 'Vacuum_1',
-                    'label': 'Vacuum_1'
+                    'label': 'LeftConductor'
                 }
             ]
         }
