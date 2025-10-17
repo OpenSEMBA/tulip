@@ -20,23 +20,22 @@ class AreaExporterService:
         self.computedAreas['geometries'].append(geometry)
 
     def addPhysicalModelForConductors(self, mappedElements:Dict[str,str]):
-        physicalGroups = gmsh.model.getPhysicalGroups(2)
+        physicalGroups = gmsh.model.getPhysicalGroups(1)
         for physicalGroup in physicalGroups:
             entityTags = gmsh.model.getEntitiesForPhysicalGroup(*physicalGroup)
             geometryName = gmsh.model.getPhysicalName(*physicalGroup)
-            if geometryName.startswith("Conductor_") and geometryName[10:].isdigit():
-                area = 0.0
-                for tag in entityTags:
-                    area += gmsh.model.occ.getMass(2, tag)
-                
-                label = ''
-                for key, geometry in mappedElements.items():
-                    if geometry == geometryName:
-                        label = key
-                        break
-                if geometryName != AreaExporterService._EMPTY_NAME_CASE:
-                    self.addComputedArea(geometryName, label, area)
+            if not geometryName.startswith("Conductor_"):
+                continue
 
+            label = ''
+            for key, geometry in mappedElements.items():
+                if geometry == geometryName:
+                    label = key
+                    break
+            
+ 
+            self.addComputedArea(geometryName, label, area)
+    
     def exportToJson(self, exportFileName:str):
         with open(exportFileName + ".areas.json", 'w') as f:
             json.dump(self.computedAreas, f, indent=3)

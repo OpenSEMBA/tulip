@@ -34,8 +34,7 @@ class testAreaExporterService(unittest.TestCase):
         mappedElements = Mesher().meshFromStep(
             self.inputFileFromCaseName(caseName), caseName)
         areaExporter = AreaExporterService()
-        areaExporter.addPhysicalModelForConductors(
-            mappedElements=mappedElements)
+        areaExporter.addPhysicalModelForConductors(mappedElements=mappedElements)
         geometries = areaExporter.computedAreas['geometries']
 
         expectedDict = {
