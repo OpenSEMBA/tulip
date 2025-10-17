@@ -221,7 +221,7 @@ TEST_F(DriverTest, five_wires)
 	ASSERT_EQ(couplingExpected.NumCols(), out.NumCols());
 
 	double rTol{ 0.05 };
-	for (int i{ 0 }; i < couplingExpected.NumRows(); i++) {
+for (int i{ 0 }; i < couplingExpected.NumRows(); i++) {
 		for (int j{ 0 }; j < couplingExpected.NumCols(); j++) {
 			EXPECT_LE(std::abs(couplingExpected(i, j) - out(i, j)), rTol)
 				<< "In C(" << i << ", " << j << ")";
@@ -864,4 +864,69 @@ TEST_F(DriverTest, lansink2024_small_one_centered_different_integration_centers)
 		}
 	}
 
+}
+
+TEST_F(DriverTest, DISABLED_realistic_case_with_dielectrics_fdtd_cell)
+{
+	InCellPotentials fdtdCellPotentials;
+	{
+		const std::string CASE{ "realistic_case_with_dielectrics_fdtd_cell" };
+		fdtdCellPotentials = Driver::loadFromFile(
+			casesFolder() + CASE + "/" + CASE + ".pulmtln.in.json").getInCellPotentials();
+	}
+	auto fdtdCellComputedC_0 = fdtdCellPotentials.getCapacitanceUsingInnerRegion(0, 0);
+	auto fdtdCellComputedC_16 = fdtdCellPotentials.getCapacitanceUsingInnerRegion(0, 16);
+	auto fdtdCellComputedC_25 = fdtdCellPotentials.getCapacitanceUsingInnerRegion(0, 25);
+	auto fdtdCellComputedC_30 = fdtdCellPotentials.getCapacitanceUsingInnerRegion(0, 30);
+
+	auto fdtdCellComputedL_0  = fdtdCellPotentials.getInductanceUsingInnerRegion(0, 0);
+	auto fdtdCellComputedL_16 = fdtdCellPotentials.getInductanceUsingInnerRegion(0, 16);
+	auto fdtdCellComputedL_25 = fdtdCellPotentials.getInductanceUsingInnerRegion(0, 25);
+	auto fdtdCellComputedL_30 = fdtdCellPotentials.getInductanceUsingInnerRegion(0, 30);
+}
+
+TEST_F(DriverTest, realistic_case_with_dielectrics)
+{
+	InCellPotentials mP;
+	{
+		const std::string CASE{ "realistic_case_with_dielectrics" };
+		mP = Driver::loadFromFile(
+			casesFolder() + CASE + "/" + CASE + ".pulmtln.in.json").getInCellPotentials();
+	}
+
+	Box fdtdCellCenteredOnConductor0{ {-0.016209, -0.009066}, {0.013791, 0.020934} };
+	auto mPComputedC_0  = mP.getCapacitanceOnBox(0,  0, fdtdCellCenteredOnConductor0);
+	auto mPComputedC_16 = mP.getCapacitanceOnBox(0, 16, fdtdCellCenteredOnConductor0);
+	auto mPComputedC_25 = mP.getCapacitanceOnBox(0, 25, fdtdCellCenteredOnConductor0);
+	auto mPComputedC_30 = mP.getCapacitanceOnBox(0, 30, fdtdCellCenteredOnConductor0);
+
+	auto mPComputedL_0  = mP.getInductanceOnBox(0,  0, fdtdCellCenteredOnConductor0);
+	auto mPComputedL_16 = mP.getInductanceOnBox(0, 16, fdtdCellCenteredOnConductor0);
+	auto mPComputedL_25 = mP.getInductanceOnBox(0, 25, fdtdCellCenteredOnConductor0);
+	auto mPComputedL_30 = mP.getInductanceOnBox(0, 30, fdtdCellCenteredOnConductor0);
+
+	// Compare with C and L computed using the fdtd cell.
+	const double rTol = 0.015;
+	const double fdtdCellComputed_C_0  = 4.0911726228481947e-11;
+	const double fdtdCellComputed_C_16 = 1.2547925523607968e-10;
+	const double fdtdCellComputed_C_25 = 5.9060595987059621e-11;
+	const double fdtdCellComputed_C_30 = 1.7797154919313720e-10;
+	const double fdtdCellComputed_L_0  = 2.9989786293920517e-07;
+	const double fdtdCellComputed_L_16 = 8.7458344767957649e-08;
+	const double fdtdCellComputed_L_25 = 2.0233814651758583e-07;
+	const double fdtdCellComputed_L_30 = 5.9647510363871327e-08;
+
+	EXPECT_LE(relError(fdtdCellComputed_C_0,  mPComputedC_0),  rTol) << "C(0,0) mismatch";
+	EXPECT_LE(relError(fdtdCellComputed_C_16, mPComputedC_16), rTol) << "C(0,16) mismatch";
+	EXPECT_LE(relError(fdtdCellComputed_C_25, mPComputedC_25), rTol) << "C(0,25) mismatch";
+	EXPECT_LE(relError(fdtdCellComputed_C_30, mPComputedC_30), rTol) << "C(0,30) mismatch";
+	EXPECT_LE(relError(fdtdCellComputed_L_0,  mPComputedL_0),  rTol) << "L(0,0) mismatch";
+	EXPECT_LE(relError(fdtdCellComputed_L_16, mPComputedL_16), rTol) << "L(0,16) mismatch";
+	EXPECT_LE(relError(fdtdCellComputed_L_25, mPComputedL_25), rTol) << "L(0,25) mismatch";
+	EXPECT_LE(relError(fdtdCellComputed_L_30, mPComputedL_30), rTol) << "L(0,30) mismatch";
+
+	 
+	// For debugging
+	saveToJSONFile(mP.toJSON(),
+		"realistic_case_with_dielectrics.inCellPotentials.out.json");
 }
