@@ -12,9 +12,9 @@ int main(int argc, char* argv[])
 	std::string inputFilename;
 	
 	po::options_description desc(
-		"-- pulmtln --\n"
-		"per unit length capacitance and inductance for MTL cross - sections.\n"
-		"Visit https://github.com/OpenSEMBA/pulmtln for more information.\n"
+		"-- tulip --\n"
+		"Per unit length capacitance and inductance for MTL cross - sections.\n"
+		"Visit https://github.com/OpenSEMBA/tulip for more information.\n"
 		"Available options"
 	);
 	desc.add_options()
@@ -46,5 +46,5 @@ int main(int argc, char* argv[])
 
 	driver.run();
 
-	std::cout << "-- pulmtln finished succesfully --" << std::endl;
+	std::cout << "-- tulip finished succesfully --" << std::endl;
 }

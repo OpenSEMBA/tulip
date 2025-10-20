@@ -271,7 +271,7 @@ double InCellPotentials::getInductanceOnBox(int i, int j, const Box& cellBox) co
     double Ij = magnetic.at(j).ab[0].first;
 
     double avAj = getAveragePotential(magnetic.at(j), innerRegionBox, cellBox);
-    double AiWhenPrescribedAj = electric.at(j).conductorPotentials.at(i);
+    double AiWhenPrescribedAj = magnetic.at(j).conductorPotentials.at(i);
     avAj = -avAj + AiWhenPrescribedAj;
 
     return avAj / Ij * MU0_SI;
