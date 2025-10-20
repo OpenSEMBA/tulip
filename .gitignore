@@ -69,4 +69,3 @@ __pycache__/
 /testData/lansink2024/inCellPotentials.out.json
 /XMLGoogleTestResults.xml
 *.inCellPotentials.out.json
-*.json
