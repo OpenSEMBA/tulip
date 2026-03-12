@@ -149,7 +149,7 @@ class TestMesher(unittest.TestCase):
         expectedEntities = [1, 1, 1, 1, 1, 1, 1]
 
         Mesher().meshFromStep(self.inputFileFromCaseName(caseName), caseName)
-        
+
         gmsh.write(caseName + '.vtk')
         gmsh.write(caseName + '.msh')
 
@@ -157,17 +157,17 @@ class TestMesher(unittest.TestCase):
 
     def test_mesh_dielectric_unshielded_pair_defined_boundary(self) -> None:
         caseName = 'DielectricUnshieldedPairDefinedBoundary'
-    
+
         meshing_options = copy.deepcopy(Mesher.DEFAULT_MESHING_OPTIONS)
         meshing_options["Mesh.ElementOrder"] = 1
-        
+
         Mesher().meshFromStep(
-            self.inputFileFromCaseName(caseName), 
+            self.inputFileFromCaseName(caseName),
             caseName,
             meshingOptions=meshing_options)
 
         gmsh.write(caseName + '.vtk')
-        
+
         expectedNames = [
             'Conductor_0', 'Conductor_1',
             'Dielectric_0', 'Dielectric_1',
@@ -190,7 +190,7 @@ class TestMesher(unittest.TestCase):
         Mesher().meshFromStep(self.inputFileFromCaseName(caseName), caseName)
 
         gmsh.write(caseName + '.vtk')
-        
+
         pGs = gmsh.model.getPhysicalGroups()
         pGNames = [gmsh.model.getPhysicalName(*pG) for pG in pGs]
         self.assertEqual(sorted(pGNames), sorted(expectedNames))
@@ -365,16 +365,35 @@ class TestMesher(unittest.TestCase):
             self.assertEqual(self.countEntitiesInPhysicalGroupWithName(
                 name), expectedEntities[idx], name)
 
+    def test_unshielded_single_wire(self):
+        caseName = 'unshielded_single_wire'
+        Mesher().meshFromStep(self.inputFileFromCaseName(caseName), caseName)
+
+        expectedNames = [
+            'Conductor_0',
+            'OpenBoundary_0',
+            'Vacuum_0',  # Inner region
+            'Vacuum_1'  # Outer region
+        ]
+        expectedEntities = [1, 1, 1, 1]
+
+        # For debugging.
+        gmsh.write(caseName + '.vtk')
+        gmsh.write(caseName + '.msh')
+        # gmsh.fltk.run()
+
+        self.assertPhysicalGroup(expectedNames, expectedEntities)
+
     def test_unshielded_nesting(self):
         caseName = 'UnshieldedNested'
         Mesher().meshFromStep(self.inputFileFromCaseName(caseName), caseName)
-        
-       #gmsh.write(caseName + '.msh')
-       #gmsh.write(caseName + '.vtk')
+
+       # gmsh.write(caseName + '.msh')
+       # gmsh.write(caseName + '.vtk')
 
         pGs = gmsh.model.getPhysicalGroups()
         pGNames = [gmsh.model.getPhysicalName(*pG) for pG in pGs]
-        expectedNames = ['Conductor_0', 
+        expectedNames = ['Conductor_0',
                          'Conductor_1',
                          'Conductor_2',
                          'OpenBoundary_0',
@@ -385,7 +404,8 @@ class TestMesher(unittest.TestCase):
         self.assertEqual(sorted(pGNames), sorted(expectedNames))
 
         for idx, name in enumerate(expectedNames):
-            self.assertEqual(self.countEntitiesInPhysicalGroupWithName(name), expectedEntities[idx], name)
+            self.assertEqual(self.countEntitiesInPhysicalGroupWithName(
+                name), expectedEntities[idx], name)
 
 
 if __name__ == '__main__':
