@@ -90,6 +90,8 @@ class ShapesClassification:
             return True
         if roots[0] in self.dielectrics.keys(): 
             return True
+        if roots[0] in self.pecs.keys() and roots[0] not in self.nestedGraph.getParentNodes():
+            return True
         return False
     
     def removeConductorsFromDielectrics(self):
