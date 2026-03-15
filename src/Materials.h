@@ -132,6 +132,7 @@ struct Materials {
 	NameToAttrMap buildNameToAttrMap() const;
 	void removeMaterialsNotInList(const NameToAttrMap allowedMaterials);
 	bool isDomainMaterial(const std::string& name) const;
+	bool hasDielectrics() const;
 	
 	static MaterialId getMaterialIdFromName(const std::string& name);	
 };
