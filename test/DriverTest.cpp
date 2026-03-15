@@ -312,6 +312,42 @@ TEST_F(DriverTest, three_wires_ribbon_generalized_capacitance)
 	}
 }
 
+TEST_F(DriverTest, two_wires_coax_generalized_capacitance_column_sums)
+{
+	// For a closed transmission line problem, charge conservation (Gauss's law)
+	// requires that the sum of each column of the generalized capacitance matrix
+	// is close to zero: when one conductor is at 1V and all others at 0V, the
+	// total induced charge on all conductors sums to zero.
+	// This property must hold for both the electric (capacitance) and magnetic
+	// (inductance) generalized capacitance matrices.
+
+	const std::string CASE{ "two_wires_coax" };
+	auto fn{ casesFolder() + CASE + "/" + CASE + ".pulmtln.in.json" };
+	auto dr = Driver::loadFromFile(fn);
+
+	for (bool ignoreDielectrics : {false, true}) {
+		auto gC = dr.getGeneralizedCMatrix(ignoreDielectrics);
+
+		double maxVal = 0.0;
+		for (int i = 0; i < gC.NumRows(); ++i) {
+			for (int j = 0; j < gC.NumCols(); ++j) {
+				maxVal = std::max(maxVal, std::abs(gC(i, j)));
+			}
+		}
+
+		const double rTol{ 0.05 };
+		for (int j = 0; j < gC.NumCols(); ++j) {
+			double colSum = 0.0;
+			for (int i = 0; i < gC.NumRows(); ++i) {
+				colSum += gC(i, j);
+			}
+			EXPECT_NEAR(0.0, colSum, maxVal * rTol)
+				<< "Column " << j << " of generalized C"
+				<< " (ignoreDielectrics=" << ignoreDielectrics << ")";
+		}
+	}
+}
+
 TEST_F(DriverTest, three_wires_ribbon_floating_potentials)
 {
 	// Three wires ribbon open problem. 
