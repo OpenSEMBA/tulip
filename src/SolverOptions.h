@@ -17,7 +17,6 @@ struct DriverOptions {
 	int multipolarExpansionOrder{ 5 }; 
 
 	bool exportParaViewSolution{ true };
-	bool exportVisItSolution{ false };
 	
 	std::string exportFolder{ "./" };
 };

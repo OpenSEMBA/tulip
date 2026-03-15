@@ -34,7 +34,6 @@ public:
     void setNeumannCondition(const int bdrAttribute, Coefficient& chargeDensity);
 
     void writeParaViewFields(ParaViewDataCollection&) const;
-    void writeVisItFields(VisItDataCollection&) const;
 
     const GridFunction& getPhi() const { return *phi_; }
     GridFunction& getPhi() { return *phi_; }

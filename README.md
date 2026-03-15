@@ -11,7 +11,7 @@
 - Works on closed, open, or semiopen MTL.
 - Multilevel domain decomposition.
 - Uses a modified [MFEM](https://mfem.org/) solver engine available [here](https://github.com/OpenSEMBA/mfem).
-- Result visualization with [Paraview](https://www.paraview.org/) or [VisIt](https://visit-dav.github.io/visit-website/index.html).
+- Result visualization with [Paraview](https://www.paraview.org/).
 - Start from `.step` CAD files using the [step2gmsh](https://github.com/OpenSEMBA/step2gmsh) workflow.
 
 ## Compiling
@@ -82,7 +82,6 @@ The input file must be describe a JSON object which describes the problem. An ex
       "analysis": {
         "order": 3,
         "exportParaViewSolution": true,
-        "exportVisItSolution": true,
         "exportFolder": "Results/five_wires/"
       },
       "model": {
@@ -116,7 +115,7 @@ These results have been cross-compared [here][test/DriverTest.cpp] to match with
 Comparison with [SACAMOS](https://www.sacamos.org/) does not produce satisfactory because of the different underlying analytical assumptions that are made.
 
 
-If `ExportParaviewSolution` and/or `ExportVisItSolution` are defined as `true` in `analysis`, `pulmtln` will also export visualization results for each simulation performed.
+If `ExportParaviewSolution` is defined as `true` in `analysis`, `pulmtln` will also export visualization results for each simulation performed.
 This means two results for each conductor different from zero: with and without accounting for dielectrics, used to compute the p.u.l $C$ and $L$ matrices, respectively.
 Below there is an example of the electric fields for the `five_wires` case visualized in Paraview with (above) and without (below) considering dielectrics.
 
