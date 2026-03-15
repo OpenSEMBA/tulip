@@ -35,20 +35,16 @@ void exportFieldSolutions(
 	const std::string name,
 	bool ignoreDielectrics)
 {
+	const std::string suffix{ ignoreDielectrics ? "_magnetostatic" : "_electrostatic" };
+
 	if (opts.exportParaViewSolution) {
-		std::string outputName{ opts.exportFolder + "/" + "ParaView/" + name };
-		if (ignoreDielectrics) {
-			outputName += "_no_dielectrics";
-		}
+		std::string outputName{ opts.exportFolder + "/" + "ParaView/" + name + suffix };
 		ParaViewDataCollection pd{ outputName, s.getMesh() };
 		s.writeParaViewFields(pd);
 	}
 
 	if (opts.exportVisItSolution) {
-		std::string outputName{ opts.exportFolder + "/" + "VisIt/" + name };
-		if (ignoreDielectrics) {
-			outputName += "_no_dielectrics";
-		}
+		std::string outputName{ opts.exportFolder + "/" + "VisIt/" + name + suffix };
 		VisItDataCollection dC{ outputName, s.getMesh() };
 		s.writeVisItFields(dC);
 	}
