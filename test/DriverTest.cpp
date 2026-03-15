@@ -930,3 +930,108 @@ TEST_F(DriverTest, realistic_case_with_dielectrics)
 	saveToJSONFile(mP.toJSON(),
 		"realistic_case_with_dielectrics.inCellPotentials.out.json");
 }
+
+TEST_F(DriverTest, empty_coax_generalized_matrices)
+{
+	// For a 2-conductor coaxial cable the generalized C and L matrices
+	// should be 2x2 (N x N where N is the total number of conductors).
+	auto out{ Driver::loadFromFile(inputCase("empty_coax")).getPULMTL() };
+
+	// Generalized matrices must be NxN = 2x2 (standard matrices are 1x1).
+	ASSERT_EQ(2, out.gC.NumRows());
+	ASSERT_EQ(2, out.gC.NumCols());
+	ASSERT_EQ(2, out.gL.NumRows());
+	ASSERT_EQ(2, out.gL.NumCols());
+
+	// For a closed system the row sums of gC must be near zero.
+	// The residual comes from FEM discretization of charge conservation.
+	const double aTolGC{ std::abs(out.C(0, 0)) * 1e-3 };
+	for (int i = 0; i < out.gC.NumRows(); ++i) {
+		double rowSumC{ 0.0 };
+		for (int j = 0; j < out.gC.NumCols(); ++j) {
+			rowSumC += out.gC(i, j);
+		}
+		EXPECT_NEAR(0.0, rowSumC, aTolGC) << "gC row " << i << " sum is not zero";
+	}
+
+	// gL is constructed algebraically, so row sums are exactly zero
+	// (up to floating-point rounding).
+	const double aTolGL{ std::abs(out.L(0, 0)) * 1e-12 };
+	for (int i = 0; i < out.gL.NumRows(); ++i) {
+		double rowSumL{ 0.0 };
+		for (int j = 0; j < out.gL.NumCols(); ++j) {
+			rowSumL += out.gL(i, j);
+		}
+		EXPECT_NEAR(0.0, rowSumL, aTolGL) << "gL row " << i << " sum is not zero";
+	}
+
+	// For a closed system the lower-right (N-1)x(N-1) block of gC equals C.
+	// Both are derived from the same underlying matrix so they must be exactly equal.
+	EXPECT_EQ(out.C(0, 0), out.gC(1, 1));
+
+	// C must be recoverable from gC: C = gC[1,1] - gC[1,0] - gC[0,1] + gC[0,0].
+	double CFromGC{ out.gC(1, 1) - out.gC(1, 0) - out.gC(0, 1) + out.gC(0, 0) };
+	EXPECT_EQ(out.C(0, 0), CFromGC);
+
+	// L must be recoverable from gL (algebraically exact).
+	double LFromGL{ out.gL(1, 1) - out.gL(1, 0) - out.gL(0, 1) + out.gL(0, 0) };
+	EXPECT_EQ(out.L(0, 0), LFromGL);
+}
+
+TEST_F(DriverTest, two_wires_coax_generalized_matrices)
+{
+	// For a 3-conductor system (reference + 2 signal wires) the generalized
+	// matrices should be 3x3.
+	const std::string CASE{ "two_wires_coax" };
+	auto fn{ casesFolder() + CASE + "/" + CASE + ".pulmtln.in.json" };
+	auto out{ Driver::loadFromFile(fn).getPULMTL() };
+
+	// Standard matrices are 2x2; generalized must be 3x3.
+	ASSERT_EQ(3, out.gC.NumRows());
+	ASSERT_EQ(3, out.gC.NumCols());
+	ASSERT_EQ(3, out.gL.NumRows());
+	ASSERT_EQ(3, out.gL.NumCols());
+
+	// Row sums of gC must be near zero (FEM charge conservation).
+	double maxAbsC{ 0.0 };
+	for (int i = 0; i < out.C.NumRows(); ++i)
+		for (int j = 0; j < out.C.NumCols(); ++j)
+			maxAbsC = std::max(maxAbsC, std::abs(out.C(i, j)));
+	const double aTolGC{ maxAbsC * 1e-3 };
+
+	for (int i = 0; i < out.gC.NumRows(); ++i) {
+		double rowSumC{ 0.0 };
+		for (int j = 0; j < out.gC.NumCols(); ++j) {
+			rowSumC += out.gC(i, j);
+		}
+		EXPECT_NEAR(0.0, rowSumC, aTolGC) << "gC row " << i << " sum is not zero";
+	}
+
+	// Row sums of gL must be exactly zero (algebraic construction).
+	double maxAbsL{ 0.0 };
+	for (int i = 0; i < out.L.NumRows(); ++i)
+		for (int j = 0; j < out.L.NumCols(); ++j)
+			maxAbsL = std::max(maxAbsL, std::abs(out.L(i, j)));
+	const double aTolGL{ maxAbsL * 1e-12 };
+
+	for (int i = 0; i < out.gL.NumRows(); ++i) {
+		double rowSumL{ 0.0 };
+		for (int j = 0; j < out.gL.NumCols(); ++j) {
+			rowSumL += out.gL(i, j);
+		}
+		EXPECT_NEAR(0.0, rowSumL, aTolGL) << "gL row " << i << " sum is not zero";
+	}
+
+	// Standard C and L must be recoverable from generalized matrices.
+	for (int i = 1; i <= out.C.NumRows(); ++i) {
+		for (int j = 1; j <= out.C.NumCols(); ++j) {
+			double CFromGC = out.gC(i,j) - out.gC(i,0) - out.gC(0,j) + out.gC(0,0);
+			EXPECT_EQ(out.C(i-1, j-1), CFromGC)
+				<< "C(" << i-1 << "," << j-1 << ") not recoverable from gC";
+
+			double LFromGL = out.gL(i,j) - out.gL(i,0) - out.gL(0,j) + out.gL(0,0);
+			EXPECT_EQ(out.L(i-1, j-1), LFromGL)
+				<< "L(" << i-1 << "," << j-1 << ") not recoverable from gL";
+		}
+	}
+}

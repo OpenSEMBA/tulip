@@ -21,7 +21,8 @@ struct PULParameters {
 
     nlohmann::json toJSON() const;
 
-    mfem::DenseMatrix L, C; // Stored in SI units.
+    mfem::DenseMatrix L, C;   // (N-1)x(N-1), stored in SI units.
+    mfem::DenseMatrix gL, gC; // NxN generalized matrices, stored in SI units.
 };
 
 struct PULParametersByDomain {

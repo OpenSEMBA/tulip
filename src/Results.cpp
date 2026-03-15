@@ -68,13 +68,21 @@ PULParameters::PULParameters(const json& j)
     }
     C = toMFEMDenseMatrix(j["C"]);
     L = toMFEMDenseMatrix(j["L"]);
+    if (j.contains("gC")) {
+        gC = toMFEMDenseMatrix(j["gC"]);
+    }
+    if (j.contains("gL")) {
+        gL = toMFEMDenseMatrix(j["gL"]);
+    }
 }
 
 bool PULParameters::operator==(const PULParameters& rhs) const
 { 
     return
         toVecVec(C) == toVecVec(rhs.C) &&
-        toVecVec(L) == toVecVec(rhs.L);
+        toVecVec(L) == toVecVec(rhs.L) &&
+        toVecVec(gC) == toVecVec(rhs.gC) &&
+        toVecVec(gL) == toVecVec(rhs.gL);
 }
 
 DenseMatrix PULParameters::getCapacitiveCouplingCoefficients() const
@@ -94,6 +102,12 @@ json PULParameters::toJSON() const
     json res;
     res["C"] = toVecVec(C);
     res["L"] = toVecVec(L);
+    if (gC.NumRows() > 0) {
+        res["gC"] = toVecVec(gC);
+    }
+    if (gL.NumRows() > 0) {
+        res["gL"] = toVecVec(gL);
+    }
     return res;
 }
 

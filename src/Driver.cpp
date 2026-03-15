@@ -263,15 +263,78 @@ DenseMatrix Driver::getLMatrix()
 	return res;
 }
 
+DenseMatrix buildGeneralizedL(const DenseMatrix& L)
+{
+	// Constructs the NxN generalized inductance matrix from the (N-1)x(N-1)
+	// standard inductance matrix L.
+	//
+	// The result satisfies:
+	//   - Row sums equal zero.
+	//   - gL(i,j) - gL(i,0) - gL(0,j) + gL(0,0) = L(i-1,j-1) for i,j >= 1.
+	//
+	// Reference: Clayton Paul, Analysis of Multiconductor Transmission Lines.
+
+	const int NM1 = L.NumRows();
+	const int N = NM1 + 1;
+
+	double totalSum = 0.0;
+	for (int i = 0; i < NM1; ++i) {
+		for (int j = 0; j < NM1; ++j) {
+			totalSum += L(i, j);
+		}
+	}
+
+	// Compute a[i]: the first-row/column entries of gL.
+	// a[0] = totalSum / N^2
+	// a[i] = -rowSum(L, i-1) / N + totalSum / N^2  for i >= 1
+	std::vector<double> a(N);
+	a[0] = totalSum / (N * N);
+	for (int i = 1; i < N; ++i) {
+		double rowSum = 0.0;
+		for (int j = 0; j < NM1; ++j) {
+			rowSum += L(i - 1, j);
+		}
+		a[i] = -rowSum / N + totalSum / (N * N);
+	}
+
+	DenseMatrix gL(N, N);
+	for (int i = 0; i < N; ++i) {
+		gL(i, 0) = a[i];
+		gL(0, i) = a[i];
+	}
+	for (int i = 1; i < N; ++i) {
+		for (int j = 1; j < N; ++j) {
+			gL(i, j) = L(i - 1, j - 1) + a[i] + a[j] - a[0];
+		}
+	}
+
+	return gL;
+}
+
 PULParameters Driver::buildPULParametersForModel()
 {
 	PULParameters res;
 
-	res.C = getCMatrix();
+	auto openness = model_.determineOpenness();
+	auto generalizedCElectric = getGeneralizedCMatrix(false);
+	auto generalizedCMagnetic = getGeneralizedCMatrix(true);
+
+	// Generalized C matrix (NxN, in SI units).
+	res.gC = generalizedCElectric;
+	res.gC *= EPSILON0_SI;
+
+	// Standard C matrix ((N-1)x(N-1), in SI units).
+	res.C = getCFromGeneralizedC(generalizedCElectric, openness);
 	res.C *= EPSILON0_SI;
 
-	res.L = getLMatrix();
+	// Standard L matrix ((N-1)x(N-1), in SI units).
+	auto standardMagneticC = getCFromGeneralizedC(generalizedCMagnetic, openness);
+	standardMagneticC.Invert();
+	res.L = standardMagneticC;
 	res.L *= MU0_SI;
+
+	// Generalized L matrix (NxN, in SI units).
+	res.gL = buildGeneralizedL(res.L);
 
 	return res;
 }
