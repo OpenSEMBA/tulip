@@ -42,12 +42,6 @@ void exportFieldSolutions(
 		ParaViewDataCollection pd{ outputName, s.getMesh() };
 		s.writeParaViewFields(pd);
 	}
-
-	if (opts.exportVisItSolution) {
-		std::string outputName{ opts.exportFolder + "/" + "VisIt/" + name + suffix };
-		VisItDataCollection dC{ outputName, s.getMesh() };
-		s.writeVisItFields(dC);
-	}
 }
 
 
