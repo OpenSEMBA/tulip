@@ -87,8 +87,13 @@ Driver::Driver(Model&& model, const DriverOptions& opts) :
 	std::cout << "Solving electrostatic problems:" << std::endl;
 	electric_ = solveForAllConductors(false);
 
-	std::cout << "Solving magnetostatic problems." << std::endl;
-	magnetic_ = solveForAllConductors(true);
+	if (model_.getMaterials().hasDielectrics()) {
+		std::cout << "Solving magnetostatic problems." << std::endl;
+		magnetic_ = solveForAllConductors(true);
+	}
+	else {
+		std::cout << "No dielectrics found. Reusing electrostatic solution for magnetostatic." << std::endl;
+	}
 }
 
 mfem::DenseMatrix Driver::getCFromGeneralizedC(
@@ -204,7 +209,7 @@ DenseMatrix Driver::getGeneralizedCMatrix(bool ignoreDielectrics)
 
 	SolvedProblem* sP;
 	if (ignoreDielectrics) {
-		sP = &magnetic_;
+		sP = model_.getMaterials().hasDielectrics() ? &magnetic_ : &electric_;
 	}
 	else {
 		sP = &electric_;
@@ -443,7 +448,7 @@ std::map<MaterialId, FieldReconstruction> Driver::getFieldParameters(
 
 	SolvedProblem* sP;
 	if (ignoreDielectrics) {
-		sP = &magnetic_;
+		sP = model_.getMaterials().hasDielectrics() ? &magnetic_ : &electric_;
 	}
 	else {
 		sP = &electric_;
