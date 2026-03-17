@@ -1,0 +1,28 @@
+{
+    "CrossSection": [
+        {
+            "name": "Conductor_0",
+            "material": {
+                "type": "PEC"
+            }
+        },
+        {
+            "name": "Conductor_1",
+            "material": {
+                "type": "PEC"
+            }
+        },
+        {
+            "name": "fdtd_cell",
+            "material": {
+                "type": "Dielectric"
+            }
+        },
+        {
+            "name": "OpenBoundary_0",
+            "material": {
+                "type": "OpenBoundary"
+            }
+        }
+    ]
+}
