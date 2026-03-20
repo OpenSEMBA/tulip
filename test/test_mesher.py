@@ -407,6 +407,28 @@ class TestMesher(unittest.TestCase):
             self.assertEqual(self.countEntitiesInPhysicalGroupWithName(
                 name), expectedEntities[idx], name)
 
+    def test_unshielded_two_wires_with_touching_dielectric(self):
+        caseName = 'unshielded_two_wires_with_touching_dielectric'
+        Mesher().meshFromStep(self.inputFileFromCaseName(caseName), caseName)
+
+        expectedNames = [
+            'Conductor_0',
+            'Conductor_1',
+            'Dielectric_0',
+            'Dielectric_1',
+            'OpenBoundary_0',
+            'Vacuum_0',  # Inner region
+            'Vacuum_1'  # Outer region
+        ]
+        expectedEntities = [1, 1, 1, 1, 1, 1, 1]
+
+        # For debugging.
+        gmsh.write(caseName + '.vtk')
+        gmsh.write(caseName + '.msh')
+        # gmsh.fltk.run()
+
+        self.assertPhysicalGroup(expectedNames, expectedEntities)
+
 
 if __name__ == '__main__':
     unittest.main()
