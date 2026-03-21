@@ -271,6 +271,19 @@ PULParameters Driver::buildPULParametersForModel()
 	return res;
 }
 
+PULParameters Driver::buildGeneralizedLCMatrices()
+{
+	PULParameters res;
+
+	res.C = getGeneralizedCMatrix(false);
+	res.C *= EPSILON0_SI;
+
+	res.L = getGeneralizedCMatrix(true);
+	res.L *= MU0_SI;
+
+	return res;
+}
+
 void Driver::run()
 {
 	auto openness{ model_.determineOpenness() };
@@ -285,6 +298,11 @@ void Driver::run()
 		saveToJSONFile(
 			inCell.toJSON(),
 			opts_.exportFolder + "inCellPotentials.out.json");
+
+		auto generalizedLCMatrices = buildGeneralizedLCMatrices();
+		saveToJSONFile(
+			generalizedLCMatrices.toJSON(),
+			opts_.exportFolder + "generalizedLC.out.json");
 	}
 	else {
 		throw std::runtime_error("Openness of the model is not supported.");
