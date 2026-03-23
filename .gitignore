@@ -69,3 +69,15 @@ __pycache__/
 /testData/lansink2024/inCellPotentials.out.json
 /XMLGoogleTestResults.xml
 *.inCellPotentials.out.json
+*.FCStd1
+*.pyc
+.vscode/
+.pytest_cache/
+.idea/
+tmpFolder/
+venv/
+gmshDoc/
+
+*.msh
+*.vtk
+*.areas.json

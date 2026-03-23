@@ -1,4 +1,4 @@
-name: "Ubuntu | Build and tests"
+name: "Ubuntu | Tulip build and tests"
 
 permissions:
   actions: write

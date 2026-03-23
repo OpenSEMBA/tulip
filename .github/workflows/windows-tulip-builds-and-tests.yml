@@ -1,4 +1,4 @@
-name: "Windows | Build and tests"
+name: "Windows | Tulip build and tests"
 
 permissions:
   actions: write
