@@ -49,6 +49,7 @@ private:
     SolvedProblem solveForAllConductors(
         bool ignoreDielectrics);
     PULParameters buildPULParametersForModel();
+    PULParameters buildGeneralizedLCMatrices();
     double getInnerRegionAveragePotential(
         const ElectrostaticSolver& s,
         bool includeConductors);
