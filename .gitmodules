@@ -2,6 +2,3 @@
 	path = external/mfem-geg
 	url = https://github.com/OpenSEMBA/mfem.git
 	ignore = dirty
-[submodule "external/step2gmsh"]
-	path = external/step2gmsh
-	url = https://github.com/OpenSEMBA/step2gmsh.git
