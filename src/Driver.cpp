@@ -35,22 +35,12 @@ void exportFieldSolutions(
 	const std::string name,
 	bool ignoreDielectrics)
 {
+	const std::string suffix{ ignoreDielectrics ? "_magnetostatic" : "_electrostatic" };
+
 	if (opts.exportParaViewSolution) {
-		std::string outputName{ opts.exportFolder + "/" + "ParaView/" + name };
-		if (ignoreDielectrics) {
-			outputName += "_no_dielectrics";
-		}
+		std::string outputName{ opts.exportFolder + "/" + "ParaView/" + name + suffix };
 		ParaViewDataCollection pd{ outputName, s.getMesh() };
 		s.writeParaViewFields(pd);
-	}
-
-	if (opts.exportVisItSolution) {
-		std::string outputName{ opts.exportFolder + "/" + "VisIt/" + name };
-		if (ignoreDielectrics) {
-			outputName += "_no_dielectrics";
-		}
-		VisItDataCollection dC{ outputName, s.getMesh() };
-		s.writeVisItFields(dC);
 	}
 }
 
@@ -97,8 +87,13 @@ Driver::Driver(Model&& model, const DriverOptions& opts) :
 	std::cout << "Solving electrostatic problems:" << std::endl;
 	electric_ = solveForAllConductors(false);
 
-	std::cout << "Solving magnetostatic problems." << std::endl;
-	magnetic_ = solveForAllConductors(true);
+	if (model_.getMaterials().hasDielectrics()) {
+		std::cout << "Solving magnetostatic problems." << std::endl;
+		magnetic_ = solveForAllConductors(true);
+	}
+	else {
+		std::cout << "No dielectrics found. Reusing electrostatic solution for magnetostatic." << std::endl;
+	}
 }
 
 mfem::DenseMatrix Driver::getCFromGeneralizedC(
@@ -214,7 +209,7 @@ DenseMatrix Driver::getGeneralizedCMatrix(bool ignoreDielectrics)
 
 	SolvedProblem* sP;
 	if (ignoreDielectrics) {
-		sP = &magnetic_;
+		sP = model_.getMaterials().hasDielectrics() ? &magnetic_ : &electric_;
 	}
 	else {
 		sP = &electric_;
@@ -276,6 +271,19 @@ PULParameters Driver::buildPULParametersForModel()
 	return res;
 }
 
+PULParameters Driver::buildGeneralizedLCMatrices()
+{
+	PULParameters res;
+
+	res.C = getGeneralizedCMatrix(false);
+	res.C *= EPSILON0_SI;
+
+	res.L = getGeneralizedCMatrix(true);
+	res.L *= MU0_SI;
+
+	return res;
+}
+
 void Driver::run()
 {
 	auto openness{ model_.determineOpenness() };
@@ -290,6 +298,11 @@ void Driver::run()
 		saveToJSONFile(
 			inCell.toJSON(),
 			opts_.exportFolder + "inCellPotentials.out.json");
+
+		auto generalizedLCMatrices = buildGeneralizedLCMatrices();
+		saveToJSONFile(
+			generalizedLCMatrices.toJSON(),
+			opts_.exportFolder + "generalizedLC.out.json");
 	}
 	else {
 		throw std::runtime_error("Openness of the model is not supported.");
@@ -453,7 +466,7 @@ std::map<MaterialId, FieldReconstruction> Driver::getFieldParameters(
 
 	SolvedProblem* sP;
 	if (ignoreDielectrics) {
-		sP = &magnetic_;
+		sP = model_.getMaterials().hasDielectrics() ? &magnetic_ : &electric_;
 	}
 	else {
 		sP = &electric_;

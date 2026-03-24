@@ -1,4 +1,5 @@
 #include "Materials.h"
+#include "constants.h"
 
 namespace pulmtln {
 
@@ -59,6 +60,16 @@ bool Materials::isDomainMaterial(const std::string& name) const
 		return false;
 	}
 
+}
+
+bool Materials::hasDielectrics() const
+{
+	for (const auto& d : dielectrics) {
+		if (d.relativePermittivity != VACUUM_RELATIVE_PERMITTIVITY) {
+			return true;
+		}
+	}
+	return false;
 }
 
 }

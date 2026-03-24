@@ -69,3 +69,19 @@ TEST_F(ParserTest, partially_filled_coax)
 	EXPECT_EQ(2, model.getMesh()->bdr_attributes.Size());
 }
 
+TEST_F(ParserTest, hasDielectrics_returns_false_for_vacuum_only_case)
+{
+	const std::string CASE{ "empty_coax" };
+	Parser parser{ casesFolder() + CASE + "/" + CASE + ".pulmtln.in.json" };
+	auto model{ parser.readModel() };
+	EXPECT_FALSE(model.getMaterials().hasDielectrics());
+}
+
+TEST_F(ParserTest, hasDielectrics_returns_true_when_dielectric_present)
+{
+	const std::string CASE{ "partially_filled_coax" };
+	Parser parser{ casesFolder() + CASE + "/" + CASE + ".pulmtln.in.json" };
+	auto model{ parser.readModel() };
+	EXPECT_TRUE(model.getMaterials().hasDielectrics());
+}
+

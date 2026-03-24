@@ -116,7 +116,7 @@ TEST_F(DriverTest, two_wires_shielded_floating_potentials)
 {
 	const std::string CASE{ "two_wires_shielded" };
 	auto fn{ casesFolder() + CASE + "/" + CASE + ".pulmtln.in.json" };
-		
+
 	const double rTol{ 2.5e-2 };
 
 	auto fp{ Driver::loadFromFile(fn).getFloatingPotentials().electric };
@@ -143,7 +143,7 @@ TEST_F(DriverTest, two_wires_shielded_floating_potentials)
 		s.Solve();
 
 		// For debugging.
-		ParaViewDataCollection pd{ outFolder() + CASE + "_floating", s.getMesh()};
+		ParaViewDataCollection pd{ outFolder() + CASE + "_floating", s.getMesh() };
 		s.writeParaViewFields(pd);
 
 		auto Q0 = s.getChargeInBoundary(1);
@@ -247,7 +247,7 @@ TEST_F(DriverTest, three_wires_ribbon)
 	CExpected.UseExternalData(CExpectedData, 2, 2);
 	CExpected *= 1e-12;
 
-	double LExpectedData[4] = { 
+	double LExpectedData[4] = {
 		0.74850, 0.50770,
 		0.50770, 1.0154
 	};
@@ -321,7 +321,7 @@ TEST_F(DriverTest, three_wires_ribbon_floating_potentials)
 
 	const std::string CASE{ "three_wires_ribbon" };
 	auto fn{ casesFolder() + CASE + "/" + CASE + ".pulmtln.in.json" };
-	
+
 	auto fp = Driver::loadFromFile(fn).getFloatingPotentials().electric;
 
 	// Solves problem and checks that charge is zero in the floating conductor.
@@ -456,12 +456,12 @@ TEST_F(DriverTest, lansink2024_floating_potentials)
 	// Numerical Computation of In - cell Parameters for Multiwire Formalism in FDTD.
 	// In 2024 International Symposium on Electromagnetic Compatibility
 	// EMC Europe(pp. 334 - 339). IEEE.
-	
+
 	const std::string CASE{ "lansink2024" };
-	
+
 	auto dr{ Driver::loadFromFile(casesFolder() + CASE + "/" + CASE + ".pulmtln.in.json") };
 
-	auto fp{ dr.getFloatingPotentials().electric }; 
+	auto fp{ dr.getFloatingPotentials().electric };
 	auto inCell{ dr.getInCellPotentials() };
 
 	auto m{ Mesh::LoadFromFile(casesFolder() + CASE + "/" + CASE + ".msh") };
@@ -560,20 +560,20 @@ TEST_F(DriverTest, lansink2024_two_wires_using_multipolar_expansion)
 
 	const double rTol = 0.06;
 
-	Box fdtdCell0{{-0.110, -0.100}, {0.090, 0.100} };
-		
+	Box fdtdCell0{ {-0.110, -0.100}, {0.090, 0.100} };
+
 	auto computedC00 = inCell.getCapacitanceOnBox(0, 0, fdtdCell0);
 	auto expectedC00 = 14.08e-12; // C11 for floating in paper. Table 1.
 	EXPECT_NEAR(0.0, relError(expectedC00, computedC00), rTol);
-	
+
 	auto computedC01 = inCell.getCapacitanceOnBox(0, 1, fdtdCell0);
 	auto expectedC01 = 43.99e-12; // C12 for floating in paper. Table 1.
 	EXPECT_NEAR(0.0, relError(expectedC01, computedC01), rTol);
-	
+
 	auto computedL00 = inCell.getInductanceOnBox(0, 0, fdtdCell0);
 	auto expectedL00 = 791e-9; // L11 for floating in paper. Table 1.
 	EXPECT_NEAR(0.0, relError(expectedL00, computedL00), rTol);
-	
+
 	auto computedL01 = inCell.getInductanceOnBox(0, 1, fdtdCell0);
 	auto expectedL01 = 253e-9; // L12 for floating in paper. Table 1.
 	EXPECT_NEAR(0.0, relError(expectedL01, computedL01), rTol);
@@ -612,9 +612,9 @@ TEST_F(DriverTest, lansink2024_fdtd_cell_shifted_and_centered)
 			casesFolder() + CASE + "/" + CASE + ".pulmtln.in.json"
 		).getInCellPotentials()
 	};
-	
+
 	Box fdtdCellCentered{ {-0.100, -0.100}, {0.100, 0.100} };
-	
+
 	{
 		Box fdtdCellShifted{ {-0.110, -0.100}, {0.090, 0.100} };
 		auto computedC_shifted = inCell.getCapacitanceOnBox(0, 0, fdtdCellShifted);
@@ -669,7 +669,7 @@ TEST_F(DriverTest, lansink2024_single_wire_in_cell_parameters)
 	{
 		auto computedC00 = inCell.getCapacitanceUsingInnerRegion(0, 0);
 		auto expectedC00 = 49.11e-12; // C11 with insulation. Table 3. 
-		                              // Paper has a mistake, this is the correct value.
+		// Paper has a mistake, this is the correct value.
 		EXPECT_NEAR(0.0, relError(expectedC00, computedC00), rTol);
 	}
 
@@ -677,7 +677,7 @@ TEST_F(DriverTest, lansink2024_single_wire_in_cell_parameters)
 	{
 		auto computedL00 = inCell.getInductanceUsingInnerRegion(0, 0);
 		auto expectedL00 = 320e-9; // L11 with insulation. Table 3. 
-								   // Paper has a mistake, this is the correct value.
+		// Paper has a mistake, this is the correct value.
 		EXPECT_NEAR(0.0, relError(expectedL00, computedL00), rTol);
 	}
 
@@ -725,6 +725,9 @@ TEST_F(DriverTest, lansink2024_single_wire_multipolar_in_cell_parameters)
 	auto a0 = inCell.magnetic.at(0).ab[0].first;
 	auto Va = a0 / (2 * M_PI) * log(1.0 / 1e-3);
 	EXPECT_NEAR(1.0, Va, 1e-3);
+
+	saveToJSONFile(inCell.toJSON(),
+		"lansink2024_single_wire_multipolar.inCellPotentials.out.json");
 }
 
 TEST_F(DriverTest, getCFromGeneralizedC_two_wires_open)
@@ -788,4 +791,158 @@ TEST_F(DriverTest, getCFromGeneralizedC_three_wires)
 				"In C(" << i << ", " << j << ")";
 		}
 	}
+}
+
+TEST_F(DriverTest, lansink2024_small_one_centered_fdtd_cell_vs_multipolar)
+{
+	// In-cell capacitances centered in conductor 0
+	// Using meshed FDTD cell.
+	InCellPotentials fdtdCellPotentials;
+	{
+		const std::string CASE{ "lansink2024_small_one_centered_fdtd_cell" };
+		fdtdCellPotentials = Driver::loadFromFile(
+			casesFolder() + CASE + "/" + CASE + ".pulmtln.in.json").getInCellPotentials();
+	}
+	auto fdtdCellComputedC00 = fdtdCellPotentials.getCapacitanceUsingInnerRegion(0, 0);
+	auto fdtdCellComputedC01 = fdtdCellPotentials.getCapacitanceUsingInnerRegion(0, 1);
+
+	// Using multipolar expansion.
+	InCellPotentials multipolarPotentials;
+	{
+		const std::string CASE{ "lansink2024_small_one_centered" };
+		multipolarPotentials = Driver::loadFromFile(
+			casesFolder() + CASE + "/" + CASE + ".pulmtln.in.json").getInCellPotentials();
+	}
+	Box fdtdCell{ {-0.1, -0.1}, {0.1, 0.1} };
+	auto multipolarComputedC00 = multipolarPotentials.getCapacitanceOnBox(0, 0, fdtdCell);
+	auto multipolarComputedC01 = multipolarPotentials.getCapacitanceOnBox(0, 1, fdtdCell);
+
+	// Compares results
+	EXPECT_NEAR(fdtdCellComputedC00, multipolarComputedC00, 0.03e-12);
+	EXPECT_NEAR(fdtdCellComputedC01, multipolarComputedC01, 0.03e-12);
+	EXPECT_LE(relError(fdtdCellComputedC00, multipolarComputedC00), 0.002);
+	EXPECT_LE(relError(fdtdCellComputedC01, multipolarComputedC01), 0.002);
+
+	saveToJSONFile(multipolarPotentials.toJSON(),
+		"lansink2024_small_one_centered.inCellPotentials.out.json");
+}
+
+TEST_F(DriverTest, lansink2024_large_one_centered_fdtd_cell)
+{
+	// In-cell capacitances centered in conductor 0
+	// Using meshed FDTD cell.
+	InCellPotentials fdtdCellPotentials;
+	{
+		const std::string CASE{ "lansink2024_large_one_centered_fdtd_cell" };
+		fdtdCellPotentials = Driver::loadFromFile(
+			casesFolder() + CASE + "/" + CASE + ".pulmtln.in.json").getInCellPotentials();
+	}
+	auto fdtdCellComputedC10 = fdtdCellPotentials.getCapacitanceUsingInnerRegion(1, 0);
+
+	// Compares results
+	EXPECT_NEAR(fdtdCellComputedC10, 43.8646e-12, 1e-12); // Computed with BEM.
+}
+
+TEST_F(DriverTest, lansink2024_small_one_centered_different_integration_centers)
+{
+	// In-cell capacitances centered in conductor 0
+	InCellPotentials multipolarPotentials;
+	const std::string CASE{ "lansink2024_small_one_centered" };
+
+	multipolarPotentials = Driver::loadFromFile(
+		casesFolder() + CASE + "/" + CASE + ".pulmtln.in.json").getInCellPotentials();
+
+	mfem::DenseMatrix geometricC(2, 2);
+	Box fdtdCellCenteredOnConductor0{ {-0.1, -0.1}, {0.1, 0.1} };
+	{
+		geometricC(0, 0) = multipolarPotentials.getCapacitanceOnBox(0, 0, fdtdCellCenteredOnConductor0);
+		geometricC(0, 1) = multipolarPotentials.getCapacitanceOnBox(0, 1, fdtdCellCenteredOnConductor0);
+	}
+	{
+		Box fdtdCellCenteredOnConductor1{ {-0.12, -0.1}, {0.08, 0.1} };
+		geometricC(1, 0) = multipolarPotentials.getCapacitanceOnBox(1, 0, fdtdCellCenteredOnConductor1);
+		geometricC(1, 1) = multipolarPotentials.getCapacitanceOnBox(1, 1, fdtdCellCenteredOnConductor1);
+	}
+
+	mfem::DenseMatrix chargeCenteredC(2, 2);
+	for (int i = 0; i < 2; i++) {
+		Box chargeCenteredCell{ fdtdCellCenteredOnConductor0 };
+		chargeCenteredCell.displace(multipolarPotentials.electric.at(i).expansionCenter);
+		for (int j = 0; j < 2; j++) {
+			chargeCenteredC(i, j) = multipolarPotentials.getCapacitanceOnBox(i, j, chargeCenteredCell);
+		}
+	}
+
+	// Compares results
+	for (int i = 0; i < 2; i++) {
+		for (int j = 0; j < 2; j++) {
+			EXPECT_NEAR(geometricC(i, j), chargeCenteredC(i, j), 0.1e-11);
+		}
+	}
+
+}
+
+TEST_F(DriverTest, DISABLED_realistic_case_with_dielectrics_fdtd_cell)
+{
+	InCellPotentials fdtdCellPotentials;
+	{
+		const std::string CASE{ "realistic_case_with_dielectrics_fdtd_cell" };
+		fdtdCellPotentials = Driver::loadFromFile(
+			casesFolder() + CASE + "/" + CASE + ".pulmtln.in.json").getInCellPotentials();
+	}
+	auto fdtdCellComputedC_0 = fdtdCellPotentials.getCapacitanceUsingInnerRegion(0, 0);
+	auto fdtdCellComputedC_16 = fdtdCellPotentials.getCapacitanceUsingInnerRegion(0, 16);
+	auto fdtdCellComputedC_25 = fdtdCellPotentials.getCapacitanceUsingInnerRegion(0, 25);
+	auto fdtdCellComputedC_30 = fdtdCellPotentials.getCapacitanceUsingInnerRegion(0, 30);
+
+	auto fdtdCellComputedL_0 = fdtdCellPotentials.getInductanceUsingInnerRegion(0, 0);
+	auto fdtdCellComputedL_16 = fdtdCellPotentials.getInductanceUsingInnerRegion(0, 16);
+	auto fdtdCellComputedL_25 = fdtdCellPotentials.getInductanceUsingInnerRegion(0, 25);
+	auto fdtdCellComputedL_30 = fdtdCellPotentials.getInductanceUsingInnerRegion(0, 30);
+}
+
+TEST_F(DriverTest, realistic_case_with_dielectrics)
+{
+	InCellPotentials mP;
+	{
+		const std::string CASE{ "realistic_case_with_dielectrics" };
+		mP = Driver::loadFromFile(
+			casesFolder() + CASE + "/" + CASE + ".pulmtln.in.json").getInCellPotentials();
+	}
+
+	Box fdtdCellCenteredOnConductor0{ {-0.016209, -0.009066}, {0.013791, 0.020934} };
+	auto mPComputedC_0 = mP.getCapacitanceOnBox(0, 0, fdtdCellCenteredOnConductor0);
+	auto mPComputedC_16 = mP.getCapacitanceOnBox(0, 16, fdtdCellCenteredOnConductor0);
+	auto mPComputedC_25 = mP.getCapacitanceOnBox(0, 25, fdtdCellCenteredOnConductor0);
+	auto mPComputedC_30 = mP.getCapacitanceOnBox(0, 30, fdtdCellCenteredOnConductor0);
+
+	auto mPComputedL_0 = mP.getInductanceOnBox(0, 0, fdtdCellCenteredOnConductor0);
+	auto mPComputedL_16 = mP.getInductanceOnBox(0, 16, fdtdCellCenteredOnConductor0);
+	auto mPComputedL_25 = mP.getInductanceOnBox(0, 25, fdtdCellCenteredOnConductor0);
+	auto mPComputedL_30 = mP.getInductanceOnBox(0, 30, fdtdCellCenteredOnConductor0);
+
+	// Compare with C and L computed using the fdtd cell.
+	const double rTol = 0.015;
+	const double fdtdCellComputed_C_0 = 4.0911726228481947e-11;
+	const double fdtdCellComputed_C_16 = 1.2547925523607968e-10;
+	const double fdtdCellComputed_C_25 = 5.9060595987059621e-11;
+	const double fdtdCellComputed_C_30 = 1.7797154919313720e-10;
+	const double fdtdCellComputed_L_0 = 2.9989786293920517e-07;
+	const double fdtdCellComputed_L_16 = 8.7458344767957649e-08;
+	const double fdtdCellComputed_L_25 = 2.0233814651758583e-07;
+	const double fdtdCellComputed_L_30 = 5.9647510363871327e-08;
+
+	EXPECT_LE(relError(fdtdCellComputed_C_0, mPComputedC_0), rTol) << "C(0,0) mismatch";
+	EXPECT_LE(relError(fdtdCellComputed_C_16, mPComputedC_16), rTol) << "C(0,16) mismatch";
+	EXPECT_LE(relError(fdtdCellComputed_C_25, mPComputedC_25), rTol) << "C(0,25) mismatch";
+	EXPECT_LE(relError(fdtdCellComputed_C_30, mPComputedC_30), rTol) << "C(0,30) mismatch";
+	EXPECT_LE(relError(fdtdCellComputed_L_0, mPComputedL_0), rTol) << "L(0,0) mismatch";
+	EXPECT_LE(relError(fdtdCellComputed_L_16, mPComputedL_16), rTol) << "L(0,16) mismatch";
+	EXPECT_LE(relError(fdtdCellComputed_L_25, mPComputedL_25), rTol) << "L(0,25) mismatch";
+	EXPECT_LE(relError(fdtdCellComputed_L_30, mPComputedL_30), rTol) << "L(0,30) mismatch";
+
+
+	// For debugging
+	saveToJSONFile(mP.toJSON(),
+		"realistic_case_with_dielectrics.inCellPotentials.out.json");
 }

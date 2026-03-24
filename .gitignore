@@ -68,3 +68,4 @@ __pycache__/
 /testData/lansink2024_fdtd_cell/calculations.py
 /testData/lansink2024/inCellPotentials.out.json
 /XMLGoogleTestResults.xml
+*.inCellPotentials.out.json

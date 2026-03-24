@@ -2,7 +2,6 @@
   "analysis": {
     "order": 3,
     "exportParaViewSolution": true,
-    "exportVisItSolution": true,
     "exportFolder": "Results/five_wires/"
   },
   "model": {
