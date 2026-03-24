@@ -1,0 +1,28 @@
+{
+  "version": 6,
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 21,
+    "patch": 0
+  },
+  "configurePresets": [
+    {
+      "name": "default",
+      "hidden": true,
+      "binaryDir": "build/",
+      "cacheVariables": {
+        "CMAKE_TOOLCHAIN_FILE": {
+          "type": "FILEPATH",
+          "value": "/home/luis/vcpkg/scripts/buildsystems/vcpkg.cmake"
+        }
+      }
+    },
+    {
+      "name": "gnu",
+      "displayName": "GNU g++ compiler",
+      "inherits": "default",
+      "cacheVariables": {
+      }
+    }
+  ]
+}

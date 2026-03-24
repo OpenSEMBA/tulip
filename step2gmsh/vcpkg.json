@@ -3,8 +3,6 @@
     "dependencies": [
       "gtest",
       "nlohmann-json",
-      "boost-graph",
-      "boost-program-options",
       {
         "name": "gmsh",
         "features": ["occ"]
