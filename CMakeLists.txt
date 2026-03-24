@@ -26,12 +26,13 @@ else ()
 	include_directories(${MFEM_INCLUDE_DIRS})
 endif()
 
-include_directories(src/)
+include_directories(src/tulip)
 
-add_subdirectory(src)
+add_subdirectory(src/tulip)
+add_subdirectory(src/adapter)
 
 enable_testing()
-add_subdirectory(test/)
-add_subdirectory(step2gmsh/)
+add_subdirectory(test/tulip)
+add_subdirectory(test/adapter)
 
 add_test(${PROJECT_NAME} ${CMAKE_BINARY_DIR}/bin/${PROJECT_NAME}_tests)
