@@ -40,23 +40,27 @@ jobs:
     - name: getcmake
       uses: lukka/get-cmake@latest
 
+    - name: Install system packages
+      run: bash ${{ env.PULMTLN_TOP_DIR }}/scripts/install-packages.sh
+
     - name: Setup vcpkg (it does not install any package yet)
       uses: lukka/run-vcpkg@v11
       with:
         vcpkgGitCommitId: 42bb0d9e8d4cf33485afb9ee2229150f79f61a1f
         vcpkgJsonGlob: 'pulmtln/vcpkg.json'
-      
-    - name: Configuring PULMTLN
-      env: 
-        MFEM_PACKAGE: ${{ github.workspace }}/${{env.MFEM_TOP_DIR}}/build
-      run: |
-        cmake --preset "gnu" -S pulmtln -B pulmtln/build
-    
-    - name: Building PULMTLN
-      run: |
-        cmake --build pulmtln/build/ 
 
-    - name: test PULMTLN
-      run: cd pulmtln && build/bin/pulmtln_tests
+    - name: Configure PULMTLN
+      env:
+        MFEM_PACKAGE: ${{ github.workspace }}/${{ env.MFEM_TOP_DIR }}/build
+      run: |
+        cmake --preset "gnu" -S ${{ env.PULMTLN_TOP_DIR }} -B ${{ env.PULMTLN_TOP_DIR }}/build
+
+    - name: Build PULMTLN
+      run: |
+        cmake --build ${{ env.PULMTLN_TOP_DIR }}/build --parallel
+
+    - name: Test PULMTLN
+      run: |
+        ctest --test-dir ${{ env.PULMTLN_TOP_DIR }}/build --output-on-failure
         
     
