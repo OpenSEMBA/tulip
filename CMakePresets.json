@@ -15,6 +15,10 @@
           "type": "FILEPATH",
           "value": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake"
         },
+        "VCPKG_OVERLAY_TRIPLETS": {
+          "type": "PATH",
+          "value": "${sourceDir}/triplets"
+        },
         "CMAKE_PREFIX_PATH": {
           "type": "FILEPATH",
           "value": "$env{MFEM_PACKAGE}"
