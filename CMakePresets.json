@@ -44,7 +44,7 @@
       "cacheVariables": {
         "TULIP_USE_MFEM_AS_SUBDIRECTORY": true,
         "MFEM_ENABLE_TESTING": false,
-        "MFEM_USE_OPENMP": true
+        "MFEM_USE_OPENMP": false
       }
     }
   ],

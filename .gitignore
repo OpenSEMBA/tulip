@@ -1,6 +1,6 @@
 .vs/
 out/
-build/
+build*/
 builds/
 ParaView/
 tmp_cases/
