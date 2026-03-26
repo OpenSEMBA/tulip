@@ -19,7 +19,7 @@
             }
         },
         {
-            "name":"Dielectric_0",
+            "name":"Dielectric_000",
             "material":{
                 "type":"Dielectric"
             }
