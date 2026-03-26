@@ -15,7 +15,7 @@ on:
   workflow_dispatch:
 
 env:
-  PULMTLN_TOP_DIR: pulmtln
+  TULIP_TOP_DIR: tulip
   MFEM_TOP_DIR: mfem
 
 jobs:
@@ -30,10 +30,10 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     steps:
-    - name: checkout PULMTLN
+    - name: checkout TULIP
       uses: actions/checkout@v3
       with:
-        path: ${{ env.PULMTLN_TOP_DIR }}
+        path: ${{ env.TULIP_TOP_DIR }}
         ssh-key: ${{secrets.PULMTLN_SSH_KEY}}
         submodules: 'recursive'
 
@@ -41,26 +41,26 @@ jobs:
       uses: lukka/get-cmake@latest
 
     - name: Install system packages
-      run: bash ${{ env.PULMTLN_TOP_DIR }}/scripts/install-packages.sh
+      run: bash ${{ env.TULIP_TOP_DIR }}/scripts/install-packages.sh
 
     - name: Setup vcpkg
       uses: lukka/run-vcpkg@v11
       with:
         vcpkgGitCommitId: eed289f6e06a5e7a5c9e6a729671b0a56af7dd69
-        vcpkgJsonGlob: 'pulmtln/vcpkg.json'
+        vcpkgJsonGlob: 'tulip/vcpkg.json'
 
-    - name: Configure PULMTLN
+    - name: Configure TULIP
       env:
         MFEM_PACKAGE: ${{ github.workspace }}/${{ env.MFEM_TOP_DIR }}/build
       run: |
-        cmake --preset "gnu" -S ${{ env.PULMTLN_TOP_DIR }} -B ${{ env.PULMTLN_TOP_DIR }}/build
+        cmake --preset "gnu" -S ${{ env.TULIP_TOP_DIR }} -B ${{ env.TULIP_TOP_DIR }}/build
 
-    - name: Build PULMTLN
+    - name: Build TULIP
       run: |
-        cmake --build ${{ env.PULMTLN_TOP_DIR }}/build --parallel
+        cmake --build ${{ env.TULIP_TOP_DIR }}/build --parallel
 
-    - name: Test PULMTLN
+    - name: Test TULIP
       run: |
-        ctest --test-dir ${{ env.PULMTLN_TOP_DIR }}/build --output-on-failure
+        ctest --test-dir ${{ env.TULIP_TOP_DIR }}/build --output-on-failure
         
     

@@ -158,7 +158,8 @@ EntityMap ShapesClassification::buildVacuumDomain() {
 }
 
 EntityMap ShapesClassification::buildClosedVacuumDomain() {
-    const auto& root    = nestedGraph.roots()[0];
+    const auto  roots   = nestedGraph.roots();
+    const auto& root    = roots[0];
     EntityList  dom     = pecs.at(root);
     EntityList  toRemove;
 
