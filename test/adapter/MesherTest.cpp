@@ -51,7 +51,7 @@ protected:
     }
 };
 
-TEST_F(MesherTest, meshFromStepWithEmptyCoax) {
+TEST_F(MesherTest, emptyCoax) {
     const std::string caseName = "empty_coax";
     Mesher().meshFromStep(stepFileFromCaseName(caseName), caseName);
 
@@ -59,7 +59,7 @@ TEST_F(MesherTest, meshFromStepWithEmptyCoax) {
     assertPhysicalGroups(expectedNames, {1, 1, 1});
 }
 
-TEST_F(MesherTest, meshFromStepWithPartiallyFilledCoax) {
+TEST_F(MesherTest, partiallyFilledCoax) {
     const std::string caseName = "partially_filled_coax";
     Mesher mesher;
     mesher.meshFromStep(stepFileFromCaseName(caseName), caseName);
@@ -86,7 +86,7 @@ TEST_F(MesherTest, meshFromStepWithPartiallyFilledCoax) {
     }
 }
 
-TEST_F(MesherTest, meshFromStepWithTwoWiresCoax) {
+TEST_F(MesherTest, twoWiresCoax) {
     const std::string caseName = "two_wires_coax";
     Mesher().meshFromStep(stepFileFromCaseName(caseName), caseName);
 
@@ -95,7 +95,7 @@ TEST_F(MesherTest, meshFromStepWithTwoWiresCoax) {
     assertPhysicalGroups(expectedNames, {1, 1, 1, 1});
 }
 
-TEST_F(MesherTest, meshFromStepWithTwoWiresOpen) {
+TEST_F(MesherTest, twoWiresOpen) {
     const std::string caseName = "two_wires_open";
     Mesher().meshFromStep(stepFileFromCaseName(caseName), caseName);
 
@@ -104,7 +104,7 @@ TEST_F(MesherTest, meshFromStepWithTwoWiresOpen) {
     assertPhysicalGroups(expectedNames, {1, 1, 1, 1, 1});
 }
 
-TEST_F(MesherTest, meshDielectricUnshieldedPair) {
+TEST_F(MesherTest, dielectricUnshieldedPair) {
     const std::string caseName = "DielectricUnshieldedPair";
     Mesher().meshFromStep(stepFileFromCaseName(caseName), caseName);
 
@@ -115,7 +115,7 @@ TEST_F(MesherTest, meshDielectricUnshieldedPair) {
     assertPhysicalGroups(expectedNames, {1, 1, 1, 1, 1, 1, 1});
 }
 
-TEST_F(MesherTest, meshDielectricUnshieldedPairDefinedBoundary) {
+TEST_F(MesherTest, dielectricUnshieldedPairDefinedBoundary) {
     const std::string caseName = "DielectricUnshieldedPairDefinedBoundary";
     auto opts = Mesher::DEFAULT_MESHING_OPTIONS;
     opts["Mesh.ElementOrder"] = 1;
@@ -128,7 +128,7 @@ TEST_F(MesherTest, meshDielectricUnshieldedPairDefinedBoundary) {
     assertPhysicalGroups(expectedNames, {1, 1, 1, 1, 1, 1});
 }
 
-TEST_F(MesherTest, meshFromStepWithFiveWires) {
+TEST_F(MesherTest, fiveWires) {
     const std::string caseName = "five_wires";
     Mesher().meshFromStep(stepFileFromCaseName(caseName), caseName);
 
@@ -141,7 +141,7 @@ TEST_F(MesherTest, meshFromStepWithFiveWires) {
         {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1});
 }
 
-TEST_F(MesherTest, meshFromStepWithThreeWiresRibbon) {
+TEST_F(MesherTest, threeWiresRibbon) {
     const std::string caseName = "three_wires_ribbon";
     Mesher().meshFromStep(stepFileFromCaseName(caseName), caseName);
 
@@ -154,7 +154,7 @@ TEST_F(MesherTest, meshFromStepWithThreeWiresRibbon) {
         {1, 1, 1, 1, 1, 1, 1, 1, 1});
 }
 
-TEST_F(MesherTest, meshFromStepWithNestedCoax) {
+TEST_F(MesherTest, nestedCoax) {
     const std::string caseName = "nested_coax";
     Mesher().meshFromStep(stepFileFromCaseName(caseName), caseName);
 
@@ -163,7 +163,7 @@ TEST_F(MesherTest, meshFromStepWithNestedCoax) {
     assertPhysicalGroups(expectedNames, {1, 2, 1, 2});
 }
 
-TEST_F(MesherTest, meshFromStepWithAgrawal1981) {
+TEST_F(MesherTest, agrawal1981) {
     const std::string caseName = "agrawal1981";
     Mesher().meshFromStep(stepFileFromCaseName(caseName), caseName);
 
@@ -176,7 +176,7 @@ TEST_F(MesherTest, meshFromStepWithAgrawal1981) {
     assertPhysicalGroups(expectedNames, expectedCounts);
 }
 
-TEST_F(MesherTest, meshUnshieldedMultiwire) {
+TEST_F(MesherTest, unshieldedMultiwire) {
     const std::string caseName = "unshielded_multiwire";
     Mesher().meshFromStep(stepFileFromCaseName(caseName), caseName);
 
@@ -196,7 +196,7 @@ TEST_F(MesherTest, conductorAndOuterDielectric) {
     assertPhysicalGroups(expectedNames, {1, 1, 1, 2, 1});
 }
 
-TEST_F(MesherTest, realisticCaseWithDielectricsFdtdCell) {
+TEST_F(MesherTest, realisticCaseWithDielectricsFDTDCell) {
     const std::string caseName = "realistic_case_with_dielectrics_fdtd_cell";
     auto opts = Mesher::DEFAULT_MESHING_OPTIONS;
     opts["Mesh.ElementOrder"] = 1;
