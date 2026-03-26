@@ -27,6 +27,7 @@ OCC_PACKAGES=(
     libxt-dev
     libfreetype-dev
     libfontconfig1-dev
+    mesa-common-dev
 )
 
 ALL_PACKAGES=("${VCPKG_PACKAGES[@]}" "${PORT_PACKAGES[@]}" "${OCC_PACKAGES[@]}")
