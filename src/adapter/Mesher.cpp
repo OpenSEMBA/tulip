@@ -69,7 +69,9 @@ std::map<std::string, std::string> Mesher::meshFromStep(
     const std::string& caseName,
     const std::map<std::string, double>* meshingOptions)
 {
-    if (!meshingOptions) meshingOptions = &DEFAULT_MESHING_OPTIONS;
+    if (!meshingOptions) {
+        meshingOptions = &DEFAULT_MESHING_OPTIONS;
+    }
 
     gmsh::model::add(caseName);
 
@@ -83,7 +85,7 @@ std::map<std::string, std::string> Mesher::meshFromStep(
     allShapes.ensureDielectricsDoNotOverlap();
     allShapes.removeConductorsFromDielectrics();
     allShapes.vacuum = allShapes.buildVacuumDomain();
-    allShapes.pecs   = extractBoundaries(allShapes.pecs);
+    allShapes.pecs = extractBoundaries(allShapes.pecs);
 
     // Mapping
     auto mappedComponents = allShapes.getMappedComponents();

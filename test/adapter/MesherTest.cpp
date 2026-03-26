@@ -1,5 +1,9 @@
 #include <gtest/gtest.h>
 
+#include <algorithm>
+#include <string>
+#include <vector>
+
 #include <gmsh.h>
 
 #include "AreaExporterService.h"
@@ -20,16 +24,39 @@ protected:
         gmsh::model::getEntitiesForPhysicalGroup(dim, tag, tags);
         return (int)tags.size();
     }
+
+    // expectedCounts[i] corresponds to expectedNames[i]. If empty, entity counts are not checked.
+    void assertPhysicalGroups(const std::vector<std::string>& expectedNames,
+                               const std::vector<int>&         expectedCounts = {}) {
+        gmsh::vectorpair pGs;
+        gmsh::model::getPhysicalGroups(pGs);
+
+        std::vector<std::string> pgNames;
+        for (const auto& [dim, tag] : pGs) {
+            std::string n;
+            gmsh::model::getPhysicalName(dim, tag, n);
+            pgNames.push_back(n);
+        }
+
+        auto sortedActual   = pgNames;
+        auto sortedExpected = expectedNames;
+        std::sort(sortedActual.begin(),   sortedActual.end());
+        std::sort(sortedExpected.begin(), sortedExpected.end());
+        EXPECT_EQ(sortedActual, sortedExpected);
+
+        for (std::size_t i = 0; i < expectedCounts.size(); ++i) {
+            EXPECT_EQ(countEntitiesInPhysicalGroupWithName(expectedNames[i]),
+                      expectedCounts[i]) << expectedNames[i];
+        }
+    }
 };
 
 TEST_F(MesherTest, meshFromStepWithEmptyCoax) {
     const std::string caseName = "empty_coax";
-    Mesher mesher;
-    mesher.meshFromStep(stepFileFromCaseName(caseName), caseName);
+    Mesher().meshFromStep(stepFileFromCaseName(caseName), caseName);
 
-    gmsh::vectorpair pGs;
-    gmsh::model::getPhysicalGroups(pGs);
-    EXPECT_EQ(pGs.size(), 3u); // Conductor_0, Conductor_1, Vacuum_0
+    const std::vector<std::string> expectedNames = {"Conductor_0", "Conductor_1", "Vacuum_0"};
+    assertPhysicalGroups(expectedNames, {1, 1, 1});
 }
 
 TEST_F(MesherTest, meshFromStepWithPartiallyFilledCoax) {
@@ -57,6 +84,162 @@ TEST_F(MesherTest, meshFromStepWithPartiallyFilledCoax) {
     for (const auto& name : expected) {
         EXPECT_EQ(countEntitiesInPhysicalGroupWithName(name), 1) << name;
     }
+}
+
+TEST_F(MesherTest, meshFromStepWithTwoWiresCoax) {
+    const std::string caseName = "two_wires_coax";
+    Mesher().meshFromStep(stepFileFromCaseName(caseName), caseName);
+
+    const std::vector<std::string> expectedNames = {
+        "Conductor_0", "Conductor_1", "Conductor_2", "Vacuum_0"};
+    assertPhysicalGroups(expectedNames, {1, 1, 1, 1});
+}
+
+TEST_F(MesherTest, meshFromStepWithTwoWiresOpen) {
+    const std::string caseName = "two_wires_open";
+    Mesher().meshFromStep(stepFileFromCaseName(caseName), caseName);
+
+    const std::vector<std::string> expectedNames = {
+        "Conductor_0", "Conductor_1", "OpenBoundary_0", "Vacuum_0", "Vacuum_1"};
+    assertPhysicalGroups(expectedNames, {1, 1, 1, 1, 1});
+}
+
+TEST_F(MesherTest, meshDielectricUnshieldedPair) {
+    const std::string caseName = "DielectricUnshieldedPair";
+    Mesher().meshFromStep(stepFileFromCaseName(caseName), caseName);
+
+    const std::vector<std::string> expectedNames = {
+        "Conductor_0", "Conductor_1",
+        "Dielectric_0", "Dielectric_1",
+        "OpenBoundary_0", "Vacuum_0", "Vacuum_1"};
+    assertPhysicalGroups(expectedNames, {1, 1, 1, 1, 1, 1, 1});
+}
+
+TEST_F(MesherTest, meshDielectricUnshieldedPairDefinedBoundary) {
+    const std::string caseName = "DielectricUnshieldedPairDefinedBoundary";
+    auto opts = Mesher::DEFAULT_MESHING_OPTIONS;
+    opts["Mesh.ElementOrder"] = 1;
+    Mesher().meshFromStep(stepFileFromCaseName(caseName), caseName, &opts);
+
+    const std::vector<std::string> expectedNames = {
+        "Conductor_0", "Conductor_1",
+        "Dielectric_0", "Dielectric_1",
+        "OpenBoundary_0", "Vacuum_0"};
+    assertPhysicalGroups(expectedNames, {1, 1, 1, 1, 1, 1});
+}
+
+TEST_F(MesherTest, meshFromStepWithFiveWires) {
+    const std::string caseName = "five_wires";
+    Mesher().meshFromStep(stepFileFromCaseName(caseName), caseName);
+
+    const std::vector<std::string> expectedNames = {
+        "Conductor_0", "Conductor_1", "Conductor_2", "Conductor_3",
+        "Conductor_4", "Conductor_5",
+        "Dielectric_0", "Dielectric_1", "Dielectric_2", "Dielectric_3",
+        "Dielectric_4", "Vacuum_0"};
+    assertPhysicalGroups(expectedNames,
+        {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1});
+}
+
+TEST_F(MesherTest, meshFromStepWithThreeWiresRibbon) {
+    const std::string caseName = "three_wires_ribbon";
+    Mesher().meshFromStep(stepFileFromCaseName(caseName), caseName);
+
+    const std::vector<std::string> expectedNames = {
+        "Conductor_0", "Conductor_1", "Conductor_2",
+        "OpenBoundary_0",
+        "Dielectric_0", "Dielectric_1", "Dielectric_2",
+        "Vacuum_0", "Vacuum_1"};
+    assertPhysicalGroups(expectedNames,
+        {1, 1, 1, 1, 1, 1, 1, 1, 1});
+}
+
+TEST_F(MesherTest, meshFromStepWithNestedCoax) {
+    const std::string caseName = "nested_coax";
+    Mesher().meshFromStep(stepFileFromCaseName(caseName), caseName);
+
+    const std::vector<std::string> expectedNames = {
+        "Conductor_0", "Conductor_1", "Conductor_2", "Vacuum_0"};
+    assertPhysicalGroups(expectedNames, {1, 2, 1, 2});
+}
+
+TEST_F(MesherTest, meshFromStepWithAgrawal1981) {
+    const std::string caseName = "agrawal1981";
+    Mesher().meshFromStep(stepFileFromCaseName(caseName), caseName);
+
+    const std::vector<std::string> expectedNames = {
+        "Conductor_0", "Conductor_1", "Conductor_2", "Conductor_3",
+        "OpenBoundary_0",
+        "Dielectric_0", "Dielectric_1", "Dielectric_2",
+        "Vacuum_0"};
+    const std::vector<int> expectedCounts = {4, 1, 1, 1, 1, 1, 1, 1, 2};
+    assertPhysicalGroups(expectedNames, expectedCounts);
+}
+
+TEST_F(MesherTest, meshUnshieldedMultiwire) {
+    const std::string caseName = "unshielded_multiwire";
+    Mesher().meshFromStep(stepFileFromCaseName(caseName), caseName);
+
+    const std::vector<std::string> expectedNames = {
+        "Conductor_0", "Conductor_1", "Dielectric_0",
+        "OpenBoundary_0", "Vacuum_0", "Vacuum_1"};
+    assertPhysicalGroups(expectedNames, {1, 1, 1, 1, 1, 1});
+}
+
+TEST_F(MesherTest, conductorAndOuterDielectric) {
+    const std::string caseName = "conductor_and_outer_dielectric";
+    Mesher().meshFromStep(stepFileFromCaseName(caseName), caseName);
+
+    const std::vector<std::string> expectedNames = {
+        "Conductor_0", "Dielectric_0",
+        "OpenBoundary_0", "Vacuum_0", "Vacuum_1"};
+    assertPhysicalGroups(expectedNames, {1, 1, 1, 2, 1});
+}
+
+TEST_F(MesherTest, realisticCaseWithDielectricsFdtdCell) {
+    const std::string caseName = "realistic_case_with_dielectrics_fdtd_cell";
+    auto opts = Mesher::DEFAULT_MESHING_OPTIONS;
+    opts["Mesh.ElementOrder"] = 1;
+    Mesher().meshFromStep(stepFileFromCaseName(caseName), caseName, &opts);
+
+    std::vector<std::string> expectedNames;
+    for (int i = 0; i <= 30; ++i)
+        expectedNames.push_back("Conductor_" + std::to_string(i));
+    for (int i = 0; i <= 31; ++i)
+        expectedNames.push_back("Dielectric_" + std::to_string(i));
+    expectedNames.push_back("OpenBoundary_0");
+    expectedNames.push_back("Vacuum_0");
+
+    assertPhysicalGroups(expectedNames);
+}
+
+TEST_F(MesherTest, lansink2024SingleWireMultipolar) {
+    const std::string caseName = "lansink2024_single_wire_multipolar";
+    Mesher().meshFromStep(stepFileFromCaseName(caseName), caseName);
+
+    const std::vector<std::string> expectedNames = {
+        "Conductor_0", "Dielectric_0",
+        "OpenBoundary_0", "Vacuum_0", "Vacuum_1"};
+    assertPhysicalGroups(expectedNames, {1, 1, 1, 1, 1});
+}
+
+TEST_F(MesherTest, unshieldedSingleWire) {
+    const std::string caseName = "unshielded_single_wire";
+    Mesher().meshFromStep(stepFileFromCaseName(caseName), caseName);
+
+    const std::vector<std::string> expectedNames = {
+        "Conductor_0", "OpenBoundary_0", "Vacuum_0", "Vacuum_1"};
+    assertPhysicalGroups(expectedNames, {1, 1, 1, 1});
+}
+
+TEST_F(MesherTest, unshieldedNesting) {
+    const std::string caseName = "UnshieldedNested";
+    Mesher().meshFromStep(stepFileFromCaseName(caseName), caseName);
+
+    const std::vector<std::string> expectedNames = {
+        "Conductor_0", "Conductor_1", "Conductor_2",
+        "OpenBoundary_0", "Vacuum_0", "Vacuum_1"};
+    assertPhysicalGroups(expectedNames, {2, 1, 1, 1, 2, 1});
 }
 
 TEST_F(MesherTest, areaExporterReturnsTrueValuesForDielectricUnshieldedPair) {
