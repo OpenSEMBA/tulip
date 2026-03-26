@@ -51,7 +51,7 @@ protected:
     }
 };
 
-TEST_F(MesherTest, emptyCoax) {
+TEST_F(MesherTest, empty_coax) {
     const std::string caseName = "empty_coax";
     Mesher().meshFromStep(stepFileFromCaseName(caseName), caseName);
 
@@ -59,7 +59,7 @@ TEST_F(MesherTest, emptyCoax) {
     assertPhysicalGroups(expectedNames, {1, 1, 1});
 }
 
-TEST_F(MesherTest, partiallyFilledCoax) {
+TEST_F(MesherTest, partially_filled_coax) {
     const std::string caseName = "partially_filled_coax";
     Mesher mesher;
     mesher.meshFromStep(stepFileFromCaseName(caseName), caseName);
@@ -86,7 +86,7 @@ TEST_F(MesherTest, partiallyFilledCoax) {
     }
 }
 
-TEST_F(MesherTest, twoWiresCoax) {
+TEST_F(MesherTest, two_wires_coax) {
     const std::string caseName = "two_wires_coax";
     Mesher().meshFromStep(stepFileFromCaseName(caseName), caseName);
 
@@ -95,16 +95,19 @@ TEST_F(MesherTest, twoWiresCoax) {
     assertPhysicalGroups(expectedNames, {1, 1, 1, 1});
 }
 
-TEST_F(MesherTest, twoWiresOpen) {
+TEST_F(MesherTest, two_wires_open) {
     const std::string caseName = "two_wires_open";
     Mesher().meshFromStep(stepFileFromCaseName(caseName), caseName);
+
+    gmsh::write(caseName + ".msh");
+    gmsh::write(caseName + ".vtk");
 
     const std::vector<std::string> expectedNames = {
         "Conductor_0", "Conductor_1", "OpenBoundary_0", "Vacuum_0", "Vacuum_1"};
     assertPhysicalGroups(expectedNames, {1, 1, 1, 1, 1});
 }
 
-TEST_F(MesherTest, dielectricUnshieldedPair) {
+TEST_F(MesherTest, dielectric_unshielded_pair) {
     const std::string caseName = "DielectricUnshieldedPair";
     Mesher().meshFromStep(stepFileFromCaseName(caseName), caseName);
 
@@ -115,7 +118,7 @@ TEST_F(MesherTest, dielectricUnshieldedPair) {
     assertPhysicalGroups(expectedNames, {1, 1, 1, 1, 1, 1, 1});
 }
 
-TEST_F(MesherTest, dielectricUnshieldedPairDefinedBoundary) {
+TEST_F(MesherTest, dielectric_unshielded_pair_defined_boundary) {
     const std::string caseName = "DielectricUnshieldedPairDefinedBoundary";
     auto opts = Mesher::DEFAULT_MESHING_OPTIONS;
     opts["Mesh.ElementOrder"] = 1;
@@ -128,7 +131,7 @@ TEST_F(MesherTest, dielectricUnshieldedPairDefinedBoundary) {
     assertPhysicalGroups(expectedNames, {1, 1, 1, 1, 1, 1});
 }
 
-TEST_F(MesherTest, fiveWires) {
+TEST_F(MesherTest, five_wires) {
     const std::string caseName = "five_wires";
     Mesher().meshFromStep(stepFileFromCaseName(caseName), caseName);
 
@@ -141,7 +144,7 @@ TEST_F(MesherTest, fiveWires) {
         {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1});
 }
 
-TEST_F(MesherTest, threeWiresRibbon) {
+TEST_F(MesherTest, three_wires_ribbon) {
     const std::string caseName = "three_wires_ribbon";
     Mesher().meshFromStep(stepFileFromCaseName(caseName), caseName);
 
@@ -154,7 +157,7 @@ TEST_F(MesherTest, threeWiresRibbon) {
         {1, 1, 1, 1, 1, 1, 1, 1, 1});
 }
 
-TEST_F(MesherTest, nestedCoax) {
+TEST_F(MesherTest, nested_coax) {
     const std::string caseName = "nested_coax";
     Mesher().meshFromStep(stepFileFromCaseName(caseName), caseName);
 
@@ -176,7 +179,7 @@ TEST_F(MesherTest, agrawal1981) {
     assertPhysicalGroups(expectedNames, expectedCounts);
 }
 
-TEST_F(MesherTest, unshieldedMultiwire) {
+TEST_F(MesherTest, unshielded_multiwire) {
     const std::string caseName = "unshielded_multiwire";
     Mesher().meshFromStep(stepFileFromCaseName(caseName), caseName);
 
@@ -186,7 +189,7 @@ TEST_F(MesherTest, unshieldedMultiwire) {
     assertPhysicalGroups(expectedNames, {1, 1, 1, 1, 1, 1});
 }
 
-TEST_F(MesherTest, conductorAndOuterDielectric) {
+TEST_F(MesherTest, conductor_and_outer_dielectric) {
     const std::string caseName = "conductor_and_outer_dielectric";
     Mesher().meshFromStep(stepFileFromCaseName(caseName), caseName);
 
@@ -196,7 +199,7 @@ TEST_F(MesherTest, conductorAndOuterDielectric) {
     assertPhysicalGroups(expectedNames, {1, 1, 1, 2, 1});
 }
 
-TEST_F(MesherTest, realisticCaseWithDielectricsFDTDCell) {
+TEST_F(MesherTest, realistic_case_with_dielectrics_fdtd_cell) {
     const std::string caseName = "realistic_case_with_dielectrics_fdtd_cell";
     auto opts = Mesher::DEFAULT_MESHING_OPTIONS;
     opts["Mesh.ElementOrder"] = 1;
@@ -213,7 +216,7 @@ TEST_F(MesherTest, realisticCaseWithDielectricsFDTDCell) {
     assertPhysicalGroups(expectedNames);
 }
 
-TEST_F(MesherTest, lansink2024SingleWireMultipolar) {
+TEST_F(MesherTest, lansink2024_single_wire_multipolar) {
     const std::string caseName = "lansink2024_single_wire_multipolar";
     Mesher().meshFromStep(stepFileFromCaseName(caseName), caseName);
 
@@ -223,7 +226,7 @@ TEST_F(MesherTest, lansink2024SingleWireMultipolar) {
     assertPhysicalGroups(expectedNames, {1, 1, 1, 1, 1});
 }
 
-TEST_F(MesherTest, unshieldedSingleWire) {
+TEST_F(MesherTest, unshielded_single_wire) {
     const std::string caseName = "unshielded_single_wire";
     Mesher().meshFromStep(stepFileFromCaseName(caseName), caseName);
 
@@ -232,7 +235,7 @@ TEST_F(MesherTest, unshieldedSingleWire) {
     assertPhysicalGroups(expectedNames, {1, 1, 1, 1});
 }
 
-TEST_F(MesherTest, unshieldedNesting) {
+TEST_F(MesherTest, unshielded_nesting) {
     const std::string caseName = "UnshieldedNested";
     Mesher().meshFromStep(stepFileFromCaseName(caseName), caseName);
 
@@ -242,7 +245,7 @@ TEST_F(MesherTest, unshieldedNesting) {
     assertPhysicalGroups(expectedNames, {2, 1, 1, 1, 2, 1});
 }
 
-TEST_F(MesherTest, unshieldedTwoWiresWithTouchingDielectric) {
+TEST_F(MesherTest, unshielded_two_wires_with_touching_dielectric) {
     const std::string caseName = "unshielded_two_wires_with_touching_dielectric";
     Mesher().meshFromStep(stepFileFromCaseName(caseName), caseName);
 
@@ -253,7 +256,7 @@ TEST_F(MesherTest, unshieldedTwoWiresWithTouchingDielectric) {
     assertPhysicalGroups(expectedNames, {1, 1, 1, 1, 1, 1, 1});
 }
 
-TEST_F(MesherTest, areaExporterReturnsTrueValuesForDielectricUnshieldedPair) {
+TEST_F(MesherTest, area_exporter_returns_true_values_for_dielectric_unshielded_pair) {
     const std::string caseName = "DielectricUnshieldedPair";
     auto mappedElements = Mesher().meshFromStep(
         stepFileFromCaseName(caseName), caseName);

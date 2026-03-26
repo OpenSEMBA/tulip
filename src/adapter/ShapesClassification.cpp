@@ -283,22 +283,23 @@ Graph ShapesClassification::buildNestedGraph() {
 
     for (std::size_t i = 0; i < keys.size(); ++i) {
         for (std::size_t j = i + 1; j < keys.size(); ++j) {
-            const auto& keyA  = keys[i];
-            const auto& keyB  = keys[j];
+            const auto& keyA   = keys[i];
+            const auto& keyB   = keys[j];
             const auto& elemsA = elements.at(keyA);
             const auto& elemsB = elements.at(keyB);
 
-            gmsh::vectorpair outDimTags;
-            std::vector<gmsh::vectorpair> outMap;
-            gmsh::model::occ::intersect(elemsA, elemsB, outDimTags, outMap,
-                                        -1, false, false);
+            BoundingBox bbA = BoundingBox::getBoundingBoxFromGroup(elemsA);
+            BoundingBox bbB = BoundingBox::getBoundingBoxFromGroup(elemsB);
 
-            if (outMap.empty() || outMap[0].empty()) continue;
+            bool aInB = (bbA.xMin >= bbB.xMin && bbA.xMax <= bbB.xMax &&
+                         bbA.yMin >= bbB.yMin && bbA.yMax <= bbB.yMax);
+            bool bInA = (bbB.xMin >= bbA.xMin && bbB.xMax <= bbA.xMax &&
+                         bbB.yMin >= bbA.yMin && bbB.yMax <= bbA.yMax);
 
-            if (outMap[0] == elemsA) {
-                graph.addEdge(keyB, keyA);
-            } else if (outMap[0] == elemsB) {
-                graph.addEdge(keyA, keyB);
+            if (aInB && !bInA) {
+                graph.addEdge(keyB, keyA);  // B contains A
+            } else if (bInA && !aInB) {
+                graph.addEdge(keyA, keyB);  // A contains B
             }
         }
     }

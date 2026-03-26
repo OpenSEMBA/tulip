@@ -18,13 +18,13 @@ using EntityMap  = std::map<std::string, EntityList>;
 
 class ShapesClassification {
 public:
-    bool      isOpenCase;
+    bool isOpenCase;
     EntityMap pecs;
     EntityMap dielectrics;
     EntityMap open;
     EntityMap vacuum;
     EntityList allShapes;
-    Graph      nestedGraph;
+    Graph nestedGraph;
 
     ShapesClassification(const EntityList& shapes, const std::string& jsonFile);
 
