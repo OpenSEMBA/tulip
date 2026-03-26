@@ -43,10 +43,10 @@ jobs:
     - name: Install system packages
       run: bash ${{ env.PULMTLN_TOP_DIR }}/scripts/install-packages.sh
 
-    - name: Setup vcpkg (it does not install any package yet)
+    - name: Setup vcpkg
       uses: lukka/run-vcpkg@v11
       with:
-        vcpkgGitCommitId: 42bb0d9e8d4cf33485afb9ee2229150f79f61a1f
+        vcpkgGitCommitId: eed289f6e06a5e7a5c9e6a729671b0a56af7dd69
         vcpkgJsonGlob: 'pulmtln/vcpkg.json'
 
     - name: Configure PULMTLN
