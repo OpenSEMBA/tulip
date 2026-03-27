@@ -57,7 +57,7 @@ jobs:
 
     - name: Build TULIP
       run: |
-        cmake --build ${{ env.TULIP_TOP_DIR }}/build --parallel
+        cmake --build ${{ env.TULIP_TOP_DIR }}/build --parallel 2
 
     - name: Test TULIP
       run: |
