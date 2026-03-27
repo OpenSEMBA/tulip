@@ -35,7 +35,7 @@ public:
                                         const std::string& materialType,
                                         int entityDim = 2) const;
 
-    EntityMap getPecs(const EntityList& entityTags);
+    EntityMap getPECs(const EntityList& entityTags);
     EntityMap getDielectrics(const EntityList& entityTags);
     EntityMap getOpenBoundaries(const EntityList& entityTags);
 

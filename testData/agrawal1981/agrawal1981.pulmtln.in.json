@@ -10,7 +10,6 @@
       "Conductor_1":    {"type": "PEC", "tag": 4 },
       "Conductor_2":    {"type": "PEC", "tag": 3 },
       "Conductor_3":    {"type": "PEC", "tag": 2 },
-      "OpenBoundary_0": {"type": "OpenBoundary", "tag": 5},
       "Vacuum_0":       {"type": "Vacuum", "tag": 6},
       "Dielectric_1":   {"type": "Dielectric", "eps_r": 2.26, "tag": 9},
       "Dielectric_2":   {"type": "Dielectric", "eps_r": 2.26, "tag": 8},

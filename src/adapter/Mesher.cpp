@@ -17,10 +17,7 @@ const std::map<std::string, double> Mesher::DEFAULT_MESHING_OPTIONS = {
     {"Mesh.ElementOrder",           3.0},
     {"Mesh.ScalingFactor",          1e-3},
     {"Mesh.SurfaceFaces",           1.0},
-    {"Mesh.MeshSizeMax",            40.0},
-    {"General.DrawBoundingBoxes",   1.0},
-    {"General.Axes",                1.0},
-    {"Geometry.SurfaceType",        2.0},
+    {"Mesh.MeshSizeMax",            40.0}
 };
 
 std::pair<bool,

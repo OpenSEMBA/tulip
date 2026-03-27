@@ -25,7 +25,7 @@ ShapesClassification::ShapesClassification(const EntityList& shapes,
     f >> jsonData;
     crossSectionData_ = jsonData["CrossSection"];
 
-    pecs        = getPecs(shapes);
+    pecs        = getPECs(shapes);
     dielectrics = getDielectrics(shapes);
     open        = getOpenBoundaries(shapes);
     nestedGraph = buildNestedGraph();
@@ -60,7 +60,12 @@ EntityMap ShapesClassification::getEntitiesByMaterialType(
     int entityDim) const
 {
     auto materialNames = getGeometryNamesByMaterialType(materialType);
-    EntityMap entities;
+    // Collect all matching entities with their full GMSH name
+    struct EntityInfo {
+        std::string fullName;
+        EntityTag   tag;
+    };
+    std::map<std::string, std::vector<EntityInfo>> candidates;
     for (const auto& [dim, tag] : entityTags) {
         if (dim != entityDim) continue;
         std::string fullName;
@@ -70,12 +75,32 @@ EntityMap ShapesClassification::getEntitiesByMaterialType(
         if (std::find(materialNames.begin(), materialNames.end(), name) == materialNames.end()) {
             continue;
         }
-        entities[name].push_back({dim, tag});
+        candidates[name].push_back({fullName, {dim, tag}});
+    }
+
+    EntityMap entities;
+    for (const auto& [name, infos] : candidates) {
+        // Check if any entity has a deep path (assembly instance).
+        // Bare part definitions have paths like "Shapes/<name>" (1 slash).
+        std::string barePath = "Shapes/" + name;
+        bool hasDeepEntities = false;
+        for (const auto& info : infos) {
+            if (info.fullName != barePath) {
+                hasDeepEntities = true;
+                break;
+            }
+        }
+        for (const auto& info : infos) {
+            if (hasDeepEntities && info.fullName == barePath) {
+                continue;  // Skip bare part definition
+            }
+            entities[name].push_back(info.tag);
+        }
     }
     return entities;
 }
 
-EntityMap ShapesClassification::getPecs(const EntityList& entityTags) {
+EntityMap ShapesClassification::getPECs(const EntityList& entityTags) {
     return getEntitiesByMaterialType(entityTags, "PEC");
 }
 
@@ -109,17 +134,21 @@ bool ShapesClassification::isOpenProblem() const {
 }
 
 void ShapesClassification::removeConductorsFromDielectrics() {
-    auto conductorsOnlyGraph = getConductorOnlyGraph();
-    auto conductorRoots = conductorsOnlyGraph.roots();
+    auto connections = nestedGraph.getConnections();
 
     for (auto& [dielName, dielSurfs] : dielectrics) {
         EntityList pecSurfs;
-        for (const auto& [pecName, surf] : pecs) {
-            bool isRoot = std::find(conductorRoots.begin(), conductorRoots.end(), pecName)
-                          != conductorRoots.end();
-            if (isRoot && !isOpenCase) continue;
-            pecSurfs.insert(pecSurfs.end(), surf.begin(), surf.end());
+        auto it = connections.find(dielName);
+        if (it != connections.end()) {
+            for (const auto& childName : it->second) {
+                if (pecs.count(childName)) {
+                    const auto& surf = pecs.at(childName);
+                    pecSurfs.insert(pecSurfs.end(), surf.begin(), surf.end());
+                }
+            }
         }
+        if (pecSurfs.empty()) continue;
+
         gmsh::vectorpair outDimTags;
         std::vector<gmsh::vectorpair> outMap;
         gmsh::model::occ::cut(dielSurfs, pecSurfs, outDimTags, outMap, -1, true, false);
