@@ -19,7 +19,7 @@ int main(int argc, char* argv[])
 	);
 	desc.add_options()
 		("help,h", "this help message")
-		("input,i", po::value(&inputFilename), "input filename .pulmtln.json")
+		("input,i", po::value(&inputFilename), "input filename .tulip.json")
 	;
 
 	po::variables_map vm;

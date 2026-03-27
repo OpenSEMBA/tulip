@@ -4,7 +4,7 @@
 
 #include "constants.h"
 #include "Driver.h"
-#include "ElectrostaticSolver.h"
+#include "Solver.h"
 
 using namespace pulmtln;
 
@@ -139,7 +139,7 @@ TEST_F(DriverTest, two_wires_shielded_floating_potentials)
 		};
 
 		SolverOptions solverOpts;
-		ElectrostaticSolver s{ m, p, solverOpts };
+		Solver s{ m, p, solverOpts };
 		s.Solve();
 
 		// For debugging.
@@ -179,7 +179,7 @@ TEST_F(DriverTest, two_wires_open_floating_potentials)
 		};
 		p.openBoundaries = { 3 };
 
-		ElectrostaticSolver s{ m, p };
+		Solver s{ m, p };
 		s.Solve();
 
 		// For debugging.
@@ -347,7 +347,7 @@ TEST_F(DriverTest, three_wires_ribbon_floating_potentials)
 		};
 
 		SolverOptions solverOpts;
-		ElectrostaticSolver s{ m, p, solverOpts };
+		Solver s{ m, p, solverOpts };
 		s.Solve();
 
 		// For debugging.
@@ -475,7 +475,7 @@ TEST_F(DriverTest, lansink2024_floating_potentials)
 	};
 	p.openBoundaries = { 3 };
 
-	ElectrostaticSolver s{ m, p };
+	Solver s{ m, p };
 	s.Solve();
 
 	auto Q0 = s.getChargeInBoundary(1);

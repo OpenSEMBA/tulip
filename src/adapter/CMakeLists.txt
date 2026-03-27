@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.21)
 
-set(ADAPTER_LIB "step2gmsh-adapter")
+set(ADAPTER_LIB "tulip-adapter")
 message(STATUS "Creating build system for ${ADAPTER_LIB}")
 
 find_package(gmsh CONFIG REQUIRED)

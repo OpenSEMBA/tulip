@@ -3,14 +3,14 @@
 #include "SolverOptions.h"
 #include "Model.h"
 #include "Results.h"
-#include "ElectrostaticSolver.h"
+#include "Solver.h"
 
 #include <vector>
 
 namespace pulmtln {
 
 struct SolvedProblem {
-    std::unique_ptr<ElectrostaticSolver> solver;
+    std::unique_ptr<Solver> solver;
     std::vector<SolverSolution> solutions;
 };
 
@@ -51,7 +51,7 @@ private:
     PULParameters buildPULParametersForModel();
     PULParameters buildGeneralizedLCMatrices();
     double getInnerRegionAveragePotential(
-        const ElectrostaticSolver& s,
+        const Solver& s,
         bool includeConductors);
     std::map<MaterialId, FieldReconstruction> getFieldParameters(
         bool ignoreDielectrics);

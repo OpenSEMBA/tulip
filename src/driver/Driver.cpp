@@ -1,6 +1,6 @@
 #include "Driver.h"
 
-#include "ElectrostaticSolver.h"
+#include "Solver.h"
 #include "Parser.h"
 #include "multipolarExpansion.h"
 
@@ -31,7 +31,7 @@ std::vector<int> getAttributesInMap(const NameToAttrMap& m)
 
 void exportFieldSolutions(
 	const DriverOptions& opts,
-	ElectrostaticSolver& s,
+	Solver& s,
 	const std::string name,
 	bool ignoreDielectrics)
 {
@@ -144,9 +144,9 @@ SolvedProblem Driver::solveForAllConductors(bool ignoreDielectrics)
 	SolvedProblem res;
 	const auto baseParameters{ 
 		buildSolverInputsFromModel(model_, ignoreDielectrics) };
-	res.solver = std::make_unique<ElectrostaticSolver>(
+	res.solver = std::make_unique<Solver>(
 		*model_.getMesh(), baseParameters, opts_.solverOptions);
-	ElectrostaticSolver& s = *res.solver.get();
+	Solver& s = *res.solver.get();
 
 	auto conductors{ model_.getMaterials().buildIdToAttrMapFor<PEC>() };
 	res.solutions.resize(conductors.size());
@@ -433,7 +433,7 @@ std::list<std::string> listMaterialsInInnerRegion(
 
 
 double Driver::getInnerRegionAveragePotential(
-	const ElectrostaticSolver& s,
+	const Solver& s,
 	bool includeConductors)
 {
 
@@ -472,7 +472,7 @@ std::map<MaterialId, FieldReconstruction> Driver::getFieldParameters(
 		sP = &electric_;
 	}
 
-	ElectrostaticSolver& s = *sP->solver;
+	Solver& s = *sP->solver;
 
 	const auto conductors{ model_.getMaterials().buildIdToAttrMapFor<PEC>() };
 	for (const auto& [condI, bdrAttI] : conductors) {

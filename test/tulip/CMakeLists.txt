@@ -5,7 +5,7 @@ message(STATUS "Creating build system for ${PROJECT_NAME}_tests")
 find_package(GTest CONFIG REQUIRED)
 
 add_executable(${PROJECT_NAME}_tests
-    "ElectrostaticSolverTest.cpp"
+    "SolverTest.cpp"
     "mfemTest.cpp"
     "DriverTest.cpp"
     "ParserTest.cpp"

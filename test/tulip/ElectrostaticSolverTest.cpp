@@ -3,7 +3,7 @@
 #include <functional>
 
 #include "TestUtils.h"
-#include "ElectrostaticSolver.h"
+#include "Solver.h"
 #include "Parser.h"
 #include "Driver.h"
 
@@ -32,17 +32,17 @@ void wireField(const Vector& pos, Vector& res)
 	res /= (norm * 2.0 * M_PI);
 }
 
-void exportSolution(ElectrostaticSolver& s, const std::string& caseName)
+void exportSolution(Solver& s, const std::string& caseName)
 {
 	ParaViewDataCollection paraview_dc{ outFolder() + caseName, s.getMesh() };
 	s.writeParaViewFields(paraview_dc);
 }
 
-class ElectrostaticSolverTest : public ::testing::Test {
+class SolverTest : public ::testing::Test {
 };
 
 
-TEST_F(ElectrostaticSolverTest, parallel_plates)
+TEST_F(SolverTest, parallel_plates)
 {
 	//    0 V
 	//  +-----+
@@ -61,7 +61,7 @@ TEST_F(ElectrostaticSolverTest, parallel_plates)
 		} 
 	};
 
-	ElectrostaticSolver s{m, params};
+	Solver s{m, params};
 	s.Solve();
 
 	exportSolution(s, "parallel_plates");
@@ -85,7 +85,7 @@ TEST_F(ElectrostaticSolverTest, parallel_plates)
 
 }
 
-TEST_F(ElectrostaticSolverTest, parallel_plates_energy)
+TEST_F(SolverTest, parallel_plates_energy)
 {
 	//    0 V
 	//  +-----+
@@ -104,7 +104,7 @@ TEST_F(ElectrostaticSolverTest, parallel_plates_energy)
 		}
 	};
 
-	ElectrostaticSolver s{ m, params };
+	Solver s{ m, params };
 	s.Solve();
 
 	// Expected energy formula (1/2) * epsilon_0 * E^2 * A.
@@ -116,7 +116,7 @@ TEST_F(ElectrostaticSolverTest, parallel_plates_energy)
 
 }
 
-TEST_F(ElectrostaticSolverTest, parallel_plates_neumann)
+TEST_F(SolverTest, parallel_plates_neumann)
 {
 	//    Q = -1 
 	//  +-----+
@@ -135,7 +135,7 @@ TEST_F(ElectrostaticSolverTest, parallel_plates_neumann)
 		}
 	};
 
-	ElectrostaticSolver s{ m, params };
+	Solver s{ m, params };
 	s.Solve();
 
 	exportSolution(s, "parallel_plates_neumann");
@@ -152,7 +152,7 @@ TEST_F(ElectrostaticSolverTest, parallel_plates_neumann)
 
 }
 
-TEST_F(ElectrostaticSolverTest, parallel_plates_epsr2)
+TEST_F(SolverTest, parallel_plates_epsr2)
 {
 	//    0 V
 	//  +-----+
@@ -170,7 +170,7 @@ TEST_F(ElectrostaticSolverTest, parallel_plates_epsr2)
 	} };
 	p.domainPermittivities = {{ {1, 2.0} }};
 
-	ElectrostaticSolver s{m, p, SolverOptions{}};
+	Solver s{m, p, SolverOptions{}};
 	s.Solve();
 
 	exportSolution(s, "Parallel_plates_epsr2");
@@ -179,7 +179,7 @@ TEST_F(ElectrostaticSolverTest, parallel_plates_epsr2)
 	EXPECT_LE(relError(2.0, s.getChargeInBoundary(1)), tol);
 }
 
-TEST_F(ElectrostaticSolverTest, two_materials)
+TEST_F(SolverTest, two_materials)
 {
 	//         0 V,   Bdr 3
 	//       +-------------+
@@ -205,7 +205,7 @@ TEST_F(ElectrostaticSolverTest, two_materials)
 	} };
 	p.domainPermittivities = { {{2, 4.0}} };
 
-	ElectrostaticSolver s{m, p};
+	Solver s{m, p};
 	s.Solve();
 
 	exportSolution(s, "two_materials");
@@ -220,7 +220,7 @@ TEST_F(ElectrostaticSolverTest, two_materials)
 
 }
 
-TEST_F(ElectrostaticSolverTest, empty_coax_charge_in_boundaries)
+TEST_F(SolverTest, empty_coax_charge_in_boundaries)
 {
 	// Coaxial case.
 	const std::string CASE{ "empty_coax" };
@@ -233,7 +233,7 @@ TEST_F(ElectrostaticSolverTest, empty_coax_charge_in_boundaries)
 		{2, V},   // inner boundary
 	}};
 	
-	ElectrostaticSolver s{m, p};
+	Solver s{m, p};
 	s.Solve();
 
 	exportSolution(s, getCaseName());
@@ -248,7 +248,7 @@ TEST_F(ElectrostaticSolverTest, empty_coax_charge_in_boundaries)
 	EXPECT_LE(relError(-QExpected, s.getChargeInBoundary(1)), rTol); // Boundary 1 is the external.
 }
 
-TEST_F(ElectrostaticSolverTest, empty_coax_average_potential)
+TEST_F(SolverTest, empty_coax_average_potential)
 {
 	// Coaxial case.
 	const std::string CASE{ "empty_coax" };
@@ -260,7 +260,7 @@ TEST_F(ElectrostaticSolverTest, empty_coax_average_potential)
 	} };
 	p.openBoundaries = { 1 };
 
-	ElectrostaticSolver s{ m, p };
+	Solver s{ m, p };
 	s.Solve();
 
 	exportSolution(s, getCaseName());
@@ -281,7 +281,7 @@ TEST_F(ElectrostaticSolverTest, empty_coax_average_potential)
 }
 
 
-TEST_F(ElectrostaticSolverTest, empty_coax_neumann)
+TEST_F(SolverTest, empty_coax_neumann)
 {
 	// Coaxial case.
 	const std::string CASE{ "empty_coax" };
@@ -296,7 +296,7 @@ TEST_F(ElectrostaticSolverTest, empty_coax_neumann)
 		{1, 0.0},   // Outer boundary. 
 	} };
 
-	ElectrostaticSolver s{ m, p };
+	Solver s{ m, p };
 	s.Solve();
 
 	exportSolution(s, getCaseName());
@@ -306,7 +306,7 @@ TEST_F(ElectrostaticSolverTest, empty_coax_neumann)
 	EXPECT_LE(relError(-1.0, s.getChargeInBoundary(1)), rTol); // Boundary 1 is the external.
 }
 
-TEST_F(ElectrostaticSolverTest, empty_coax_neumann_quadrupole)
+TEST_F(SolverTest, empty_coax_neumann_quadrupole)
 {
 	// Coaxial case.
 	const std::string CASE{ "empty_coax" };
@@ -321,7 +321,7 @@ TEST_F(ElectrostaticSolverTest, empty_coax_neumann_quadrupole)
 	};
 	Vector origin({ 0.0, 0.0 });
 	
-	ElectrostaticSolver s{ m, p };
+	Solver s{ m, p };
 
 	// Sets multipolar expansion over internal boundary.
 	{
@@ -350,7 +350,7 @@ TEST_F(ElectrostaticSolverTest, empty_coax_neumann_quadrupole)
 	EXPECT_NEAR(0.0, s.getChargeInBoundary(1), aTol); // Boundary 1 is the external.
 }
 
-TEST_F(ElectrostaticSolverTest, wire_in_open_region)
+TEST_F(SolverTest, wire_in_open_region)
 {
 	// Coaxial case.
 	const std::string CASE{ "empty_coax" };
@@ -362,7 +362,7 @@ TEST_F(ElectrostaticSolverTest, wire_in_open_region)
 	} };
 	p.openBoundaries = { 1 }; // Outer boundary.
 
-	ElectrostaticSolver s{ m, p };
+	Solver s{ m, p };
 	s.Solve();
 
 	exportSolution(s, getCaseName());
@@ -391,7 +391,7 @@ TEST_F(ElectrostaticSolverTest, wire_in_open_region)
 
 }
 
-TEST_F(ElectrostaticSolverTest, two_wires_coax)
+TEST_F(SolverTest, two_wires_coax)
 {
 	const std::string CASE{ "two_wires_coax" };
 	auto m{ Mesh::LoadFromFile(casesFolder() + CASE + "/" + CASE + ".msh") };
@@ -404,7 +404,7 @@ TEST_F(ElectrostaticSolverTest, two_wires_coax)
 		{3, 0.0}, // Conductor 2 bdr.
 	} };
 
-	ElectrostaticSolver s{m, p};
+	Solver s{m, p};
 	s.Solve();
 
 	exportSolution(s, getCaseName());
@@ -418,7 +418,7 @@ TEST_F(ElectrostaticSolverTest, two_wires_coax)
 	EXPECT_LE(relError(C12Expected, s.getChargeInBoundary(3) / V), rTol);
 }
 
-TEST_F(ElectrostaticSolverTest, two_wires_open_capacitance)
+TEST_F(SolverTest, two_wires_open_capacitance)
 {
 	const std::string CASE{ "two_wires_open" };
 	auto m{ Mesh::LoadFromFile(casesFolder() + CASE + "/" + CASE + ".msh") };
@@ -431,7 +431,7 @@ TEST_F(ElectrostaticSolverTest, two_wires_open_capacitance)
 	} };
 	p.openBoundaries = { 3 };
 
-	ElectrostaticSolver s{ m, p };
+	Solver s{ m, p };
 	s.Solve();
 
 	exportSolution(s, getCaseName());
@@ -457,7 +457,7 @@ TEST_F(ElectrostaticSolverTest, two_wires_open_capacitance)
 	EXPECT_LE(relError(CExpected, CComputedEnergy), rTol);
 }
 
-TEST_F(ElectrostaticSolverTest, two_wires_open_monopolar_moment)
+TEST_F(SolverTest, two_wires_open_monopolar_moment)
 {
 	const std::string CASE{ "two_wires_open" };
 	auto m{ Mesh::LoadFromFile(casesFolder() + CASE + "/" + CASE + ".msh") };
@@ -469,7 +469,7 @@ TEST_F(ElectrostaticSolverTest, two_wires_open_monopolar_moment)
 		{2,  1.0}, // Conductor 2 bdr.
 	} };
 
-	ElectrostaticSolver s{ m, p };
+	Solver s{ m, p };
 	s.Solve();
 
 	auto Q1{ s.getChargeInBoundary(1) };
@@ -485,7 +485,7 @@ TEST_F(ElectrostaticSolverTest, two_wires_open_monopolar_moment)
 	exportSolution(s, getCaseName());
 }
 
-TEST_F(ElectrostaticSolverTest, two_wires_open_boundary_charges)
+TEST_F(SolverTest, two_wires_open_boundary_charges)
 {
 	const std::string CASE{ "two_wires_open" };
 	auto m{ Mesh::LoadFromFile(casesFolder() + CASE + "/" + CASE + ".msh") };
@@ -498,7 +498,7 @@ TEST_F(ElectrostaticSolverTest, two_wires_open_boundary_charges)
 	} };
 	p.openBoundaries = { 3 };
 
-	ElectrostaticSolver s{ m, p };
+	Solver s{ m, p };
 	s.Solve();
 
 	exportSolution(s, getTestCaseName());
@@ -522,7 +522,7 @@ TEST_F(ElectrostaticSolverTest, two_wires_open_boundary_charges)
 	EXPECT_LE(relError(CFromEnergy, CFromCharge), 1e-3);
 }
 
-TEST_F(ElectrostaticSolverTest, two_wires_open_multipolarCoefficients_with_same_potential)
+TEST_F(SolverTest, two_wires_open_multipolarCoefficients_with_same_potential)
 {
 	const std::string CASE{ "two_wires_open" };
 	auto m{ Mesh::LoadFromFile(casesFolder() + CASE + "/" + CASE + ".msh") };
@@ -535,7 +535,7 @@ TEST_F(ElectrostaticSolverTest, two_wires_open_multipolarCoefficients_with_same_
 		{2,  1.0}, // Conductor 2 bdr.
 	} };
 
-	ElectrostaticSolver s{ m, p };
+	Solver s{ m, p };
 	s.Solve();
 		
 	auto Q1 = s.getChargeInBoundary(1);
@@ -559,7 +559,7 @@ TEST_F(ElectrostaticSolverTest, two_wires_open_multipolarCoefficients_with_same_
 	EXPECT_NEAR(0.0, ab[2].second, aTol);
 }
 
-TEST_F(ElectrostaticSolverTest, two_wires_open_center_of_charge_with_same_potential)
+TEST_F(SolverTest, two_wires_open_center_of_charge_with_same_potential)
 {
 	const std::string CASE{ "two_wires_open" };
 	auto m{ Mesh::LoadFromFile(casesFolder() + CASE + "/" + CASE + ".msh") };
@@ -571,7 +571,7 @@ TEST_F(ElectrostaticSolverTest, two_wires_open_center_of_charge_with_same_potent
 		{2,  1.0}, // Conductor 2 bdr.
 	} };
 
-	ElectrostaticSolver s{ m, p };
+	Solver s{ m, p };
 	s.Solve();
 	auto centerOfCharge{ s.getCenterOfCharge() };
 	EXPECT_NEAR(0.0, centerOfCharge[0], 5e-6);
@@ -580,7 +580,7 @@ TEST_F(ElectrostaticSolverTest, two_wires_open_center_of_charge_with_same_potent
 	exportSolution(s, getCaseName());
 }
 
-TEST_F(ElectrostaticSolverTest, two_wires_open_center_of_charge_with_floating_potential)
+TEST_F(SolverTest, two_wires_open_center_of_charge_with_floating_potential)
 {
 	const std::string CASE{ "two_wires_open" };
 	auto m{ Mesh::LoadFromFile(casesFolder() + CASE + "/" + CASE + ".msh") };
@@ -593,7 +593,7 @@ TEST_F(ElectrostaticSolverTest, two_wires_open_center_of_charge_with_floating_po
 		{2,  0.48228164}, // Conductor 2, floating, zero charge.
 	} };
 
-	ElectrostaticSolver s{ m, p };
+	Solver s{ m, p };
 	s.Solve();
 
 	ASSERT_NEAR(0.0, s.getChargeInBoundary(2), 5e-5);
@@ -605,7 +605,7 @@ TEST_F(ElectrostaticSolverTest, two_wires_open_center_of_charge_with_floating_po
 	exportSolution(s, getCaseName());
 }
 
-TEST_F(ElectrostaticSolverTest, three_wires_ribbon_zero_net_charge)
+TEST_F(SolverTest, three_wires_ribbon_zero_net_charge)
 {
 	// Three wires ribbon open problem. 
 	// Comparison with Clayton Paul's book:  
@@ -625,7 +625,7 @@ TEST_F(ElectrostaticSolverTest, three_wires_ribbon_zero_net_charge)
 	};
 
 	SolverOptions solverOpts;
-	ElectrostaticSolver s{ m, p, solverOpts };
+	Solver s{ m, p, solverOpts };
 	s.Solve();
 
 	exportSolution(s, getCaseName());
@@ -637,7 +637,7 @@ TEST_F(ElectrostaticSolverTest, three_wires_ribbon_zero_net_charge)
 	EXPECT_NEAR(0.0, Q0+Q1+Q2+Qb, 1e-4);
 }
 
-TEST_F(ElectrostaticSolverTest, lansink2024_fdtd_in_cell_C00_with_floating)
+TEST_F(SolverTest, lansink2024_fdtd_in_cell_C00_with_floating)
 {
 	// From:
 	// Rotgerink, J.L. et al. (2024, September).
@@ -660,7 +660,7 @@ TEST_F(ElectrostaticSolverTest, lansink2024_fdtd_in_cell_C00_with_floating)
 	};
 	p.openBoundaries = { 3 };
 
-	ElectrostaticSolver s{ *model.getMesh(), p };
+	Solver s{ *model.getMesh(), p };
 	s.Solve();
 
 	auto avVVacuum = s.getAveragePotentialInDomain(5);
@@ -692,7 +692,7 @@ TEST_F(ElectrostaticSolverTest, lansink2024_fdtd_in_cell_C00_with_floating)
 	EXPECT_NEAR(0.0, Q1, 0.005);
 }
 
-TEST_F(ElectrostaticSolverTest, lansink2024_fdtd_in_cell_C01_with_floating)
+TEST_F(SolverTest, lansink2024_fdtd_in_cell_C01_with_floating)
 {
 	// From:
 	// Rotgerink, J.L. et al. (2024, September).
@@ -715,7 +715,7 @@ TEST_F(ElectrostaticSolverTest, lansink2024_fdtd_in_cell_C01_with_floating)
 	};
 	p.openBoundaries = { 3 };
 
-	ElectrostaticSolver s{ *model.getMesh(), p };
+	Solver s{ *model.getMesh(), p };
 	s.Solve();
 
 	auto avVVacuum = s.getAveragePotentialInDomain(5);
@@ -747,7 +747,7 @@ TEST_F(ElectrostaticSolverTest, lansink2024_fdtd_in_cell_C01_with_floating)
 	EXPECT_NEAR(0.0, Q0, 0.005);
 }
 
-TEST_F(ElectrostaticSolverTest, lansink2024_single_wire_L00_with_floating)
+TEST_F(SolverTest, lansink2024_single_wire_L00_with_floating)
 {
 	// From:
 	// Rotgerink, J.L. et al. (2024, September).
@@ -769,7 +769,7 @@ TEST_F(ElectrostaticSolverTest, lansink2024_single_wire_L00_with_floating)
 	};
 	p.openBoundaries = { 2 };
 
-	ElectrostaticSolver s{ *model.getMesh(), p };
+	Solver s{ *model.getMesh(), p };
 	s.Solve();
 
 	auto avVVacuum = s.getAveragePotentialInDomain(4);
@@ -800,7 +800,7 @@ TEST_F(ElectrostaticSolverTest, lansink2024_single_wire_L00_with_floating)
 	EXPECT_NEAR(0.0, relError(expectedL00, computedL00), rTol);
 }
 
-TEST_F(ElectrostaticSolverTest, lansink2024_small_one_centered_bem_comparison)
+TEST_F(SolverTest, lansink2024_small_one_centered_bem_comparison)
 {
 	// Case from:
 	// Rotgerink, J.L. et al. (2024, September).
@@ -826,7 +826,7 @@ TEST_F(ElectrostaticSolverTest, lansink2024_small_one_centered_bem_comparison)
 	};
 	p.openBoundaries = { 3 };
 
-	ElectrostaticSolver s{ *model.getMesh(), p };
+	Solver s{ *model.getMesh(), p };
 	s.Solve();
 	
 
@@ -871,7 +871,7 @@ TEST_F(ElectrostaticSolverTest, lansink2024_small_one_centered_bem_comparison)
 
 	// Computes and exports multipolar expansion with center of charge.
 	{
-		ElectrostaticSolver s{ *model.getMesh(), p };
+		Solver s{ *model.getMesh(), p };
 		s.Solve();
 		auto centerOfCharge = s.getCenterOfCharge();
 		auto mCoeff = s.getMultipolarCoefficients(order);

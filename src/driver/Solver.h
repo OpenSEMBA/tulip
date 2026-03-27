@@ -21,13 +21,13 @@ struct SolverSolution {
     std::unique_ptr<GridFunction> phi, e, d;
 };
 
-class ElectrostaticSolver {
+class Solver {
 public:
-    ElectrostaticSolver(
+    Solver(
         Mesh& mesh,
         const SolverInputs&,
         const SolverOptions = SolverOptions{});
-    ~ElectrostaticSolver();
+    ~Solver();
 
     void Solve();
     void setDirichletConditions(const AttrToValueMap& dbcs);
