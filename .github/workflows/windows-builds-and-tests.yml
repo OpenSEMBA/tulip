@@ -47,7 +47,7 @@ jobs:
     - name: Setup vcpkg (it does not install any package yet)
       uses: lukka/run-vcpkg@v11
       with:
-        vcpkgGitCommitId: 120deac3062162151622ca4860575a33844ba10b
+        vcpkgGitCommitId: eed289f6e06a5e7a5c9e6a729671b0a56af7dd69
         vcpkgJsonGlob: 'pulmtln/vcpkg.json'
 
     - name: cache MFEM 

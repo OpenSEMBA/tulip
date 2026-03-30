@@ -1,5 +1,7 @@
 #include <gtest/gtest.h>
 
+#include <algorithm>
+
 #include "Graph.h"
 
 using namespace step2gmsh;
