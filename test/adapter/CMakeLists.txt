@@ -16,7 +16,7 @@ target_include_directories(adapter_tests PRIVATE
 )
 
 target_link_libraries(adapter_tests
-    step2gmsh-adapter
+    tulip-adapter
     GTest::gtest
     GTest::gtest_main
 )

@@ -1,0 +1,20 @@
+{
+    "format": "Tulip input file",
+    "comments": "Single wire in an undefined open domain.",
+    "materials": [
+        {
+            "name": "PEC",
+            "type": "conductor",
+            "id": 1
+        }
+    ],
+    "model": {
+        "layers": [
+            {
+                "name": "Wire_A",
+                "id": 1,
+                "materialId": 1
+            }
+        ]
+    }
+}

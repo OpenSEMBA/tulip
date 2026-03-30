@@ -12,7 +12,7 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
-set(PROJECT_NAME "pulmtln")
+set(PROJECT_NAME "tulip")
 
 project(${PROJECT_NAME})
 
@@ -26,11 +26,9 @@ else ()
 	include_directories(${MFEM_INCLUDE_DIRS})
 endif()
 
-include_directories(src/tulip)
-
-add_subdirectory(src/tulip)
 add_subdirectory(src/adapter)
+add_subdirectory(src/driver)
 
 enable_testing()
-add_subdirectory(test/tulip)
 add_subdirectory(test/adapter)
+add_subdirectory(test/driver)
