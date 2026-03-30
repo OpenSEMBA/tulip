@@ -34,5 +34,3 @@ add_subdirectory(src/adapter)
 enable_testing()
 add_subdirectory(test/tulip)
 add_subdirectory(test/adapter)
-
-add_test(${PROJECT_NAME} ${CMAKE_BINARY_DIR}/bin/${PROJECT_NAME}_tests)

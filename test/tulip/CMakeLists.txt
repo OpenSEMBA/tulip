@@ -26,3 +26,9 @@ target_link_libraries(${PROJECT_NAME}_tests
     GTest::gtest_main
 )
 
+add_test(
+    NAME ${PROJECT_NAME}_tests
+    COMMAND ${PROJECT_NAME}_tests
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+)
+

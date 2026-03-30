@@ -83,3 +83,5 @@ vcpkg_installed/
 *.vtk
 *.areas.json
 build
+Testing/Temporary/CTestCostData.txt
+Testing/Temporary/LastTest.log
