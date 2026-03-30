@@ -16,14 +16,6 @@ TEST_F(ModelTest, empty_coax_is_closed)
 	);
 }
 
-TEST_F(ModelTest, agrawal1981_is_semiopen)
-{
-	EXPECT_EQ(
-		Parser{ inputCase("agrawal1981") }.readModel().determineOpenness(),
-		Model::Openness::semiopen
-	);
-}
-
 TEST_F(ModelTest, three_wires_ribbon_is_open)
 {
 	EXPECT_EQ(

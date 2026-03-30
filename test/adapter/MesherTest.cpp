@@ -260,9 +260,9 @@ TEST_F(MesherTest, lansink2024_single_wire_multipolar)
     assertPhysicalGroups(expectedNames, {1, 1, 1, 1, 1});
 }
 
-TEST_F(MesherTest, unshielded_single_wire)
+TEST_F(MesherTest, single_wire)
 {
-    const std::string caseName = "unshielded_single_wire";
+    const std::string caseName = "single_wire";
     Mesher().meshFromStep(stepFileFromCaseName(caseName), caseName);
 
     const std::vector<std::string> expectedNames = {
@@ -281,9 +281,9 @@ TEST_F(MesherTest, unshielded_nesting)
     assertPhysicalGroups(expectedNames, {2, 1, 1, 1, 2, 1});
 }
 
-TEST_F(MesherTest, unshielded_two_wires_with_touching_dielectric)
+TEST_F(MesherTest, two_wires_with_touching_dielectric)
 {
-    const std::string caseName = "unshielded_two_wires_with_touching_dielectric";
+    const std::string caseName = "two_wires_with_touching_dielectric";
     Mesher().meshFromStep(stepFileFromCaseName(caseName), caseName);
 
     const std::vector<std::string> expectedNames = {

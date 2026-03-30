@@ -36,7 +36,6 @@ class Model {
 public:
 	enum class Openness {
 		open,     // The most external boundary is open.
-		semiopen, // The most external boundaries are open and a conductor.
 		closed    // The most external boundary is a conductor.
 	};
 

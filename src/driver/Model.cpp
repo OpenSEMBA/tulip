@@ -93,18 +93,11 @@ std::size_t Model::numberOfConductors() const
 
 Model::Openness Model::determineOpenness() const
 {
-	assert(materials_.openBoundaries.size() <= 1);
-
 	if (materials_.openBoundaries.size() == 0) {
 		return Openness::closed;
+	} else {
+		return Openness::open;
 	}
-
-	for (const auto& m : materials_.openBoundaries) {
-		if (!elementsFormOpenLoops(getElementsWithAttribute(*mesh_, m.attribute))) {
-			return Openness::open;
-		}
-	}
-	return Openness::semiopen;
 }
 
 double Model::getAreaOfMaterial(const std::string& materialName) const

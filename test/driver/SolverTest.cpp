@@ -32,9 +32,9 @@ void wireField(const Vector& pos, Vector& res)
 	res /= (norm * 2.0 * M_PI);
 }
 
-void exportSolution(Solver& s, const std::string& caseName)
+void exportSolution(tulip::Solver& s, const std::string& caseName)
 {
-	ParaViewDataCollection paraview_dc{ outFolder() + caseName, s.getMesh() };
+	ParaViewDataCollection paraview_dc(outFolder() + caseName, s.getMesh());
 	s.writeParaViewFields(paraview_dc);
 }
 
@@ -61,7 +61,7 @@ TEST_F(SolverTest, parallel_plates)
 		} 
 	};
 
-	Solver s{m, params};
+	tulip::Solver s{m, params};
 	s.Solve();
 
 	exportSolution(s, "parallel_plates");
@@ -104,7 +104,7 @@ TEST_F(SolverTest, parallel_plates_energy)
 		}
 	};
 
-	Solver s{ m, params };
+	tulip::Solver s{ m, params };
 	s.Solve();
 
 	// Expected energy formula (1/2) * epsilon_0 * E^2 * A.
@@ -135,7 +135,7 @@ TEST_F(SolverTest, parallel_plates_neumann)
 		}
 	};
 
-	Solver s{ m, params };
+	tulip::Solver s{ m, params };
 	s.Solve();
 
 	exportSolution(s, "parallel_plates_neumann");
@@ -170,7 +170,7 @@ TEST_F(SolverTest, parallel_plates_epsr2)
 	} };
 	p.domainPermittivities = {{ {1, 2.0} }};
 
-	Solver s{m, p, SolverOptions{}};
+	tulip::Solver s{m, p, SolverOptions{}};
 	s.Solve();
 
 	exportSolution(s, "Parallel_plates_epsr2");
@@ -205,7 +205,7 @@ TEST_F(SolverTest, two_materials)
 	} };
 	p.domainPermittivities = { {{2, 4.0}} };
 
-	Solver s{m, p};
+	tulip::Solver s{m, p};
 	s.Solve();
 
 	exportSolution(s, "two_materials");
@@ -233,7 +233,7 @@ TEST_F(SolverTest, empty_coax_charge_in_boundaries)
 		{2, V},   // inner boundary
 	}};
 	
-	Solver s{m, p};
+	tulip::Solver s{m, p};
 	s.Solve();
 
 	exportSolution(s, getCaseName());
@@ -260,7 +260,7 @@ TEST_F(SolverTest, empty_coax_average_potential)
 	} };
 	p.openBoundaries = { 1 };
 
-	Solver s{ m, p };
+	tulip::Solver s{ m, p };
 	s.Solve();
 
 	exportSolution(s, getCaseName());
@@ -296,7 +296,7 @@ TEST_F(SolverTest, empty_coax_neumann)
 		{1, 0.0},   // Outer boundary. 
 	} };
 
-	Solver s{ m, p };
+	tulip::Solver s{ m, p };
 	s.Solve();
 
 	exportSolution(s, getCaseName());
@@ -321,7 +321,7 @@ TEST_F(SolverTest, empty_coax_neumann_quadrupole)
 	};
 	Vector origin({ 0.0, 0.0 });
 	
-	Solver s{ m, p };
+	tulip::Solver s{ m, p };
 
 	// Sets multipolar expansion over internal boundary.
 	{
@@ -362,7 +362,7 @@ TEST_F(SolverTest, wire_in_open_region)
 	} };
 	p.openBoundaries = { 1 }; // Outer boundary.
 
-	Solver s{ m, p };
+	tulip::Solver s{ m, p };
 	s.Solve();
 
 	exportSolution(s, getCaseName());
@@ -404,7 +404,7 @@ TEST_F(SolverTest, two_wires_coax)
 		{3, 0.0}, // Conductor 2 bdr.
 	} };
 
-	Solver s{m, p};
+	tulip::Solver s{m, p};
 	s.Solve();
 
 	exportSolution(s, getCaseName());
@@ -431,7 +431,7 @@ TEST_F(SolverTest, two_wires_open_capacitance)
 	} };
 	p.openBoundaries = { 3 };
 
-	Solver s{ m, p };
+	tulip::Solver s{ m, p };
 	s.Solve();
 
 	exportSolution(s, getCaseName());
@@ -469,7 +469,7 @@ TEST_F(SolverTest, two_wires_open_monopolar_moment)
 		{2,  1.0}, // Conductor 2 bdr.
 	} };
 
-	Solver s{ m, p };
+	tulip::Solver s{ m, p };
 	s.Solve();
 
 	auto Q1{ s.getChargeInBoundary(1) };
@@ -498,7 +498,7 @@ TEST_F(SolverTest, two_wires_open_boundary_charges)
 	} };
 	p.openBoundaries = { 3 };
 
-	Solver s{ m, p };
+	tulip::Solver s{ m, p };
 	s.Solve();
 
 	exportSolution(s, getTestCaseName());
@@ -535,7 +535,7 @@ TEST_F(SolverTest, two_wires_open_multipolarCoefficients_with_same_potential)
 		{2,  1.0}, // Conductor 2 bdr.
 	} };
 
-	Solver s{ m, p };
+	tulip::Solver s{ m, p };
 	s.Solve();
 		
 	auto Q1 = s.getChargeInBoundary(1);
@@ -571,7 +571,7 @@ TEST_F(SolverTest, two_wires_open_center_of_charge_with_same_potential)
 		{2,  1.0}, // Conductor 2 bdr.
 	} };
 
-	Solver s{ m, p };
+	tulip::Solver s{ m, p };
 	s.Solve();
 	auto centerOfCharge{ s.getCenterOfCharge() };
 	EXPECT_NEAR(0.0, centerOfCharge[0], 5e-6);
@@ -593,7 +593,7 @@ TEST_F(SolverTest, two_wires_open_center_of_charge_with_floating_potential)
 		{2,  0.48228164}, // Conductor 2, floating, zero charge.
 	} };
 
-	Solver s{ m, p };
+	tulip::Solver s{ m, p };
 	s.Solve();
 
 	ASSERT_NEAR(0.0, s.getChargeInBoundary(2), 5e-5);
@@ -625,7 +625,7 @@ TEST_F(SolverTest, three_wires_ribbon_zero_net_charge)
 	};
 
 	SolverOptions solverOpts;
-	Solver s{ m, p, solverOpts };
+	tulip::Solver s{ m, p, solverOpts };
 	s.Solve();
 
 	exportSolution(s, getCaseName());
@@ -646,7 +646,7 @@ TEST_F(SolverTest, lansink2024_fdtd_in_cell_C00_with_floating)
 	// EMC Europe(pp. 334 - 339). IEEE.
 
 	const std::string CASE{ "lansink2024_fdtd_cell" };
-	const std::string fn{ casesFolder() + CASE + "/" + CASE + ".tulip.in.json" };
+	const std::string fn{ casesFolder() + CASE + "/" + CASE + ".tulip.adapted.json" };
 	auto model{ Parser{fn}.readModel() };
 
 	auto fp = Driver::loadFromFile(fn).getFloatingPotentials().electric;
@@ -660,7 +660,7 @@ TEST_F(SolverTest, lansink2024_fdtd_in_cell_C00_with_floating)
 	};
 	p.openBoundaries = { 3 };
 
-	Solver s{ *model.getMesh(), p };
+	tulip::Solver s{ *model.getMesh(), p };
 	s.Solve();
 
 	auto avVVacuum = s.getAveragePotentialInDomain(5);
@@ -701,7 +701,7 @@ TEST_F(SolverTest, lansink2024_fdtd_in_cell_C01_with_floating)
 	// EMC Europe(pp. 334 - 339). IEEE.
 
 	const std::string CASE{ "lansink2024_fdtd_cell" };
-	const std::string fn{ casesFolder() + CASE + "/" + CASE + ".tulip.in.json" };
+	const std::string fn{ casesFolder() + CASE + "/" + CASE + ".tulip.adapted.json" };
 	auto model{ Parser{fn}.readModel() };
 
 	auto fp = Driver::loadFromFile(fn).getFloatingPotentials().electric;
@@ -715,7 +715,7 @@ TEST_F(SolverTest, lansink2024_fdtd_in_cell_C01_with_floating)
 	};
 	p.openBoundaries = { 3 };
 
-	Solver s{ *model.getMesh(), p };
+	tulip::Solver s{ *model.getMesh(), p };
 	s.Solve();
 
 	auto avVVacuum = s.getAveragePotentialInDomain(5);
@@ -756,7 +756,7 @@ TEST_F(SolverTest, lansink2024_single_wire_L00_with_floating)
 	// EMC Europe(pp. 334 - 339). IEEE.
 
 	const std::string CASE{ "lansink2024_single_wire" };
-	const std::string fn{ casesFolder() + CASE + "/" + CASE + ".tulip.in.json" };
+	const std::string fn{ casesFolder() + CASE + "/" + CASE + ".tulip.adapted.json" };
 	auto model{ Parser{fn}.readModel() };
 
 	auto fp = Driver::loadFromFile(fn).getFloatingPotentials().electric;
@@ -769,7 +769,7 @@ TEST_F(SolverTest, lansink2024_single_wire_L00_with_floating)
 	};
 	p.openBoundaries = { 2 };
 
-	Solver s{ *model.getMesh(), p };
+	tulip::Solver s{ *model.getMesh(), p };
 	s.Solve();
 
 	auto avVVacuum = s.getAveragePotentialInDomain(4);
@@ -812,7 +812,7 @@ TEST_F(SolverTest, lansink2024_small_one_centered_bem_comparison)
 	// This test compares multipolar expansion results between Tulip and BEM.
 
 	const std::string CASE{ "lansink2024_small_one_centered" };
-	const std::string fn{ casesFolder() + CASE + "/" + CASE + ".tulip.in.json" };
+	const std::string fn{ casesFolder() + CASE + "/" + CASE + ".tulip.adapted.json" };
 	auto model{ Parser{fn}.readModel() };
 
 	auto fp = Driver::loadFromFile(fn).getFloatingPotentials().electric;
@@ -826,7 +826,7 @@ TEST_F(SolverTest, lansink2024_small_one_centered_bem_comparison)
 	};
 	p.openBoundaries = { 3 };
 
-	Solver s{ *model.getMesh(), p };
+	tulip::Solver s{ *model.getMesh(), p };
 	s.Solve();
 	
 
@@ -871,7 +871,7 @@ TEST_F(SolverTest, lansink2024_small_one_centered_bem_comparison)
 
 	// Computes and exports multipolar expansion with center of charge.
 	{
-		Solver s{ *model.getMesh(), p };
+		tulip::Solver s{ *model.getMesh(), p };
 		s.Solve();
 		auto centerOfCharge = s.getCenterOfCharge();
 		auto mCoeff = s.getMultipolarCoefficients(order);

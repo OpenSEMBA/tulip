@@ -8,7 +8,7 @@
 - Third order isoparametric elements. 
 - Support for dielectric materials.
 - Open boundary conditions.
-- Works on closed, open, or semiopen MTL.
+- Works on closed and open MTLs.
 - Multilevel domain decomposition.
 - Uses a modified [MFEM](https://mfem.org/) solver engine available [here](https://github.com/OpenSEMBA/mfem).
 - Result visualization with [Paraview](https://www.paraview.org/).
