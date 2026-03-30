@@ -4,6 +4,7 @@
 
 #include <string>
 #include <vector>
+#include <memory>
 
 namespace tulip {
 
@@ -11,46 +12,62 @@ using MaterialId = int;
 using Attribute = int;
 using IdToAttrMap = std::map<MaterialId, Attribute>;
 
-struct Material {
+class Material {
+public:
+	virtual bool isDomainMaterial() const = 0;
+
+private:
 	std::string name;
-	Attribute attribute;
+	Attribute attribute = -1;
 };
 
-struct PEC : public Material {
-	double area{ 0.0 };
+class Conductor : public Material {
+public:	
+	bool isDomainMaterial() const { return false; }
+
+private:
+	double resistancePerMeter = 0.0;
+	
+	// Area enclosed by the outermost curve. 
+	// It is different from area if the layer contains holes.
+	double enclosedArea = -1.0; 
 };
 
-struct OpenBoundary : public Material {
+class Shield : public Conductor {
+public: 
+	bool isDomainMaterial() const { return false; }
+
+private:
+	enum class Direction { 
+		both, 
+		inwards, 
+		outwards
+	};
+	double inductancePerMeter = 0.0;
+	Direction direction = Direction::both;
+
 };
 
-struct Dielectric : public Material {
-	double relativePermittivity{ 1.0 };
+class Dielectric : public Material {
+public:
+	bool isDomainMaterial() const { return true; }
+
+private:
+	double relativePermittivity = 1.0;
 };
 
-struct Materials { 
-	std::vector<PEC> pecs;
-	std::vector<OpenBoundary> openBoundaries;
-	std::vector<Dielectric> dielectrics;
+class Open : public Material {
+	bool isDomainMaterial() const { return false; }
+};
 
+
+class Materials {
+public: 
 	template <class T>
 	NameToAttrMap buildNameToAttrMapFor() const
 	{
 		NameToAttrMap res;
-		if constexpr (std::is_same<T, PEC>()) {
-			for (const auto& m : pecs) {
-				res[m.name] = m.attribute;
-			}
-		}
-		if constexpr (std::is_same<T, OpenBoundary>()) {
-			for (const auto& m : openBoundaries) {
-				res[m.name] = m.attribute;
-			}
-		}
-		else if constexpr (std::is_same<T, Dielectric>()) {
-			for (const auto& m : dielectrics) {
-				res[m.name] = m.attribute;
-			}
-		}
+		// TODO 
 		return res;
 	}
 
@@ -58,86 +75,28 @@ struct Materials {
 	IdToAttrMap buildIdToAttrMapFor() const
 	{
 		IdToAttrMap res;
-		if constexpr (std::is_same<T, PEC>()) {
-			for (const auto& m : pecs) {
-				res[getMaterialIdFromName(m.name)] = m.attribute;
-			}
-		}
-		if constexpr (std::is_same<T, OpenBoundary>()) {
-			for (const auto& m : openBoundaries) {
-				res[getMaterialIdFromName(m.name)] = m.attribute;
-			}
-		}
-		else if constexpr (std::is_same<T, Dielectric>()) {
-			for (const auto& m : dielectrics) {
-				res[getMaterialIdFromName(m.name)] = m.attribute;
-			}
-		}
+		// TODO
 		return res;
 	}
 
-	template <class T>
-	const T& get(const std::string name) const
+	Material&
+	const T& getByName(const std::string& name) const
 	{
-		if constexpr (std::is_same<T, PEC>()) {
-			for (const auto& m : pecs) {
-				if (m.name == name) {
-					return m;
-				}
-			}
-		}
-		if constexpr (std::is_same<T, OpenBoundary>()) {
-			for (const auto& m : openBoundaries) {
-				if (m.name == name) {
-					return m;
-				}
-			}
-		}
-		if constexpr (std::is_same<T, Dielectric>()) {
-			for (const auto& m : dielectrics) {
-				if (m.name == name) {
-					return m;
-				}
-			}
-		}
-
-		throw std::runtime_error("Invalid material type");
+		// TODO
 	}
 
 	template <class T>
-	const T& get(const MaterialId id) const
+	const T& getByMaterialId(const MaterialId id) const
 	{
-		if constexpr (std::is_same<T, PEC>()) {
-			for (const auto& m : pecs) {
-				if (getMaterialIdFromName(m.name) == id) {
-					return m;
-				}
-			}
-		}
-		if constexpr (std::is_same<T, OpenBoundary>()) {
-			for (const auto& m : openBoundaries) {
-				if (getMaterialIdFromName(m.name) == id) {
-					return m;
-				}
-			}
-		}
-		if constexpr (std::is_same<T, Dielectric>()) {
-			for (const auto& m : dielectrics) {
-				if (getMaterialIdFromName(m.name) == id) {
-					return m;
-				}
-			}
-		}
-
-		throw std::runtime_error("Invalid material type");
+		// TODO
 	}
 
 	NameToAttrMap buildNameToAttrMap() const;
 	void removeMaterialsNotInList(const NameToAttrMap allowedMaterials);
-	bool isDomainMaterial(const std::string& name) const;
 	bool hasDielectrics() const;
 	
-	static MaterialId getMaterialIdFromName(const std::string& name);	
+private:
+	std::map<MaterialId, std::unique_ptr<Material>> materials_;
 };
 
 }
