@@ -18,7 +18,7 @@ static std::string smbCase(const std::string& name)
 
 static std::string inputCase(const std::string& name)
 {
-	return casesFolder() + name + "/" + name + ".pulmtln.in.json";
+	return casesFolder() + name + "/" + name + ".tulip.in.json";
 }
 
 static std::string getCaseName()

@@ -4,7 +4,7 @@
 
 class DirectedGraphTest : public ::testing::Test {};
 
-using namespace pulmtln;
+using namespace tulip;
 
 TEST_F(DirectedGraphTest, getVertices)
 {

@@ -4,19 +4,18 @@ set(LIBRARY_NAME "tulip-driver")
 message(STATUS "Creating build system for ${LIBRARY_NAME}")
 
 find_package(nlohmann_json CONFIG REQUIRED)
-
 find_package(Boost REQUIRED graph program_options)
 
 add_library(${LIBRARY_NAME} STATIC
     "FES.cpp"
     "Solver.cpp"
     "Driver.cpp"
-    "Parser.cpp"
-    "Model.cpp"
-    "Materials.cpp"
     "Results.cpp"
     "DirectedGraph.cpp"
     "Domain.cpp"
+    "Materials.cpp"
+    "Model.cpp"
+    "Parser.cpp"
 )
 
 target_include_directories(${LIBRARY_NAME} PUBLIC
@@ -24,4 +23,8 @@ target_include_directories(${LIBRARY_NAME} PUBLIC
     ${Boost_INCLUDE_DIRS}
 )
 
-target_link_libraries(${LIBRARY_NAME} PUBLIC mfem nlohmann_json::nlohmann_json Boost::graph)
+target_link_libraries(${LIBRARY_NAME} PUBLIC
+    mfem
+    nlohmann_json::nlohmann_json
+    Boost::graph
+)

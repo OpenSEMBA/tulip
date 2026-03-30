@@ -4,7 +4,7 @@
 #include "TestUtils.h"
 #include "constants.h"
 
-using namespace pulmtln;
+using namespace tulip;
 
 class ParserTest : public ::testing::Test {};
 
@@ -12,7 +12,7 @@ TEST_F(ParserTest, empty_coax)
 {
 	const std::string CASE{ "empty_coax" };
 	Parser parser{ 
-		casesFolder() + CASE + "/" + CASE + ".pulmtln.in.json" 
+		casesFolder() + CASE + "/" + CASE + ".tulip.in.json" 
 	};
 
 	auto opts{ parser.readDriverOptions() };
@@ -41,7 +41,7 @@ TEST_F(ParserTest, partially_filled_coax)
 {
 	const std::string CASE{ "partially_filled_coax" };
 	Parser parser{
-		casesFolder() + CASE + "/" + CASE + ".pulmtln.in.json"
+		casesFolder() + CASE + "/" + CASE + ".tulip.in.json"
 	};
 
 	auto opts{ parser.readDriverOptions() };
@@ -72,7 +72,7 @@ TEST_F(ParserTest, partially_filled_coax)
 TEST_F(ParserTest, hasDielectrics_returns_false_for_vacuum_only_case)
 {
 	const std::string CASE{ "empty_coax" };
-	Parser parser{ casesFolder() + CASE + "/" + CASE + ".pulmtln.in.json" };
+	Parser parser{ casesFolder() + CASE + "/" + CASE + ".tulip.in.json" };
 	auto model{ parser.readModel() };
 	EXPECT_FALSE(model.getMaterials().hasDielectrics());
 }
@@ -80,7 +80,7 @@ TEST_F(ParserTest, hasDielectrics_returns_false_for_vacuum_only_case)
 TEST_F(ParserTest, hasDielectrics_returns_true_when_dielectric_present)
 {
 	const std::string CASE{ "partially_filled_coax" };
-	Parser parser{ casesFolder() + CASE + "/" + CASE + ".pulmtln.in.json" };
+	Parser parser{ casesFolder() + CASE + "/" + CASE + ".tulip.in.json" };
 	auto model{ parser.readModel() };
 	EXPECT_TRUE(model.getMaterials().hasDielectrics());
 }

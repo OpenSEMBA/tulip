@@ -2,7 +2,7 @@
 
 #include "AttrToValueMap.h"
 
-namespace pulmtln {
+namespace tulip {
 
 using MaterialId = int;
 using Attribute = int;

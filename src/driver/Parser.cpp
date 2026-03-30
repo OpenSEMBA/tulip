@@ -6,7 +6,7 @@
 
 using json = nlohmann::json;
 
-namespace pulmtln {
+namespace tulip {
 
 enum class MaterialType {
 	PEC,

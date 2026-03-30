@@ -2,7 +2,7 @@
 
 #include <string>
 
-namespace pulmtln {
+namespace tulip {
 
 struct SolverOptions {
 	// Basis function order

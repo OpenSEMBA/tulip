@@ -1,7 +1,7 @@
 #include "Materials.h"
 #include "constants.h"
 
-namespace pulmtln {
+namespace tulip {
 
 
 NameToAttrMap Materials::buildNameToAttrMap() const

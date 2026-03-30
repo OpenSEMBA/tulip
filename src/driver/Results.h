@@ -6,7 +6,7 @@
 #include "Domain.h"
 #include "multipolarExpansion.h"
 
-namespace pulmtln {
+namespace tulip {
 
 
 void saveToJSONFile(const nlohmann::json&, const std::string& filename);

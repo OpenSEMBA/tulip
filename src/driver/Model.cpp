@@ -5,7 +5,7 @@
 
 #include "DirectedGraph.h"
 
-namespace pulmtln {
+namespace tulip {
 
 using namespace mfem;
 

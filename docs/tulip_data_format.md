@@ -1,7 +1,9 @@
 # Tulip input data format
 
 - [Tulip input data format](#tulip-input-data-format)
-  - [`[options]`.](#options)
+  - [`[analysis]`.](#analysis)
+    - [adapter options](#adapter-options)
+    - [driver options](#driver-options)
   - [`<materials>`](#materials)
     - [`conductor`](#conductor)
     - [`shield`](#shield)
@@ -13,10 +15,15 @@ Tulip receives a JSON object as an input with the entries described below. Squar
 
 Unless specified otherwise all units are assumed to be in SI-MKS.
 
-## `[options]`.
-Defaults to the options described in:
+## `[analysis]`.
+This object contains options to control the adapter and driver behaviors. 
+Adapter is in 
 
+### adapter options
+
+### driver options
 - `[exportParaviewSolution]` can be `true` or `false`. Exports visualization results for each simulation performed.
+- 
 
 
 ## `<materials>`

@@ -1,6 +1,6 @@
 #include "FES.h"
 
-namespace pulmtln {
+namespace tulip {
 
 H1_FESpace::H1_FESpace(Mesh *m,
                              const int p, const int space_dim, const int type,

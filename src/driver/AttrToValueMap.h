@@ -3,7 +3,7 @@
 #include <map>
 #include "FES.h"
 
-namespace pulmtln {
+namespace tulip {
 
 using NameToAttrMap = std::map<std::string, int>;
 

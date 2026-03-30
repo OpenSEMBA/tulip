@@ -2,7 +2,7 @@
 
 #include "constants.h"
 
-namespace pulmtln {
+namespace tulip {
 
 using namespace mfem;
 using json = nlohmann::json;

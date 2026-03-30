@@ -2,7 +2,7 @@
 
 using namespace mfem;
 
-namespace pulmtln {
+namespace tulip {
 
 DirectedGraph buildMeshGraph(const mfem::Mesh& mesh)
 {

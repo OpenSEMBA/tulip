@@ -1,13 +1,13 @@
 #pragma once
 
-#include "SolverOptions.h"
+#include "DriverOptions.h"
 #include "Model.h"
 #include "Results.h"
 #include "Solver.h"
 
 #include <vector>
 
-namespace pulmtln {
+namespace tulip {
 
 struct SolvedProblem {
     std::unique_ptr<Solver> solver;

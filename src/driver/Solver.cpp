@@ -3,7 +3,7 @@
 #include "constants.h"
 #include "AttrToValueMap.h"
 
-namespace pulmtln {
+namespace tulip {
 
 Array<int> AttrToMarker(const Mesh& mesh, const Array<int>& attrs)
 {

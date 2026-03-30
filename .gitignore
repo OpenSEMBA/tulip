@@ -61,7 +61,7 @@ __pycache__/
 
 /CMakeUserPresets.json
 
-/to_from_JSONFile_test.pulmtln.out.json
+/to_from_JSONFile_test.tulip.out.json
 /Results
 /mfem-build
 /testData/lansink2024_single_wire/lansink2024_single_wire.areas.json

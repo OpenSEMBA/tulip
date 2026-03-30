@@ -4,7 +4,7 @@
 
 #include <string>
 
-namespace pulmtln {
+namespace tulip {
 
 struct DriverOptions {
 	SolverOptions solverOptions;

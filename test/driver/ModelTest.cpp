@@ -4,7 +4,7 @@
 #include "Parser.h"
 #include "TestUtils.h"
 
-using namespace pulmtln;
+using namespace tulip;
 
 class ModelTest : public ::testing::Test {};
 

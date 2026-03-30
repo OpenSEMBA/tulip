@@ -3,7 +3,7 @@
 #include "FES.h"
 #include "constants.h"
 
-namespace pulmtln {
+namespace tulip {
 
 using multipolarCoefficient = std::pair<double, double>;
 using multipolarCoefficients = std::vector<multipolarCoefficient>;

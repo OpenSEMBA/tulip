@@ -10,7 +10,7 @@
 
 namespace boost { template <typename G> inline void renumber_vertex_indices(G& g) { throw; } }
 
-namespace pulmtln {
+namespace tulip {
 
 IdSet DirectedGraph::getVertices() const 
 {

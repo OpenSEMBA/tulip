@@ -3,7 +3,7 @@
 #include "FES.h"
 
 using namespace mfem;
-using namespace pulmtln;
+using namespace tulip;
 
 class mfemTest : public ::testing::Test {
 };

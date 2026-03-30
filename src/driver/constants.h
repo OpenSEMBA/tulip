@@ -3,7 +3,7 @@
 #define _USE_MATH_DEFINES
 #include <math.h>
 
-namespace pulmtln {
+namespace tulip {
 
 static const double VACUUM_RELATIVE_PERMITTIVITY{ 1.0 };
 

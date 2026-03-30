@@ -1,11 +1,11 @@
 #pragma once
 
-#include "SolverOptions.h"
+#include "DriverOptions.h"
 #include "Model.h"
 
 #include <nlohmann/json.hpp>
 
-namespace pulmtln {
+namespace tulip {
 
 class Parser {
 public:

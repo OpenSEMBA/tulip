@@ -3,7 +3,7 @@
 #include "AttrToValueMap.h"
 #include "Materials.h"
 
-namespace pulmtln {
+namespace tulip {
 
 struct Box {
 	std::array<double,2> min, max;

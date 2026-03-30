@@ -6,7 +6,7 @@
 
 using namespace mfem;
 
-namespace pulmtln {
+namespace tulip {
 
 const std::string INNER_REGION_DEFAULT_NAME = "Vacuum_0";
 
@@ -291,7 +291,7 @@ void Driver::run()
 		auto pul = buildPULParametersForModel();
 		saveToJSONFile(
 			pul.toJSON(), 
-			opts_.exportFolder + "pulmtln.out.json");
+			opts_.exportFolder + "tulip.out.json");
 	}
 	else if (openness == Model::Openness::open) {
 		auto inCell = getInCellPotentials();

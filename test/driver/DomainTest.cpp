@@ -5,7 +5,7 @@
 #include "Domain.h"
 #include "Parser.h"
 
-using namespace pulmtln;
+using namespace tulip;
 
 class DomainTest : public ::testing::Test {};
 

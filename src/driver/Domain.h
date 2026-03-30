@@ -3,7 +3,7 @@
 #include "DirectedGraph.h"
 #include "Model.h"
 
-namespace pulmtln {
+namespace tulip {
 
 struct Domain {
     using Id = int;

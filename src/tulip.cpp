@@ -41,7 +41,7 @@ int main(int argc, char* argv[])
 		"./" + std::filesystem::path{inputFilename}.parent_path().string() + "/"
 	};
 
-	auto driver{ pulmtln::Driver::loadFromFile(inputFilename) };
+	auto driver{ tulip::Driver::loadFromFile(inputFilename) };
 	driver.setExportFolder(folder);
 
 	driver.run();

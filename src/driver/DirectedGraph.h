@@ -10,7 +10,7 @@
 #include <set>
 #include <map>
 
-namespace pulmtln {
+namespace tulip {
 
 using namespace boost;
 

@@ -33,7 +33,7 @@ Configure and build presets are available. For instance, to configure in windows
 Once compiled, test cases can be launched from the project root folder, with
 
 ```shell
-   <build folder>/bin/Release/pulmtln_tests.exe 
+   ctest --test-dir ./<build folder> --output-on-failure
 ```
 
 Most cases will store results in the `Results` folder. 
@@ -48,7 +48,7 @@ Call `tulip` from command line as,
 
 The input file format is [described here](docs/tulip_data_format.md).
 
-By default, `pulmtln` will generate a file called `matrices.pulmtln.out.json` which contains the $C$ and $L$ p.u.l parameters of the MTL. Each row and column corresponds to the `N` integer in `Conductor_N`. `Conductor_0` is used as reference. 
+By default, `tulip` will generate a file called `matrices.tulip.out.json` which contains the $C$ and $L$ p.u.l parameters of the MTL. Each row and column corresponds to the `N` integer in `Conductor_N`. `Conductor_0` is used as reference. 
 These results have been cross-compared [here][test/DriverTest.cpp] to match with [Ansys Maxwell](https://www.ansys.com/products/electronics/ansys-maxwell). 
 Comparison with [SACAMOS](https://www.sacamos.org/) does not produce satisfactory because of the different underlying analytical assumptions that are made.
 

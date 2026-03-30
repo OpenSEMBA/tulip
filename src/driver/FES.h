@@ -5,7 +5,7 @@
 
 #include <cstddef>
 
-namespace pulmtln {
+namespace tulip {
 
 using namespace mfem;
 

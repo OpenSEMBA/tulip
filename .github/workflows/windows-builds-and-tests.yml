@@ -15,7 +15,7 @@ on:
   workflow_dispatch:
 
 env:
-  PULMTLN_TOP_DIR: pulmtln
+  TULIP_TOP_DIR: tulip
   MFEM_TOP_DIR: mfem
 
 jobs:
@@ -35,10 +35,10 @@ jobs:
       with:
         access_token: ${{ github.token }}
 
-    - name: checkout PULMTLN
+    - name: checkout TULIP
       uses: actions/checkout@v3
       with:
-        path: ${{ env.PULMTLN_TOP_DIR }}
+        path: ${{ env.TULIP_TOP_DIR }}
         ssh-key: ${{secrets.PULMTLN_SSH_KEY}}
 
     - name: getcmake
@@ -48,7 +48,7 @@ jobs:
       uses: lukka/run-vcpkg@v11
       with:
         vcpkgGitCommitId: eed289f6e06a5e7a5c9e6a729671b0a56af7dd69
-        vcpkgJsonGlob: 'pulmtln/vcpkg.json'
+        vcpkgJsonGlob: 'tulip/vcpkg.json'
 
     - name: cache MFEM 
       uses: actions/cache@v3
@@ -80,28 +80,28 @@ jobs:
         metis-dir: ${{ env.METIS_TOP_DIR }}
         mfem-dir: ${{ env.MFEM_TOP_DIR }}
  
-    - name: Configuring PULMTLN
+    - name: Configuring TULIP
       env: 
         MFEM_PACKAGE: ${{ github.workspace }}/${{env.MFEM_TOP_DIR}}/build
       run: |
-        cmake --preset "msbuild-vcpkg" -S pulmtln -B pulmtln/build
+        cmake --preset "msbuild-vcpkg" -S tulip -B tulip/build
     
-    - name: Building PULMTLN
+    - name: Building TULIP
       run: |
-        cmake --build pulmtln/build/ --config Release
+        cmake --build tulip/build/ --config Release
 
-    # - name: Configuring and building PULMTLN
+    # - name: Configuring and building TULIP
     #   uses: lukka/run-cmake@v10
     #   id: runcmake
         
     #   with:
-    #     cmakeListsTxtPath: '${{ github.workspace }}/pulmtln/CMakeLists.txt'
+    #     cmakeListsTxtPath: '${{ github.workspace }}/tulip/CMakeLists.txt'
     #     configurePreset: 'msbuild-vcpkg'
     #     configurePresetAdditionalArgs: '[`-DCMAKE_PREFIX_PATH=../mfem`]'
     #     buildPreset: 'msbuild-vcpkg'
     #     buildPresetAdditionalArgs: '[`--config Release`]'
  
-    - name: test PULMTLN
-      run: cd pulmtln && build/bin/Release/pulmtln_tests.exe
+    - name: test TULIP
+      run: cd tulip && build/bin/Release/tulip_tests.exe
         
     

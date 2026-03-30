@@ -1,34 +1,34 @@
 cmake_minimum_required(VERSION 3.21)
 
-message(STATUS "Creating build system for ${PROJECT_NAME}_tests")
+message(STATUS "Creating build system for driver_tests")
 
 find_package(GTest CONFIG REQUIRED)
 
-add_executable(${PROJECT_NAME}_tests
-    "SolverTest.cpp"
-    "mfemTest.cpp"
+add_executable(driver_tests
     "DriverTest.cpp"
-    "ParserTest.cpp"
+    "mfemTest.cpp"
     "ResultsTest.cpp"
-    "ModelTest.cpp"
     "DirectedGraphTest.cpp"
     "DomainTest.cpp"
     "multipolarExpansionTest.cpp"
+    "ModelTest.cpp"
+    "ParserTest.cpp"
+    "SolverTest.cpp"
 )
 
-target_include_directories(${PROJECT_NAME}_tests PRIVATE
+target_include_directories(driver_tests PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
-target_link_libraries(${PROJECT_NAME}_tests
-    pulmtln-core
+target_link_libraries(driver_tests
+    tulip-driver
     GTest::gtest
     GTest::gtest_main
 )
 
 add_test(
-    NAME ${PROJECT_NAME}_tests
-    COMMAND ${PROJECT_NAME}_tests
+    NAME driver_tests
+    COMMAND driver_tests
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 )
 

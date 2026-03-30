@@ -6,7 +6,7 @@
 #include "Driver.h"
 #include "Solver.h"
 
-using namespace pulmtln;
+using namespace tulip;
 
 using json = nlohmann::json;
 
@@ -79,7 +79,7 @@ TEST_F(DriverTest, partially_filled_coax_by_domains)
 TEST_F(DriverTest, two_wires_coax)
 {
 	const std::string CASE{ "two_wires_coax" };
-	auto fn{ casesFolder() + CASE + "/" + CASE + ".pulmtln.in.json" };
+	auto fn{ casesFolder() + CASE + "/" + CASE + ".tulip.in.json" };
 
 	mfem::DenseMatrix CMatExpected(2, 2);
 	CMatExpected(0, 0) = 2.15605359;
@@ -115,7 +115,7 @@ TEST_F(DriverTest, two_wires_coax)
 TEST_F(DriverTest, two_wires_shielded_floating_potentials)
 {
 	const std::string CASE{ "two_wires_shielded" };
-	auto fn{ casesFolder() + CASE + "/" + CASE + ".pulmtln.in.json" };
+	auto fn{ casesFolder() + CASE + "/" + CASE + ".tulip.in.json" };
 
 	const double rTol{ 2.5e-2 };
 
@@ -157,7 +157,7 @@ TEST_F(DriverTest, two_wires_shielded_floating_potentials)
 TEST_F(DriverTest, two_wires_open_floating_potentials)
 {
 	const std::string CASE{ "two_wires_open" };
-	auto fn{ casesFolder() + CASE + "/" + CASE + ".pulmtln.in.json" };
+	auto fn{ casesFolder() + CASE + "/" + CASE + ".tulip.in.json" };
 
 	auto fp{ Driver::loadFromFile(fn).getFloatingPotentials().electric };
 
@@ -201,7 +201,7 @@ TEST_F(DriverTest, five_wires)
 	// Comparison with SACAMOS data (No Laplace).
 
 	const std::string CASE{ "five_wires" };
-	auto fn{ casesFolder() + CASE + "/" + CASE + ".pulmtln.in.json" };
+	auto fn{ casesFolder() + CASE + "/" + CASE + ".tulip.in.json" };
 
 	mfem::DenseMatrix couplingExpected(5, 5);
 	double couplingExpectedData[25] = {
@@ -237,7 +237,7 @@ TEST_F(DriverTest, three_wires_ribbon)
 	// Sec. 5.2.3, p. 187.
 
 	const std::string CASE{ "three_wires_ribbon" };
-	auto fn{ casesFolder() + CASE + "/" + CASE + ".pulmtln.in.json" };
+	auto fn{ casesFolder() + CASE + "/" + CASE + ".tulip.in.json" };
 
 	double CExpectedData[4] = {
 		 37.432, -18.716,
@@ -285,7 +285,7 @@ TEST_F(DriverTest, three_wires_ribbon_generalized_capacitance)
 	// Sec. 5.2.3, p. 187.
 
 	const std::string CASE{ "three_wires_ribbon" };
-	auto fn{ casesFolder() + CASE + "/" + CASE + ".pulmtln.in.json" };
+	auto fn{ casesFolder() + CASE + "/" + CASE + ".tulip.in.json" };
 
 	auto dr = Driver::loadFromFile(fn);
 
@@ -320,7 +320,7 @@ TEST_F(DriverTest, three_wires_ribbon_floating_potentials)
 	// Sec. 5.2.3, p. 187.
 
 	const std::string CASE{ "three_wires_ribbon" };
-	auto fn{ casesFolder() + CASE + "/" + CASE + ".pulmtln.in.json" };
+	auto fn{ casesFolder() + CASE + "/" + CASE + ".tulip.in.json" };
 
 	auto fp = Driver::loadFromFile(fn).getFloatingPotentials().electric;
 
@@ -422,7 +422,7 @@ TEST_F(DriverTest, agrawal1981)
 	// Transmission Lines in the Time Domain. IEEE-TEMC. 1981.
 
 	const std::string CASE{ "agrawal1981" };
-	auto fn{ casesFolder() + CASE + "/" + CASE + ".pulmtln.in.json" };
+	auto fn{ casesFolder() + CASE + "/" + CASE + ".tulip.in.json" };
 
 	// P.U.L. Capacitances obtained from eigenvectors.
 	const int nConductors = 3;
@@ -459,7 +459,7 @@ TEST_F(DriverTest, lansink2024_floating_potentials)
 
 	const std::string CASE{ "lansink2024" };
 
-	auto dr{ Driver::loadFromFile(casesFolder() + CASE + "/" + CASE + ".pulmtln.in.json") };
+	auto dr{ Driver::loadFromFile(casesFolder() + CASE + "/" + CASE + ".tulip.in.json") };
 
 	auto fp{ dr.getFloatingPotentials().electric };
 	auto inCell{ dr.getInCellPotentials() };
@@ -507,7 +507,7 @@ TEST_F(DriverTest, lansink2024_fdtd_in_cell_parameters_around_conductor_1)
 
 	auto inCell{
 		Driver::loadFromFile(
-			casesFolder() + CASE + "/" + CASE + ".pulmtln.in.json"
+			casesFolder() + CASE + "/" + CASE + ".tulip.in.json"
 		).getInCellPotentials()
 	};
 
@@ -553,7 +553,7 @@ TEST_F(DriverTest, lansink2024_two_wires_using_multipolar_expansion)
 
 	auto inCell{
 		Driver::loadFromFile(
-			casesFolder() + CASE + "/" + CASE + ".pulmtln.in.json"
+			casesFolder() + CASE + "/" + CASE + ".tulip.in.json"
 		).getInCellPotentials()
 	};
 
@@ -609,7 +609,7 @@ TEST_F(DriverTest, lansink2024_fdtd_cell_shifted_and_centered)
 
 	auto inCell{
 		Driver::loadFromFile(
-			casesFolder() + CASE + "/" + CASE + ".pulmtln.in.json"
+			casesFolder() + CASE + "/" + CASE + ".tulip.in.json"
 		).getInCellPotentials()
 	};
 
@@ -658,7 +658,7 @@ TEST_F(DriverTest, lansink2024_single_wire_in_cell_parameters)
 
 	auto inCell{
 		Driver::loadFromFile(
-			casesFolder() + CASE + "/" + CASE + ".pulmtln.in.json"
+			casesFolder() + CASE + "/" + CASE + ".tulip.in.json"
 		).getInCellPotentials()
 	};
 
@@ -696,7 +696,7 @@ TEST_F(DriverTest, lansink2024_single_wire_multipolar_in_cell_parameters)
 
 	auto inCell{
 		Driver::loadFromFile(
-			casesFolder() + CASE + "/" + CASE + ".pulmtln.in.json"
+			casesFolder() + CASE + "/" + CASE + ".tulip.in.json"
 		).getInCellPotentials()
 	};
 
@@ -733,7 +733,7 @@ TEST_F(DriverTest, lansink2024_single_wire_multipolar_in_cell_parameters)
 TEST_F(DriverTest, getCFromGeneralizedC_two_wires_open)
 {
 	const std::string CASE{ "two_wires_open" };
-	auto fn{ casesFolder() + CASE + "/" + CASE + ".pulmtln.in.json" };
+	auto fn{ casesFolder() + CASE + "/" + CASE + ".tulip.in.json" };
 
 	auto gC{ Driver::loadFromFile(fn).getGeneralizedCMatrix() };
 
@@ -801,7 +801,7 @@ TEST_F(DriverTest, lansink2024_small_one_centered_fdtd_cell_vs_multipolar)
 	{
 		const std::string CASE{ "lansink2024_small_one_centered_fdtd_cell" };
 		fdtdCellPotentials = Driver::loadFromFile(
-			casesFolder() + CASE + "/" + CASE + ".pulmtln.in.json").getInCellPotentials();
+			casesFolder() + CASE + "/" + CASE + ".tulip.in.json").getInCellPotentials();
 	}
 	auto fdtdCellComputedC00 = fdtdCellPotentials.getCapacitanceUsingInnerRegion(0, 0);
 	auto fdtdCellComputedC01 = fdtdCellPotentials.getCapacitanceUsingInnerRegion(0, 1);
@@ -811,7 +811,7 @@ TEST_F(DriverTest, lansink2024_small_one_centered_fdtd_cell_vs_multipolar)
 	{
 		const std::string CASE{ "lansink2024_small_one_centered" };
 		multipolarPotentials = Driver::loadFromFile(
-			casesFolder() + CASE + "/" + CASE + ".pulmtln.in.json").getInCellPotentials();
+			casesFolder() + CASE + "/" + CASE + ".tulip.in.json").getInCellPotentials();
 	}
 	Box fdtdCell{ {-0.1, -0.1}, {0.1, 0.1} };
 	auto multipolarComputedC00 = multipolarPotentials.getCapacitanceOnBox(0, 0, fdtdCell);
@@ -835,7 +835,7 @@ TEST_F(DriverTest, lansink2024_large_one_centered_fdtd_cell)
 	{
 		const std::string CASE{ "lansink2024_large_one_centered_fdtd_cell" };
 		fdtdCellPotentials = Driver::loadFromFile(
-			casesFolder() + CASE + "/" + CASE + ".pulmtln.in.json").getInCellPotentials();
+			casesFolder() + CASE + "/" + CASE + ".tulip.in.json").getInCellPotentials();
 	}
 	auto fdtdCellComputedC10 = fdtdCellPotentials.getCapacitanceUsingInnerRegion(1, 0);
 
@@ -850,7 +850,7 @@ TEST_F(DriverTest, lansink2024_small_one_centered_different_integration_centers)
 	const std::string CASE{ "lansink2024_small_one_centered" };
 
 	multipolarPotentials = Driver::loadFromFile(
-		casesFolder() + CASE + "/" + CASE + ".pulmtln.in.json").getInCellPotentials();
+		casesFolder() + CASE + "/" + CASE + ".tulip.in.json").getInCellPotentials();
 
 	mfem::DenseMatrix geometricC(2, 2);
 	Box fdtdCellCenteredOnConductor0{ {-0.1, -0.1}, {0.1, 0.1} };
@@ -888,7 +888,7 @@ TEST_F(DriverTest, DISABLED_realistic_case_with_dielectrics_fdtd_cell)
 	{
 		const std::string CASE{ "realistic_case_with_dielectrics_fdtd_cell" };
 		fdtdCellPotentials = Driver::loadFromFile(
-			casesFolder() + CASE + "/" + CASE + ".pulmtln.in.json").getInCellPotentials();
+			casesFolder() + CASE + "/" + CASE + ".tulip.in.json").getInCellPotentials();
 	}
 	auto fdtdCellComputedC_0 = fdtdCellPotentials.getCapacitanceUsingInnerRegion(0, 0);
 	auto fdtdCellComputedC_16 = fdtdCellPotentials.getCapacitanceUsingInnerRegion(0, 16);
@@ -907,7 +907,7 @@ TEST_F(DriverTest, realistic_case_with_dielectrics)
 	{
 		const std::string CASE{ "realistic_case_with_dielectrics" };
 		mP = Driver::loadFromFile(
-			casesFolder() + CASE + "/" + CASE + ".pulmtln.in.json").getInCellPotentials();
+			casesFolder() + CASE + "/" + CASE + ".tulip.in.json").getInCellPotentials();
 	}
 
 	Box fdtdCellCenteredOnConductor0{ {-0.016209, -0.009066}, {0.013791, 0.020934} };

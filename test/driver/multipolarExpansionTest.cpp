@@ -3,7 +3,7 @@
 #include "multipolarExpansion.h"
 
 using namespace mfem;
-using namespace pulmtln;
+using namespace tulip;
 
 class multipolarExpansionTest : public ::testing::Test {
 };

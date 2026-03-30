@@ -8,7 +8,7 @@
 #include "Driver.h"
 
 using namespace mfem;
-using namespace pulmtln;
+using namespace tulip;
 
 Vector getBaricenterOfElement(Mesh& mesh, int e)
 {
@@ -646,7 +646,7 @@ TEST_F(SolverTest, lansink2024_fdtd_in_cell_C00_with_floating)
 	// EMC Europe(pp. 334 - 339). IEEE.
 
 	const std::string CASE{ "lansink2024_fdtd_cell" };
-	const std::string fn{ casesFolder() + CASE + "/" + CASE + ".pulmtln.in.json" };
+	const std::string fn{ casesFolder() + CASE + "/" + CASE + ".tulip.in.json" };
 	auto model{ Parser{fn}.readModel() };
 
 	auto fp = Driver::loadFromFile(fn).getFloatingPotentials().electric;
@@ -701,7 +701,7 @@ TEST_F(SolverTest, lansink2024_fdtd_in_cell_C01_with_floating)
 	// EMC Europe(pp. 334 - 339). IEEE.
 
 	const std::string CASE{ "lansink2024_fdtd_cell" };
-	const std::string fn{ casesFolder() + CASE + "/" + CASE + ".pulmtln.in.json" };
+	const std::string fn{ casesFolder() + CASE + "/" + CASE + ".tulip.in.json" };
 	auto model{ Parser{fn}.readModel() };
 
 	auto fp = Driver::loadFromFile(fn).getFloatingPotentials().electric;
@@ -756,7 +756,7 @@ TEST_F(SolverTest, lansink2024_single_wire_L00_with_floating)
 	// EMC Europe(pp. 334 - 339). IEEE.
 
 	const std::string CASE{ "lansink2024_single_wire" };
-	const std::string fn{ casesFolder() + CASE + "/" + CASE + ".pulmtln.in.json" };
+	const std::string fn{ casesFolder() + CASE + "/" + CASE + ".tulip.in.json" };
 	auto model{ Parser{fn}.readModel() };
 
 	auto fp = Driver::loadFromFile(fn).getFloatingPotentials().electric;
@@ -812,7 +812,7 @@ TEST_F(SolverTest, lansink2024_small_one_centered_bem_comparison)
 	// This test compares multipolar expansion results between Tulip and BEM.
 
 	const std::string CASE{ "lansink2024_small_one_centered" };
-	const std::string fn{ casesFolder() + CASE + "/" + CASE + ".pulmtln.in.json" };
+	const std::string fn{ casesFolder() + CASE + "/" + CASE + ".tulip.in.json" };
 	auto model{ Parser{fn}.readModel() };
 
 	auto fp = Driver::loadFromFile(fn).getFloatingPotentials().electric;
