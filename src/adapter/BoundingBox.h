@@ -4,7 +4,7 @@
 #include <utility>
 #include <vector>
 
-namespace step2gmsh {
+namespace tulip {
 
 class BoundingBox {
 public:
@@ -26,4 +26,4 @@ public:
         const std::vector<std::pair<int, int>>& elements);
 };
 
-} // namespace step2gmsh
+} // namespace tulip

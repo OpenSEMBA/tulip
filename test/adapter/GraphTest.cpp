@@ -4,7 +4,7 @@
 
 #include "Graph.h"
 
-using namespace step2gmsh;
+using namespace tulip;
 
 class GraphTest : public ::testing::Test {
 protected:

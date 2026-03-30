@@ -8,7 +8,7 @@ add_executable(adapter_tests
     GraphTest.cpp
     BoundingBoxTest.cpp
     ShapesClassificationTest.cpp
-    MesherTest.cpp
+    AdapterTest.cpp
 )
 
 target_include_directories(adapter_tests PRIVATE

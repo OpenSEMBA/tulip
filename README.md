@@ -12,7 +12,7 @@
 - Multilevel domain decomposition.
 - Uses a modified [MFEM](https://mfem.org/) solver engine available [here](https://github.com/OpenSEMBA/mfem).
 - Result visualization with [Paraview](https://www.paraview.org/).
-- Start from `.step` CAD files using the [step2gmsh](https://github.com/OpenSEMBA/step2gmsh) workflow.
+- Start from `.step` CAD files with the integrated [gmsh](https://gmsh.info) workflow.
 
 ## Compile and testing
 Compilation needs vcpkg with the packages stated in the ```vcpkg.json``` manifest. 

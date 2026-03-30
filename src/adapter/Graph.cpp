@@ -7,7 +7,7 @@
 #include <set>
 #include <sstream>
 
-namespace step2gmsh {
+namespace tulip {
 
 std::vector<Graph::Node> Graph::roots() const {
     std::vector<Node> r;
@@ -179,4 +179,4 @@ std::string Graph::toString() const {
     return oss.str();
 }
 
-} // namespace step2gmsh
+} // namespace tulip

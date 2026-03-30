@@ -5,7 +5,7 @@
 #include <utility>
 #include <vector>
 
-namespace step2gmsh {
+namespace tulip {
 
 class Graph {
 public:
@@ -43,4 +43,4 @@ private:
     std::vector<Edge> edges_;
 };
 
-} // namespace step2gmsh
+} // namespace tulip

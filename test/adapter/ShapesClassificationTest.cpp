@@ -9,7 +9,7 @@
 #include "ShapesClassification.h"
 #include "TestUtils.h"
 
-using namespace step2gmsh;
+using namespace tulip;
 
 class ShapesClassificationTest : public ::testing::Test {
 protected:

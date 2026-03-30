@@ -11,7 +11,7 @@ add_library(${ADAPTER_LIB} STATIC
     BoundingBox.cpp
     ShapesClassification.cpp
     AreaExporterService.cpp
-    Mesher.cpp
+    Adapter.cpp
 )
 
 target_include_directories(${ADAPTER_LIB} PUBLIC

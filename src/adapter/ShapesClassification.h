@@ -10,7 +10,7 @@
 #include "BoundingBox.h"
 #include "Graph.h"
 
-namespace step2gmsh {
+namespace tulip {
 
 using EntityTag  = std::pair<int, int>;
 using EntityList = std::vector<EntityTag>;
@@ -60,4 +60,4 @@ private:
     EntityMap buildOpenVacuumDomain();
 };
 
-} // namespace step2gmsh
+} // namespace tulip

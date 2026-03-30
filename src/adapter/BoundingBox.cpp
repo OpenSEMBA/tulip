@@ -6,7 +6,7 @@
 
 #include <gmsh.h>
 
-namespace step2gmsh {
+namespace tulip {
 
 BoundingBox::BoundingBox(double xMin_, double yMin_, double zMin_,
                          double xMax_, double yMax_, double zMax_)
@@ -73,4 +73,4 @@ BoundingBox BoundingBox::getBoundingBoxFromGroup(
     return BoundingBox(xMinAll, yMinAll, zMinAll, xMaxAll, yMaxAll, zMaxAll);
 }
 
-} // namespace step2gmsh
+} // namespace tulip

@@ -4,7 +4,7 @@
 
 #include "BoundingBox.h"
 
-using namespace step2gmsh;
+using namespace tulip;
 
 class BoundingBoxTest : public ::testing::Test {
 protected:

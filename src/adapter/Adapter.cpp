@@ -7,23 +7,12 @@
 
 #include <gmsh.h>
 
-#include "AreaExporterService.h"
-
-namespace step2gmsh {
-
-const std::map<std::string, double> Mesher::DEFAULT_MESHING_OPTIONS = {
-    {"Mesh.MshFileVersion",         2.2},
-    {"Mesh.MeshSizeFromCurvature",  50.0},
-    {"Mesh.ElementOrder",           3.0},
-    {"Mesh.ScalingFactor",          1e-3},
-    {"Mesh.SurfaceFaces",           1.0},
-    {"Mesh.MeshSizeMax",            40.0}
-};
+namespace tulip {
 
 std::pair<bool,
           std::map<std::tuple<double, double, double>,
                    std::vector<std::size_t>>>
-Mesher::findDuplicateNodes()
+Adapter::findDuplicateNodes()
 {
     std::vector<std::size_t> nodeTags;
     std::vector<double>      nodeCoords, nodeParams;
@@ -47,28 +36,12 @@ Mesher::findDuplicateNodes()
     return {!groups.empty(), groups};
 }
 
-void Mesher::runFromInput(const std::string& inputFile, bool runGui) {
-    auto stem = std::filesystem::path(inputFile).stem().string();
-
-    gmsh::initialize();
-    auto mappedElements = meshFromStep(inputFile, stem, &DEFAULT_MESHING_OPTIONS);
-    exportGeometryAreas(stem, mappedElements);
-    gmsh::write(stem + ".msh");
-    gmsh::write(stem + ".vtk");
-    if (runGui) {
-        gmsh::fltk::run();
-    }
-    gmsh::finalize();
-}
-
-std::map<std::string, std::string> Mesher::meshFromStep(
-    const std::string& inputFile,
-    const std::string& caseName,
-    const std::map<std::string, double>* meshingOptions)
+std::map<std::string, std::string> Adapter::meshFromStep(
+    const std::string& inputFile
+    const AdapterOptions& adapterOptions)
 {
-    if (!meshingOptions) {
-        meshingOptions = &DEFAULT_MESHING_OPTIONS;
-    }
+    
+    meshingOptions = &adapterOptions.gmsh;
 
     gmsh::model::add(caseName);
 
@@ -102,16 +75,7 @@ std::map<std::string, std::string> Mesher::meshFromStep(
     return mappedComponents;
 }
 
-void Mesher::exportGeometryAreas(
-    const std::string& caseName,
-    const std::map<std::string, std::string>& mappedElements)
-{
-    AreaExporterService exporter;
-    exporter.addPhysicalModelForConductors(mappedElements);
-    exporter.exportToJson(caseName);
-}
-
-void Mesher::buildPhysicalModel(
+void Adapter::buildPhysicalModel(
     ShapesClassification& shapes,
     const std::map<std::string, std::string>& labelMapping)
 {
@@ -149,7 +113,7 @@ void Mesher::buildPhysicalModel(
     gmsh::model::occ::synchronize();
 }
 
-void Mesher::createPhysicalGroups(
+void Adapter::createPhysicalGroups(
     const EntityMap& objsDict,
     const std::map<std::string, std::string>& labelMapping)
 {
@@ -164,7 +128,7 @@ void Mesher::createPhysicalGroups(
     }
 }
 
-std::pair<int, int> Mesher::getPhysicalGroupWithName(const std::string& name) {
+std::pair<int, int> Adapter::getPhysicalGroupWithName(const std::string& name) {
     gmsh::vectorpair pGs;
     gmsh::model::getPhysicalGroups(pGs);
     for (const auto& [dim, tag] : pGs) {
@@ -175,7 +139,7 @@ std::pair<int, int> Mesher::getPhysicalGroupWithName(const std::string& name) {
     return {-1, -1};
 }
 
-EntityMap Mesher::extractBoundaries(const EntityMap& shapes) {
+EntityMap Adapter::extractBoundaries(const EntityMap& shapes) {
     EntityMap boundaries;
     for (const auto& [name, surfs] : shapes) {
         gmsh::vectorpair bdrs;
@@ -185,17 +149,5 @@ EntityMap Mesher::extractBoundaries(const EntityMap& shapes) {
     return boundaries;
 }
 
-void Mesher::runCase(
-    const std::string& folder,
-    const std::string& caseName,
-    const std::map<std::string, double>* meshingOptions)
-{
-    gmsh::initialize();
-    std::string inputFile = folder + caseName + "/" + caseName + ".step";
-    Mesher mesher;
-    mesher.meshFromStep(inputFile, caseName, meshingOptions);
-    gmsh::write(caseName + ".msh");
-    gmsh::finalize();
-}
 
-} // namespace step2gmsh
+} // namespace tulip

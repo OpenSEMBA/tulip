@@ -1,7 +1,6 @@
 #pragma once
 
 #include <map>
-#include "FES.h"
 
 namespace tulip {
 
@@ -14,10 +13,10 @@ public:
 		std::map<int,double>{attVals}
 	{}
 	
-	mfem::Array<int> getAttributesAsArray() const
+	std::vector<int> getAttributesAsArray() const
 	{
 		int dbcSize{ (int) size() };
-		mfem::Array<int> bi(dbcSize);
+		std::vector<int> bi(dbcSize);
 		auto it{ begin() };
 		for (int i = 0; i < dbcSize; i++) {
 			bi[i] = it->first;
@@ -26,10 +25,10 @@ public:
 		return bi;
 	}
 
-	mfem::Vector getValuesAsArray() const
+	std::vector<double> getValuesAsArray() const
 	{
 		int dbcSize{ (int) size() };
-		mfem::Vector bv(dbcSize);
+		std::vector<double> bv(dbcSize);
 		auto it{ begin() };
 		for (int i = 0; i < dbcSize; i++) {
 			bv[i] = it->second;

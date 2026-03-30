@@ -8,7 +8,7 @@
 
 #include <gmsh.h>
 
-namespace step2gmsh {
+namespace tulip {
 
 ShapesClassification::ShapesClassification(const EntityList& shapes,
                                            const std::string& jsonFile)
@@ -209,9 +209,6 @@ EntityMap ShapesClassification::buildClosedVacuumDomain() {
 }
 
 EntityMap ShapesClassification::buildOpenVacuumDomain() {
-    constexpr double NEAR_REGION_SCALING = 1.15;
-    constexpr double FAR_REGION_SCALING  = 4.0;
-
     EntityList nonVacuumSurfaces;
     for (const auto& [name, surf] : pecs) {
         nonVacuumSurfaces.insert(nonVacuumSurfaces.end(), surf.begin(), surf.end());
@@ -242,7 +239,7 @@ EntityMap ShapesClassification::buildOpenVacuumDomain() {
         auto lengths     = boundingBox.getLengths();
         double bbMaxLen  = *std::max_element(lengths.begin(), lengths.end());
 
-        double nearBoxSize = bbMaxLen * NEAR_REGION_SCALING;
+        double nearBoxSize = bbMaxLen * innerRegionBoxScalingFactor;
         auto   center      = boundingBox.getCenter();
         double nVX = center[0] - nearBoxSize / 2.0;
         double nVY = center[1] - nearBoxSize / 2.0;
@@ -252,7 +249,7 @@ EntityMap ShapesClassification::buildOpenVacuumDomain() {
             nVX, nVY, nVZ, nearBoxSize, nearBoxSize);
         EntityList nearVacuum = {{2, nearRectTag}};
 
-        double farDiameter = FAR_REGION_SCALING * boundingBox.getDiagonal();
+        double farDiameter = farRegionBoxScalingFactor * boundingBox.getDiagonal();
         int    farDiskTag  = gmsh::model::occ::addDisk(
             center[0], center[1], center[2], farDiameter, farDiameter);
         EntityList farVacuum = {{2, farDiskTag}};
@@ -372,31 +369,4 @@ Graph ShapesClassification::getConductorOnlyGraph() const {
     return conductorGraph;
 }
 
-std::map<std::string, std::string> ShapesClassification::getMappedComponents() const {
-    std::map<std::string, std::string> mappedComponents;
-
-    std::vector<std::string> sortedNodes = nestedGraph.getNodesByLevels();
-
-    int conductorIdx = 0;
-    for (const auto& node : sortedNodes) {
-        if (pecs.count(node)) {
-            mappedComponents[node] = "Conductor_" + std::to_string(conductorIdx++);
-        }
-    }
-
-    int dielectricIdx = 0;
-    for (const auto& [name, _] : dielectrics) {
-        mappedComponents[name] = "Dielectric_" + std::to_string(dielectricIdx++);
-    }
-
-    for (const auto& [domain, _] : vacuum) {
-        mappedComponents[domain] = domain;
-    }
-    for (const auto& [openBoundary, _] : open) {
-        mappedComponents[openBoundary] = "OpenBoundary_0";
-    }
-
-    return mappedComponents;
-}
-
-} // namespace step2gmsh
+} // namespace tulip

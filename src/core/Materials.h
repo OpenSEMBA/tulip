@@ -2,6 +2,9 @@
 
 #include "AttrToValueMap.h"
 
+#include <string>
+#include <vector>
+
 namespace tulip {
 
 using MaterialId = int;
