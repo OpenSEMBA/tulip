@@ -64,7 +64,7 @@ jobs:
         repository: opensemba/mfem
         path: ${{ env.MFEM_TOP_DIR }}
     
-    - name: build MFEM
+    - name: Build MFEM
       if: steps.mfem-cache.outputs.cache-hit != 'true'
       uses: mfem/github-actions/build-mfem@v2.4
       env:
@@ -80,28 +80,17 @@ jobs:
         metis-dir: ${{ env.METIS_TOP_DIR }}
         mfem-dir: ${{ env.MFEM_TOP_DIR }}
  
-    - name: Configuring TULIP
+    - name: Configure TULIP
       env: 
         MFEM_PACKAGE: ${{ github.workspace }}/${{env.MFEM_TOP_DIR}}/build
       run: |
         cmake --preset "msbuild-vcpkg" -S tulip -B tulip/build
     
-    - name: Building TULIP
+    - name: Build TULIP
       run: |
         cmake --build tulip/build/ --config Release
-
-    # - name: Configuring and building TULIP
-    #   uses: lukka/run-cmake@v10
-    #   id: runcmake
-        
-    #   with:
-    #     cmakeListsTxtPath: '${{ github.workspace }}/tulip/CMakeLists.txt'
-    #     configurePreset: 'msbuild-vcpkg'
-    #     configurePresetAdditionalArgs: '[`-DCMAKE_PREFIX_PATH=../mfem`]'
-    #     buildPreset: 'msbuild-vcpkg'
-    #     buildPresetAdditionalArgs: '[`--config Release`]'
- 
-    - name: test TULIP
-      run: cd tulip && build/bin/Release/tulip_tests.exe
-        
+    
+    - name: Test TULIP
+      run: |
+        ctest --test-dir ${{ env.TULIP_TOP_DIR }}/build --output-on-failure        
     
