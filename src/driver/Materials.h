@@ -8,9 +8,8 @@
 
 namespace tulip {
 
-using LayerId = int;
+using ConductorId = int;
 using Attribute = int;
-using IdToAttrMap = std::map<LayerId, Attribute>;
 
 // This are materials used by the solver. 
 // There are only three options: 
@@ -19,56 +18,48 @@ using IdToAttrMap = std::map<LayerId, Attribute>;
 // - Open.
 class Material {
 public:
-	virtual bool isDomainMaterial() const = 0;
-
+	Attribute getAttribute() const {
+		return attribute;
+	}
 private:
-	LayerId id = -1;
 	Attribute attribute = -1;
 };
 
 class Conductor : public Material {
-public:	
-	bool isDomainMaterial() const { return false; }
+public:
+	ConductorId getConductorId() const {
+		return conductorId;
+	}
+private:	
+	ConductorId conductorId = -1;
 };
 
 class Dielectric : public Material {
 public:
-	bool isDomainMaterial() const { return true; }
-
+	double getRelativePermittivity() const {
+		return relativePermittivity;
+	}
+	void setAsOuterRegion() { isOuterRegion = true; }
+	bool isOuterRegion() const { return isOuterRegion; }
 private:
 	double relativePermittivity = 1.0;
+	bool isOuterRegion = false;
 };
 
 class Open : public Material {
-	bool isDomainMaterial() const { return false; }
 };
 
 
 class Materials {
 public: 
-	template <class T>
-	NameToAttrMap buildNameToAttrMapFor() const
-	{
-		NameToAttrMap res;
-		// TODO 
-		return res;
-	}
+	
+	// List of conductors sorted by their conductorId.
+	std::list<const Conductor*> getConductors() const;
 
-	template <class T>
-	IdToAttrMap buildIdToAttrMapFor() const
-	{
-		IdToAttrMap res;
-		// TODO
-		return res;
-	}
-
-	template <class T>
-	const T& getByLayerId(const LayerId id) const
-	{
-		// TODO
-	}
-
-	void removeMaterialsNotInList(const NameToAttrMap allowedMaterials);
+	std::list<const Dielectric*> getDielectrics() const;
+	
+	std::list<const Open*> getOpenBoundaries() const;
+	
 	bool hasDielectrics() const;
 	
 private:

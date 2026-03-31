@@ -30,14 +30,14 @@ struct PULParametersByDomain {
 };
 
 struct FloatingPotentials {
-    mfem::DenseMatrix electric, magnetic;
+    std::map<ConductorId, std::map<ConductorId, double>> electric, magnetic;
 };
 
 struct FieldReconstruction {
     double innerRegionAveragePotential;
     std::array<double,2> expansionCenter;
     multipolarCoefficients ab; // Stored in natural units.
-    std::map<MaterialId, double> conductorPotentials;
+    std::map<ConductorId, double> conductorPotentials;
 
     nlohmann::json toJSON() const;
 	bool operator==(const FieldReconstruction& rhs) const;
@@ -50,7 +50,7 @@ struct InCellPotentials {
 	bool operator==(const InCellPotentials&) const;
 
     Box innerRegionBox;
-    std::map<MaterialId, FieldReconstruction> electric, magnetic;
+    std::map<ConductorId, FieldReconstruction> electric, magnetic;
 
     double getCapacitanceUsingInnerRegion(int i, int j) const;
     double getInductanceUsingInnerRegion(int i, int j) const;

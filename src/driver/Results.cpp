@@ -112,9 +112,9 @@ multipolarCoefficients multipolarCoefficientsFromJSON(const json& j)
 	return res;
 }
 
-std::map<MaterialId, FieldReconstruction> potentialsFromJSON(const json& j)
+std::map<ConductorId, FieldReconstruction> potentialsFromJSON(const json& j)
 {
-    std::map<MaterialId, FieldReconstruction> res;
+    std::map<ConductorId, FieldReconstruction> res;
     int reconstructedId = 0;
     for (const auto& f : j) {
 		FieldReconstruction fr;

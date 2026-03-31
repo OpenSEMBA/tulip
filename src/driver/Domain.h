@@ -10,8 +10,8 @@ struct Domain {
     using ElementIds = std::set<int>;
     using IdToDomain = std::map<Id, Domain>;
 
-    MaterialId ground{ -1 };
-    std::set<MaterialId> conductorIds;
+    ConductorId ground{ -1 };
+    std::set<ConductorId> conductorIds;
     ElementIds elems;   
     ElementIds bdrElems;
 

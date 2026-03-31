@@ -71,7 +71,7 @@ DomainTree::DomainTree(const Domain::IdToDomain& domains)
 		throw std::runtime_error("Conductor 0 is not present");
 	}
 	
-	std::multimap<MaterialId, Domain::Id> condIdToDomId;
+	std::multimap<ConductorId, Domain::Id> condIdToDomId;
 	for (const auto& [domId, dom] : domains) {
 		addVertex(domId);
 		for (const auto& condId : dom.conductorIds) {
@@ -145,7 +145,7 @@ Domain::IdToDomain Domain::buildDomains(const Model& model)
 	for (const auto& edge : DomainTree{ res }.getEdgesAsPairs()) {
 		const auto& c1{ res[edge.first].conductorIds };
 		const auto& c2{ res[edge.second].conductorIds };
-		std::set<MaterialId> common;
+		std::set<ConductorId> common;
 		std::set_intersection(
 			c1.begin(), c1.end(),
 			c2.begin(), c2.end(),

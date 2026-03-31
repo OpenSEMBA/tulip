@@ -11,7 +11,7 @@ namespace tulip {
 
 struct SolvedProblem {
     std::unique_ptr<Solver> solver;
-    std::vector<SolverSolution> solutions;
+    std::map<ConductorId,SolverSolution> solutions;
 };
 
 class Driver {
@@ -53,7 +53,7 @@ private:
     double getInnerRegionAveragePotential(
         const Solver& s,
         bool includeConductors);
-    std::map<MaterialId, FieldReconstruction> getFieldParameters(
+    std::map<ConductorId, FieldReconstruction> getFieldParameters(
         bool ignoreDielectrics);
 };
 

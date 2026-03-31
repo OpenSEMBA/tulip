@@ -51,8 +51,8 @@ public:
 	const Materials& getMaterials() const { return materials_; }
 	std::size_t numberOfConductors() const;
 	
-	void setGroundConductorId(MaterialId id) { groundConductorId_ = id; }
-	MaterialId getGroundConductorId() const { return groundConductorId_; }
+	void setGroundConductorId(ConductorId id) { groundConductorId_ = id; }
+	ConductorId getGroundConductorId() const { return groundConductorId_; }
 
 	Openness determineOpenness() const;
 	
@@ -62,7 +62,7 @@ public:
 private:
 	Materials materials_;
 	std::unique_ptr<mfem::Mesh> mesh_;
-	LayerId groundConductorId_{ 0 };
+	ConductorId groundConductorId_{ 0 };
 };
 
 }
