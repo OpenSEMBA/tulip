@@ -4,12 +4,6 @@
 namespace tulip {
 
 
-NameToAttrMap Materials::buildNameToAttrMap() const
-{
-	// TODO
-	return res;
-}
-
 void Materials::removeMaterialsNotInList(const NameToAttrMap allowedMaterials)
 {
 	// TODO

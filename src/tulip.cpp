@@ -1,5 +1,6 @@
 
 #include "Driver.h"
+#include "Adapter.h"
 
 #include <filesystem>
 #include <boost/program_options.hpp>
@@ -11,40 +12,43 @@ int main(int argc, char* argv[])
 	// Parses arguments.
 	std::string inputFilename;
 	
-	po::options_description desc(
+	po::options_description optionsDescription(
 		"-- tulip --\n"
-		"Per unit length capacitance and inductance for MTL cross - sections.\n"
+		"Transmission line unit length conductors and in-cell parameters calculator.\n"
 		"Visit https://github.com/OpenSEMBA/tulip for more information.\n"
 		"Available options"
 	);
-	desc.add_options()
+	optionsDescription.add_options()
 		("help,h", "this help message")
-		("input,i", po::value(&inputFilename), "input filename .tulip.in.json")
+		("input,i", po::value(&inputFilename), "input JSON file to use a .step file.")
 	;
 
 	po::variables_map vm;
-	po::store(po::parse_command_line(argc, argv, desc), vm);
+	po::store(po::parse_command_line(argc, argv, optionsDescription), vm);
 	po::notify(vm);
 
-
 	if (vm.count("help") || vm.empty()) {
-		std::cout << desc << std::endl;
+		std::cout << optionsDescription << std::endl;
 		return 0;
 	}
 	
-	std::cout << desc << std::endl;
+	std::cout << optionsDescription << std::endl;
 	std::cout << "Using input file: " << inputFilename << std::endl;
 
-
 	// Launcher.
-	std::string folder{ 
-		"./" + std::filesystem::path{inputFilename}.parent_path().string() + "/"
+	std::filesystem::path folder{ 
+		"./" + std::filesystem::path{inputFilename}.parent_path() + "/"
 	};
 
-	auto driver{ tulip::Driver::loadFromFile(inputFilename) };
+	auto adapter{ tulip::Adapter::loadFromFile(inputFilename) };
+	adapter.run();
+	
+	auto driver{ 
+		adapter.getModel(),
+		adapter.getDriverOptions()
+	};
 	driver.setExportFolder(folder);
-
 	driver.run();
 
-	std::cout << "-- tulip finished succesfully --" << std::endl;
+	std::cout << "-- tulip finished successfully --" << std::endl;
 }

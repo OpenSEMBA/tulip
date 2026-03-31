@@ -62,7 +62,7 @@ public:
 private:
 	Materials materials_;
 	std::unique_ptr<mfem::Mesh> mesh_;
-	MaterialId groundConductorId_{ 0 };
+	LayerId groundConductorId_{ 0 };
 };
 
 }

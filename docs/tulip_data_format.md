@@ -1,9 +1,7 @@
-# Tulip input data format
 
-- [Tulip input data format](#tulip-input-data-format)
-  - [`[analysis]`.](#analysis)
-    - [adapter options](#adapter-options)
-    - [driver options](#driver-options)
+- [Tulip input from step file format](#tulip-input-from-step-file-format)
+  - [`[adapterOptions]`](#adapteroptions)
+    - [\`\[driverOptions\]](#driveroptions)
   - [`<materials>`](#materials)
     - [`conductor`](#conductor)
     - [`shield`](#shield)
@@ -11,26 +9,39 @@
     - [`open`](#open)
   - [`<model>`](#model)
 
+# Tulip input from step file format
 Tulip receives a JSON object as an input with the entries described below. Square brackets indicate that the entry is optional and a default value will be assumed, angle brackets indicate that the entry is mandatory. 
 
 Unless specified otherwise all units are assumed to be in SI-MKS.
 
-## `[analysis]`.
-This object contains options to control the adapter and driver behaviors. 
-Adapter is in 
+Filename should be in the format `CASE_NAME.tulip.input.json`.
 
-### adapter options
+## `[adapterOptions]`
+ It can contain the following entries, as explained in [AdapterOption.h](../src/adapter/AdapterOptions.h) with their corresponding default values. An example is shown below.
+```json
+  "innerRegionBoxScalingFactor": 1.40,
+  "gmshOptions": {
+    {"Mesh.ElementOrder", 3.0},
+    {"Mesh.MeshSizeMax", 40.0},
+  }
+```
 
-### driver options
-- `[exportParaviewSolution]` can be `true` or `false`. Exports visualization results for each simulation performed.
-- 
+### `[driverOptions]
+Driver manages the solver`and generates outputs. Default options can be checked in [DriverOptions.h](../src/driver/DriverOptions.h) and [SolverOptions.h](../src/driver/SolverOptions.h)
 
+```json
+  "multipolarExpansionOrder": 2,
+  "solverOptions": {
+    "order": 2,
+    "printIterations": true
+  }
+```
 
 ## `<materials>`
 These materials are associated with `model` `layers` to define regions with different material properties.
 They are defined by an array of JSON objects with:
+- `[name]` a string with a human readable name.
 - `<id>` an integer identifier with a unique number.
-- `<name>` a string with a human readable name.
 - `<type>` a string with `conductor`, `shield`, `dielectric`, or `open`. Depending on their type  they may need additional entries, as described below.
 
 ### `conductor`
@@ -65,12 +76,8 @@ An `open` material serves to specify the computational boundary of the problem. 
 
 ## `<model>`  
 This object can contain the following entries:
-+ `[stepFilename]` defaults to the ```CASE_NAME.step```
-  + `<layers>` which is an array which associates the layers present in the `.step` file with the different `materials`. Each layer is specified by:
++ `<layers>` which is an array which associates the layers present in the `.step` file with the different `materials`. Each layer is specified by:
   - `<name>` which must match exactly the name of the corresponding layer within the `.step` file. It must be unique.
-  - `<id>` which is an integer unique identifier which will be used to order the results for the calculated PUL matrices.
+  - `<id>` which is an integer non-negative unique identifier which will be used to order the results for the calculated PUL matrices.
   - `<materialId>` which must match an `id` from a material in the list of `materials`
   
-
-
- 

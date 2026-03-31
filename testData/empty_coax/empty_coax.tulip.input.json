@@ -1,0 +1,10 @@
+{
+    "materials": [
+        { "id": 1, "type": "shield" },
+        { "id": 2, "type": "conductor"}
+    ],
+    "layers": [ 
+        { "name":"Shield", "id": 0, "materialId": 1 },
+        { "name":"Inner", "id": 1, "materialId": 2}
+    ]
+}
