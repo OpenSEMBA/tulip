@@ -92,5 +92,5 @@ jobs:
     
     - name: Test TULIP
       run: |
-        ctest --test-dir ${{ env.TULIP_TOP_DIR }}/build --output-on-failure        
+        ctest --test-dir ${{ env.TULIP_TOP_DIR }}/build -C Release --output-on-failure        
     

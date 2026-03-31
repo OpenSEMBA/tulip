@@ -39,7 +39,8 @@ public:
     DenseMatrix getLMatrix();
     DenseMatrix getFloatingPotentialsMatrix(const bool ignoreDielectrics);
 
-    static Driver loadFromFile(const std::string& filename);
+    static Driver loadFromAdaptedFile(const std::string& filename);
+    static Driver adaptFromFile(const std::string& filename)
 
 private:
     Model model_;

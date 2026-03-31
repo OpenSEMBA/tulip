@@ -23,7 +23,8 @@ Adapter is in
 
 ### driver options
 - `[exportParaviewSolution]` can be `true` or `false`. Exports visualization results for each simulation performed.
-- 
+- `[order]`{3}; 
+	bool printIterations{ false };
 
 
 ## `<materials>`
@@ -65,8 +66,8 @@ An `open` material serves to specify the computational boundary of the problem. 
 
 ## `<model>`  
 This object can contain the following entries:
-+ `[stepFilename]` defaults to the ```CASE_NAME.step```
-  + `<layers>` which is an array which associates the layers present in the `.step` file with the different `materials`. Each layer is specified by:
++ `[stepFilename]` defaults to the ```CASE_NAME.step``` where CASE_NAME is the basename of the input file (wt).
++ `<layers>` which is an array which associates the layers present in the `.step` file with the different `materials`. Each layer is specified by:
   - `<name>` which must match exactly the name of the corresponding layer within the `.step` file. It must be unique.
   - `<id>` which is an integer unique identifier which will be used to order the results for the calculated PUL matrices.
   - `<materialId>` which must match an `id` from a material in the list of `materials`
