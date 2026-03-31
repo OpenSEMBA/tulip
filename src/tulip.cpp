@@ -41,10 +41,10 @@ int main(int argc, char* argv[])
 		"./" + std::filesystem::path{inputFilename}.parent_path() + "/"
 	};
 
-	auto adapter{ tulip::Adapter::loadFromFile(inputFilename) };
+	auto adapter{ Adapter::loadFromFile(inputFilename) };
 	adapter.run();
 	
-	auto driver{ 
+	Driver driver{ 
 		adapter.getModel(),
 		adapter.getDriverOptions()
 	};

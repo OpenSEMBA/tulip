@@ -7,9 +7,9 @@
 
 namespace tulip {
 
-class Parser {
+class AdaptedInputParser {
 public:
-	Parser(const std::string& filename);
+	AdaptedInputParser(const std::string& filename);
 
 	Model readModel() const;
 	DriverOptions readDriverOptions() const;
