@@ -11,12 +11,7 @@ void Materials::removeMaterialsNotInList(const NameToAttrMap allowedMaterials)
 
 bool Materials::hasDielectrics() const
 {
-	for (const auto& d : dielectrics) {
-		if (d.relativePermittivity != VACUUM_RELATIVE_PERMITTIVITY) {
-			return true;
-		}
-	}
-	return false;
+	// TODO
 }
 
 

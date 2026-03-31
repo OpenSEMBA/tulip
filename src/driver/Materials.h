@@ -12,6 +12,11 @@ using LayerId = int;
 using Attribute = int;
 using IdToAttrMap = std::map<LayerId, Attribute>;
 
+// This are materials used by the solver. 
+// There are only three options: 
+// - Conductor (treated as PEC), 
+// - Dielectric.
+// - Open.
 class Material {
 public:
 	virtual bool isDomainMaterial() const = 0;

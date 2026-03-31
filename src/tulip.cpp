@@ -7,6 +7,7 @@
 
 namespace po = boost::program_options;
 
+// TODO change this to be a minimal launcher which creates an object called Tulip. Include a test with empty_coax.
 int main(int argc, char* argv[])
 {
 	// Parses arguments.
