@@ -21,6 +21,7 @@ public:
 	Attribute getAttribute() const { return attribute; }
 	void setAsOuterRegion() { isOuterRegion_ = true; }
 	bool isOuterRegion() const { return isOuterRegion_; }
+	virtual bool isDomainMaterial() const = 0;
 private:
 	Attribute attribute = -1;
 	bool isOuterRegion_ = false;
@@ -33,6 +34,7 @@ public:
 	}
 	bool isGround() const;
 	void setAsGround() { isGround_ = true; }
+	bool isDomainMaterial() const { return false; }
 private:	
 	ConductorId conductorId = -1;
 	bool isGround_ = false;
@@ -43,11 +45,13 @@ public:
 	double getRelativePermittivity() const {
 		return relativePermittivity;
 	}
+	bool isDomainMaterial() const { return true; }
 private:
 	double relativePermittivity = 1.0;
 };
 
 class Open : public Material {
+	bool isDomainMaterial() const { return false; }
 };
 
 

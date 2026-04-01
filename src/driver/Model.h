@@ -56,8 +56,8 @@ public:
 
 	Openness determineOpenness() const;
 	
-	double getAreaOfMaterial(const std::string& materialName) const;
-	Box getBoundingBoxOfMaterial(const std::string& materialName) const;
+	double getAreaOfMaterial(const Material* m) const;
+	Box getInnerRegionBoundingBox() const;
 
 private:
 	Materials materials_;

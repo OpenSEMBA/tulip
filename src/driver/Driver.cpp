@@ -12,7 +12,8 @@ void exportFieldSolutions(
 	const DriverOptions& opts,
 	Solver& s,
 	int conductorId,
-	bool ignoreDielectrics)
+	bool ignoreDielectrics,
+	std::string extraName = "")
 {
 	const std::string suffix{ ignoreDielectrics ? "_magnetostatic" : "_electrostatic" };
 
@@ -20,7 +21,7 @@ void exportFieldSolutions(
 	ss << "Conductor_" << conductorId;
 
 	if (opts.exportParaViewSolution) {
-		std::string outputName{ opts.exportFolder + "/" + "ParaView/" + ss.str() + suffix };
+		std::string outputName{ opts.exportFolder + "/" + "ParaView/" + ss.str() + suffix + extraName};
 		ParaViewDataCollection pd{ outputName, s.getMesh() };
 		s.writeParaViewFields(pd);
 	}
@@ -389,25 +390,6 @@ std::map<ConductorId, double> Driver::getFloatingPotentials(
 	return res;
 }
 
-std::list<std::string> listMaterialsInInnerRegion(
-	const Model& m,
-	bool includeConductors = true)
-{
-	std::list<std::string> res;
-	for (auto d : m.getMaterials().buildNameToAttrMapFor<Dielectric>()) {
-		if (name.find("Vacuum_") != std::string::npos) {
-			continue;
-		}
-		res.push_back(name);
-	}
-	if (includeConductors) {
-		for (auto [name, tag] : m.getMaterials().buildNameToAttrMapFor<PEC>()) {
-			res.push_back(name);
-		}
-	}
-	return res;
-}
-
 
 double Driver::getInnerRegionAveragePotential(
 	const Solver& s,
@@ -417,16 +399,17 @@ double Driver::getInnerRegionAveragePotential(
 	double totalPotential = 0.0;
 	double totalArea = 0.0;
 	
-	auto innerRegionMaterials = listMaterialsInInnerRegion(model_, includeConductors);
-	auto materials = model_.getMaterials().buildNameToAttrMap();
-	
-	for (const auto& name: innerRegionMaterials ) {
-		auto tag = materials.at(name);
-		double area = model_.getAreaOfMaterial(name);
-		if (model_.getMaterials().isDomainMaterial(name)) {
-			totalPotential += s.getAveragePotentialInDomain(tag) * area;
+	for (const auto& m: model_.getMaterials().getAll() ) {
+		if (m->isOuterRegion()) {
+			continue;
+		}
+		auto area = model_.getAreaOfMaterial(m); 
+		if (m->isDomainMaterial()) {
+			totalPotential += 
+				s.getAveragePotentialInDomain(m->getAttribute()) * area;
 		} else {
-			totalPotential += s.getAveragePotentialInBoundary(tag) * area;
+			totalPotential += 
+				s.getAveragePotentialInBoundary(m->getAttribute()) * area;
 		}
 		totalArea += area;
 	}
@@ -453,19 +436,19 @@ std::map<ConductorId, FieldReconstruction> Driver::getFieldParameters(
 	for (const auto& cI : conductors) {
 		
 		auto condI = cI->getConductorId();
-		auto fp = getFloatingPotentials(ignoreDielectrics);
+		auto fp = getFloatingPotentials(condI, ignoreDielectrics);
 		s.getPhi() *= 0.0;
 		s.getE() *= 0.0;
 		s.getD() *= 0.0;
-		for (const auto& [condJ, bdrAttJ] : conductors) {
-			s.getPhi().Add(fp(condI, condJ), *sP->solutions[condJ].phi);
-			s.getE().Add(fp(condI, condJ), *sP->solutions[condJ].e);
-			s.getD().Add(fp(condI, condJ), *sP->solutions[condJ].d);
+		for (const auto& cJ : conductors) {
+			auto condJ = cJ->getConductorId();
+			auto fpJ = fp.at(condJ);
+			s.getPhi().Add(fpJ, *sP->solutions[condJ].phi);
+			s.getE().Add(fpJ, *sP->solutions[condJ].e);
+			s.getD().Add(fpJ, *sP->solutions[condJ].d);
 		}
 
-		exportFieldSolutions(opts_, s, 
-			model_.getMaterials().get<PEC>(condI).name + "_prescribed_and_others_floating", 
-			ignoreDielectrics);
+		exportFieldSolutions(opts_, s, condI, ignoreDielectrics, "_floating");
 
 		res[condI].innerRegionAveragePotential = 
 			getInnerRegionAveragePotential(s, true);
@@ -490,7 +473,7 @@ InCellPotentials Driver::getInCellPotentials()
 		throw std::runtime_error("In cell parameters can only be computed for open problems.");
 	}
 
-	res.innerRegionBox = model_.getBoundingBoxOfMaterial(INNER_REGION_DEFAULT_NAME);
+	res.innerRegionBox = model_.getInnerRegionBoundingBox();
 
 	res.electric = getFieldParameters(false);
 	res.magnetic = getFieldParameters(true);
