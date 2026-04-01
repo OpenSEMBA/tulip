@@ -28,7 +28,7 @@ void exportFieldSolutions(
 }
 
 
-Driver Driver::loadFromFile(const std::string& fn)
+Driver Driver::loadFromAdaptedFile(const std::string& fn)
 {
 	AdaptedInputParser p{ fn };
 	return Driver{

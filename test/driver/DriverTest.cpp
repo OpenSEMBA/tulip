@@ -15,7 +15,7 @@ class DriverTest : public ::testing::Test {};
 TEST_F(DriverTest, empty_coax)
 {
 	// Empty Coaxial case.
-	auto out{ Driver::loadFromFile(inputCase("empty_coax")).getPULMTL() };
+	auto out{ Driver::loadFromAdaptedFile(inputCase("empty_coax")).getPULMTL() };
 
 	auto CExpected{ EPSILON0_SI * 2 * M_PI / log(0.05 / 0.025) };
 
@@ -36,7 +36,7 @@ TEST_F(DriverTest, partially_filled_coax)
 	// Dielectric internal radius -> rI_dielectric = 25 mm
 	// Dielectric external radius -> rO_dielectric = 35 mm
 	// Dielectric permittivity -> eps_r = 4.0
-	auto out{ Driver::loadFromFile(inputCase("partially_filled_coax")).getPULMTL() };
+	auto out{ Driver::loadFromAdaptedFile(inputCase("partially_filled_coax")).getPULMTL() };
 
 	// Equivalent capacity is the series of the inner and outer capacitors.
 	auto COut{ EPSILON0_SI * 2 * M_PI / log(0.050 / 0.035) };
@@ -57,7 +57,7 @@ TEST_F(DriverTest, partially_filled_coax)
 
 TEST_F(DriverTest, partially_filled_coax_by_domains)
 {
-	auto dr{ Driver::loadFromFile(inputCase("partially_filled_coax")) };
+	auto dr{ Driver::loadFromAdaptedFile(inputCase("partially_filled_coax")) };
 	auto globalOut{ dr.getPULMTL() };
 
 	auto out{ dr.getPULMTLByDomains() };
@@ -90,7 +90,7 @@ TEST_F(DriverTest, two_wires_coax)
 
 	const double rTol{ 2.5e-2 };
 
-	auto out{ Driver::loadFromFile(fn).getPULMTL() };
+	auto out{ Driver::loadFromAdaptedFile(fn).getPULMTL() };
 
 	const int N{ 2 };
 	ASSERT_EQ(N, out.C.NumCols());
@@ -119,7 +119,7 @@ TEST_F(DriverTest, two_wires_shielded_floating_potentials)
 
 	const double rTol{ 2.5e-2 };
 
-	auto fp{ Driver::loadFromFile(fn).getFloatingPotentials().electric };
+	auto fp{ Driver::loadFromAdaptedFile(fn).getFloatingPotentials().electric };
 
 	const int N{ 2 };
 	ASSERT_EQ(N, fp.NumCols());
@@ -159,7 +159,7 @@ TEST_F(DriverTest, two_wires_open_floating_potentials)
 	const std::string CASE{ "two_wires_open" };
 	auto fn{ casesFolder() + CASE + "/" + CASE + ".tulip.adapted.json" };
 
-	auto fp{ Driver::loadFromFile(fn).getFloatingPotentials().electric };
+	auto fp{ Driver::loadFromAdaptedFile(fn).getFloatingPotentials().electric };
 
 	const int N{ 2 };
 	ASSERT_EQ(N, fp.NumCols());
@@ -214,7 +214,7 @@ TEST_F(DriverTest, five_wires)
 	couplingExpected.UseExternalData(couplingExpectedData, 5, 5);
 
 	auto out{
-		Driver::loadFromFile(fn).getPULMTL().getCapacitiveCouplingCoefficients()
+		Driver::loadFromAdaptedFile(fn).getPULMTL().getCapacitiveCouplingCoefficients()
 	};
 
 	ASSERT_EQ(couplingExpected.NumRows(), out.NumRows());
@@ -255,7 +255,7 @@ TEST_F(DriverTest, three_wires_ribbon)
 	LExpected.UseExternalData(LExpectedData, 2, 2);
 	LExpected *= 1e-6;
 
-	auto out{ Driver::loadFromFile(fn).getPULMTL() };
+	auto out{ Driver::loadFromAdaptedFile(fn).getPULMTL() };
 
 	const double rTol{ 0.0025 };
 	ASSERT_EQ(CExpected.NumRows(), out.C.NumRows());
@@ -287,7 +287,7 @@ TEST_F(DriverTest, three_wires_ribbon_generalized_capacitance)
 	const std::string CASE{ "three_wires_ribbon" };
 	auto fn{ casesFolder() + CASE + "/" + CASE + ".tulip.adapted.json" };
 
-	auto dr = Driver::loadFromFile(fn);
+	auto dr = Driver::loadFromAdaptedFile(fn);
 
 	double gCExpectedData[9] = {
 	  26.2148,  -18.0249,  -5.03325,
@@ -322,7 +322,7 @@ TEST_F(DriverTest, three_wires_ribbon_floating_potentials)
 	const std::string CASE{ "three_wires_ribbon" };
 	auto fn{ casesFolder() + CASE + "/" + CASE + ".tulip.adapted.json" };
 
-	auto fp = Driver::loadFromFile(fn).getFloatingPotentials().electric;
+	auto fp = Driver::loadFromAdaptedFile(fn).getFloatingPotentials().electric;
 
 	// Solves problem and checks that charge is zero in the floating conductor.
 	{
@@ -368,7 +368,7 @@ TEST_F(DriverTest, three_wires_ribbon_floating_potentials)
 
 TEST_F(DriverTest, nested_coax)
 {
-	auto out{ Driver::loadFromFile(inputCase("nested_coax")).getPULMTL() };
+	auto out{ Driver::loadFromAdaptedFile(inputCase("nested_coax")).getPULMTL() };
 
 
 	auto C01{ EPSILON0_SI * 2.0 * M_PI / log(8.0 / 5.6) };
@@ -395,7 +395,7 @@ TEST_F(DriverTest, nested_coax)
 
 TEST_F(DriverTest, DISABLED_nested_coax_by_domains) // Fails when enforcing conductors to start in zero and be consecutive.
 {
-	auto out{ Driver::loadFromFile(inputCase("nested_coax")).getPULMTLByDomains() };
+	auto out{ Driver::loadFromAdaptedFile(inputCase("nested_coax")).getPULMTLByDomains() };
 
 	auto C01{ EPSILON0_SI * 2.0 * M_PI / log(8.0 / 5.6) };
 	auto C12{ EPSILON0_SI * 2.0 * M_PI / log(4.8 / 2.0) };
@@ -435,7 +435,7 @@ TEST_F(DriverTest, agrawal1981)
 	CExpected.UseExternalData(CExpectedData, nConductors, nConductors);
 	CExpected *= 1e-12;
 
-	auto out{ Driver::loadFromFile(fn).getPULMTL() };
+	auto out{ Driver::loadFromAdaptedFile(fn).getPULMTL() };
 
 	const double rTol{ 0.10 };
 
@@ -459,7 +459,7 @@ TEST_F(DriverTest, lansink2024_floating_potentials)
 
 	const std::string CASE{ "lansink2024" };
 
-	auto dr{ Driver::loadFromFile(casesFolder() + CASE + "/" + CASE + ".tulip.adapted.json") };
+	auto dr{ Driver::loadFromAdaptedFile(casesFolder() + CASE + "/" + CASE + ".tulip.adapted.json") };
 
 	auto fp{ dr.getFloatingPotentials().electric };
 	auto inCell{ dr.getInCellPotentials() };
@@ -506,7 +506,7 @@ TEST_F(DriverTest, lansink2024_fdtd_in_cell_parameters_around_conductor_1)
 	const std::string CASE{ "lansink2024_fdtd_cell" };
 
 	auto inCell{
-		Driver::loadFromFile(
+		Driver::loadFromAdaptedFile(
 			casesFolder() + CASE + "/" + CASE + ".tulip.adapted.json"
 		).getInCellPotentials()
 	};
@@ -552,7 +552,7 @@ TEST_F(DriverTest, lansink2024_two_wires_using_multipolar_expansion)
 	const std::string CASE{ "lansink2024" };
 
 	auto inCell{
-		Driver::loadFromFile(
+		Driver::loadFromAdaptedFile(
 			casesFolder() + CASE + "/" + CASE + ".tulip.adapted.json"
 		).getInCellPotentials()
 	};
@@ -608,7 +608,7 @@ TEST_F(DriverTest, lansink2024_fdtd_cell_shifted_and_centered)
 	const std::string CASE{ "lansink2024" };
 
 	auto inCell{
-		Driver::loadFromFile(
+		Driver::loadFromAdaptedFile(
 			casesFolder() + CASE + "/" + CASE + ".tulip.adapted.json"
 		).getInCellPotentials()
 	};
@@ -657,7 +657,7 @@ TEST_F(DriverTest, lansink2024_single_wire_in_cell_parameters)
 	const std::string CASE{ "lansink2024_single_wire" };
 
 	auto inCell{
-		Driver::loadFromFile(
+		Driver::loadFromAdaptedFile(
 			casesFolder() + CASE + "/" + CASE + ".tulip.adapted.json"
 		).getInCellPotentials()
 	};
@@ -695,7 +695,7 @@ TEST_F(DriverTest, lansink2024_single_wire_multipolar_in_cell_parameters)
 	const std::string CASE{ "lansink2024_single_wire_multipolar" };
 
 	auto inCell{
-		Driver::loadFromFile(
+		Driver::loadFromAdaptedFile(
 			casesFolder() + CASE + "/" + CASE + ".tulip.adapted.json"
 		).getInCellPotentials()
 	};
@@ -735,7 +735,7 @@ TEST_F(DriverTest, getCFromGeneralizedC_two_wires_open)
 	const std::string CASE{ "two_wires_open" };
 	auto fn{ casesFolder() + CASE + "/" + CASE + ".tulip.adapted.json" };
 
-	auto gC{ Driver::loadFromFile(fn).getGeneralizedCMatrix() };
+	auto gC{ Driver::loadFromAdaptedFile(fn).getGeneralizedCMatrix() };
 
 	double d = 50;
 	double rw1 = 2;
@@ -800,7 +800,7 @@ TEST_F(DriverTest, lansink2024_small_one_centered_fdtd_cell_vs_multipolar)
 	InCellPotentials fdtdCellPotentials;
 	{
 		const std::string CASE{ "lansink2024_small_one_centered_fdtd_cell" };
-		fdtdCellPotentials = Driver::loadFromFile(
+		fdtdCellPotentials = Driver::loadFromAdaptedFile(
 			casesFolder() + CASE + "/" + CASE + ".tulip.adapted.json").getInCellPotentials();
 	}
 	auto fdtdCellComputedC00 = fdtdCellPotentials.getCapacitanceUsingInnerRegion(0, 0);
@@ -810,7 +810,7 @@ TEST_F(DriverTest, lansink2024_small_one_centered_fdtd_cell_vs_multipolar)
 	InCellPotentials multipolarPotentials;
 	{
 		const std::string CASE{ "lansink2024_small_one_centered" };
-		multipolarPotentials = Driver::loadFromFile(
+		multipolarPotentials = Driver::loadFromAdaptedFile(
 			casesFolder() + CASE + "/" + CASE + ".tulip.adapted.json").getInCellPotentials();
 	}
 	Box fdtdCell{ {-0.1, -0.1}, {0.1, 0.1} };
@@ -834,7 +834,7 @@ TEST_F(DriverTest, lansink2024_large_one_centered_fdtd_cell)
 	InCellPotentials fdtdCellPotentials;
 	{
 		const std::string CASE{ "lansink2024_large_one_centered_fdtd_cell" };
-		fdtdCellPotentials = Driver::loadFromFile(
+		fdtdCellPotentials = Driver::loadFromAdaptedFile(
 			casesFolder() + CASE + "/" + CASE + ".tulip.adapted.json").getInCellPotentials();
 	}
 	auto fdtdCellComputedC10 = fdtdCellPotentials.getCapacitanceUsingInnerRegion(1, 0);
@@ -849,7 +849,7 @@ TEST_F(DriverTest, lansink2024_small_one_centered_different_integration_centers)
 	InCellPotentials multipolarPotentials;
 	const std::string CASE{ "lansink2024_small_one_centered" };
 
-	multipolarPotentials = Driver::loadFromFile(
+	multipolarPotentials = Driver::loadFromAdaptedFile(
 		casesFolder() + CASE + "/" + CASE + ".tulip.adapted.json").getInCellPotentials();
 
 	mfem::DenseMatrix geometricC(2, 2);
@@ -887,7 +887,7 @@ TEST_F(DriverTest, DISABLED_realistic_case_with_dielectrics_fdtd_cell)
 	InCellPotentials fdtdCellPotentials;
 	{
 		const std::string CASE{ "realistic_case_with_dielectrics_fdtd_cell" };
-		fdtdCellPotentials = Driver::loadFromFile(
+		fdtdCellPotentials = Driver::loadFromAdaptedFile(
 			casesFolder() + CASE + "/" + CASE + ".tulip.adapted.json").getInCellPotentials();
 	}
 	auto fdtdCellComputedC_0 = fdtdCellPotentials.getCapacitanceUsingInnerRegion(0, 0);
@@ -906,7 +906,7 @@ TEST_F(DriverTest, realistic_case_with_dielectrics)
 	InCellPotentials mP;
 	{
 		const std::string CASE{ "realistic_case_with_dielectrics" };
-		mP = Driver::loadFromFile(
+		mP = Driver::loadFromAdaptedFile(
 			casesFolder() + CASE + "/" + CASE + ".tulip.adapted.json").getInCellPotentials();
 	}
 

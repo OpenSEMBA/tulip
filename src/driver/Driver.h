@@ -39,8 +39,10 @@ public:
     DenseMatrix getGeneralizedCMatrix(bool ignoreDielectrics = false);
     DenseMatrix getCMatrix();
     DenseMatrix getLMatrix();
-    
-    static Driver loadFromFile(const std::string& filename);
+    DenseMatrix getFloatingPotentialsMatrix(const bool ignoreDielectrics);
+
+    static Driver loadFromAdaptedFile(const std::string& filename);
+    static Driver adaptFromFile(const std::string& filename);
 
 private:
     Model model_;
