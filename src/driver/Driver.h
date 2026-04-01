@@ -21,14 +21,16 @@ public:
     PULParameters getPULMTL();
     PULParametersByDomain getPULMTLByDomains();
     InCellPotentials getInCellPotentials();
-    FloatingPotentials getFloatingPotentials();
+    std::map<ConductorId, double> getFloatingPotentials(
+	    ConductorId prescribedId, 
+        bool ignoreDielectrics);
 
     void setExportFolder(const std::string folder) { opts_.exportFolder = folder; }
 
     static SolverInputs buildSolverInputsFromModel(
         const Model& model,
         bool ignoreDielectrics);
-    static DenseMatrix getCFromGeneralizedC(
+    DenseMatrix getCFromGeneralizedC(
         const mfem::DenseMatrix& gC,
         const Model::Openness&);
 
@@ -37,8 +39,7 @@ public:
     DenseMatrix getGeneralizedCMatrix(bool ignoreDielectrics = false);
     DenseMatrix getCMatrix();
     DenseMatrix getLMatrix();
-    DenseMatrix getFloatingPotentialsMatrix(const bool ignoreDielectrics);
-
+    
     static Driver loadFromFile(const std::string& filename);
 
 private:

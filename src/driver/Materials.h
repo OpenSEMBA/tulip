@@ -18,11 +18,12 @@ using Attribute = int;
 // - Open.
 class Material {
 public:
-	Attribute getAttribute() const {
-		return attribute;
-	}
+	Attribute getAttribute() const { return attribute; }
+	void setAsOuterRegion() { isOuterRegion_ = true; }
+	bool isOuterRegion() const { return isOuterRegion_; }
 private:
 	Attribute attribute = -1;
+	bool isOuterRegion_ = false;
 };
 
 class Conductor : public Material {
@@ -30,8 +31,11 @@ public:
 	ConductorId getConductorId() const {
 		return conductorId;
 	}
+	bool isGround() const;
+	void setAsGround() { isGround_ = true; }
 private:	
 	ConductorId conductorId = -1;
+	bool isGround_ = false;
 };
 
 class Dielectric : public Material {
@@ -39,11 +43,8 @@ public:
 	double getRelativePermittivity() const {
 		return relativePermittivity;
 	}
-	void setAsOuterRegion() { isOuterRegion = true; }
-	bool isOuterRegion() const { return isOuterRegion; }
 private:
 	double relativePermittivity = 1.0;
-	bool isOuterRegion = false;
 };
 
 class Open : public Material {
@@ -54,11 +55,13 @@ class Materials {
 public: 
 	
 	// List of conductors sorted by their conductorId.
-	std::list<const Conductor*> getConductors() const;
+	std::list<const Conductor*> getConductors() const; // TODO
 
-	std::list<const Dielectric*> getDielectrics() const;
+	std::list<const Dielectric*> getDielectrics() const; // TODO
 	
-	std::list<const Open*> getOpenBoundaries() const;
+	std::list<const Open*> getOpenBoundaries() const; // TODO
+
+	std::list<const Material*> getAll() const; // TODO
 	
 	bool hasDielectrics() const;
 	

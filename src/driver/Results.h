@@ -29,10 +29,6 @@ struct PULParametersByDomain {
     std::map<Domain::Id, PULParameters> domainToPUL;
 };
 
-struct FloatingPotentials {
-    std::map<ConductorId, std::map<ConductorId, double>> electric, magnetic;
-};
-
 struct FieldReconstruction {
     double innerRegionAveragePotential;
     std::array<double,2> expansionCenter;

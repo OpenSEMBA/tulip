@@ -64,12 +64,23 @@ mfem::DenseMatrix Driver::getCFromGeneralizedC(
 	// Implements (5.21) from,
 	// Clayton Paul. Analysis of multiconductor transmision lines. 2007.
 	mfem::DenseMatrix C(gC.NumRows() - 1, gC.NumCols() - 1);
+	auto conductors = model_.getMaterials().getConductors();
 
 	if (opennness == Model::Openness::closed) {
-		for (int i = 1; i < gC.NumRows(); ++i) {
-			for (int j = 1; j < gC.NumCols(); ++j) {
-				C(i - 1, j - 1) = gC(i, j);
+		int i = 0;
+		for (auto cI : conductors) {
+			if (cI->isGround()) {
+				continue;
 			}
+			int j = 0;
+			for (auto cJ : conductors) {
+				if (cJ->isGround()) {
+					continue;
+				}
+				C(i - 1, j - 1) = gC(i, j);
+				j++;
+			}
+			i++;
 		}
 		return C;
 	}
@@ -299,20 +310,24 @@ PULParametersByDomain Driver::getPULMTLByDomains()
 	return res;
 }
 
-mfem::SparseMatrix
-Driver::getFloatingPotentialsMatrix(const bool ignoreDielectrics)
+std::map<ConductorId, double> Driver::getFloatingPotentials(
+	ConductorId prescribedId, bool ignoreDielectrics)
 {
-	// For an open problem with N conductors, returns a sparse matrix with N^2
-	// non-zero terms.
-	// - ones at (conductorI, conductorI)
-	// - (conductorI, conductorJ) terms are the voltages at the other conductors when they are assumed to be floating.
+	// Returns a map from conductorId to value, with the potentials
+	// which other conductors must have in order to be "floating",
+	// i.e. with zero charge.
+	// For open problems returns a map with N entries.
+	// For closed problems, returns a map with N-1 terms and assumes that conductor 0 has always a prescribed potential of zero.
 
-	// For closed problems with N conductors, returns a matrix (N-1)x(N-1) terms
-	// and assumes that conductor 0 has always a prescribed potential of zero.
+	std::map<ConductorId, double> res;
 
-	if (model_.getMaterials().getConductors().size() == 1) {
-		mfem::SpasrseMatrix res;
-		res(dsadsad) = 1.0;
+	auto conductors = model_.getMaterials().getConductors();
+
+	// TODO Precondition to check if the prescribed Id belongs to an conductor.
+
+	if (conductors.size() == 1) {
+		auto cId = conductors.front()->getConductorId();
+		res[cId] = 1.0;
 		return res;
 	}
 
@@ -339,42 +354,37 @@ Driver::getFloatingPotentialsMatrix(const bool ignoreDielectrics)
 	// 
 	// which can be converted to A x = b with unknowns x = [Q_1, V_2, ...]^T
 	auto N = C.NumRows();
-	mfem::DenseMatrix res(N, N);
-	for (int i{ 0 }; i < N; ++i) {
-		mfem::DenseMatrix A{ C };
-		mfem::Vector negativeQ(N);
-		negativeQ = 0.0;
-		negativeQ(i) = -1.0;
+	
+	mfem::DenseMatrix A{ C };
+	mfem::Vector negativeQ(N);
+	negativeQ = 0.0;
 
-		A.SetCol(i, negativeQ);
-
-		mfem::Vector b(N);
-		b = C.GetColumn(i);
-		b *= -1.0;
-
-		mfem::Vector x(N);
-		mfem::DenseMatrixInverse Ainv(A);
-		Ainv.Mult(b, x);
-
-		for (int j{ 0 }; j < res.NumCols(); ++j) {
-			if (i == j) {
-				res(i, i) = 1.0;
-			}
-			else {
-				res(i, j) = x(j);
-			}
+	int i = 0;
+	for (auto cI : conductors) {
+		if (cI->getConductorId() == prescribedId) {
+			negativeQ(i) = -1.0;
 		}
+		i++;
 	}
 
-	return res;
-}
+	A.SetCol(i, negativeQ);
 
-FloatingPotentials Driver::getFloatingPotentials()
-{
-	FloatingPotentials res;
+	mfem::Vector b(N);
+	b = C.GetColumn(i);
+	b *= -1.0;
 
-	res.electric = getFloatingPotentialsMatrix(false);
-	res.magnetic = getFloatingPotentialsMatrix(true);
+	mfem::Vector x(N);
+	mfem::DenseMatrixInverse Ainv(A);
+	Ainv.Mult(b, x);
+
+	i = 0;
+	for (auto c: conductors) {
+		if (c->isGround()) {
+			continue;
+		}
+		res[c->getConductorId()] = x(i);
+		i++;
+	}
 
 	return res;
 }
@@ -384,8 +394,7 @@ std::list<std::string> listMaterialsInInnerRegion(
 	bool includeConductors = true)
 {
 	std::list<std::string> res;
-	res.push_back(INNER_REGION_DEFAULT_NAME);
-	for (auto [name, tag] : m.getMaterials().buildNameToAttrMapFor<Dielectric>()) {
+	for (auto d : m.getMaterials().buildNameToAttrMapFor<Dielectric>()) {
 		if (name.find("Vacuum_") != std::string::npos) {
 			continue;
 		}
@@ -430,8 +439,6 @@ std::map<ConductorId, FieldReconstruction> Driver::getFieldParameters(
 {
 	std::map<ConductorId, FieldReconstruction> res;
 
-	auto fp = getFloatingPotentialsMatrix(ignoreDielectrics);
-
 	SolvedProblem* sP;
 	if (ignoreDielectrics) {
 		sP = model_.getMaterials().hasDielectrics() ? &magnetic_ : &electric_;
@@ -445,8 +452,8 @@ std::map<ConductorId, FieldReconstruction> Driver::getFieldParameters(
 	const auto conductors = model_.getMaterials().getConductors();
 	for (const auto& cI : conductors) {
 		
-		auto condI = cI->
-
+		auto condI = cI->getConductorId();
+		auto fp = getFloatingPotentials(ignoreDielectrics);
 		s.getPhi() *= 0.0;
 		s.getE() *= 0.0;
 		s.getD() *= 0.0;
