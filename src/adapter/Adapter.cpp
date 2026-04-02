@@ -46,7 +46,7 @@ Adapter::findDuplicateNodes()
     return {!groups.empty(), groups};
 }
 
-std::map<std::string, std::string> Adapter::meshFromStep(
+std::map<std::string, std::string> Adapter::meshFromInput(
     const std::string& inputFile,
     const std::string& caseName,
     const MeshingOptions* meshingOptions)

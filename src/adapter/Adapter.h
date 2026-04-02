@@ -18,7 +18,7 @@ public:
     // Baseline gmsh options used by adapter tests and CLI code.
     static const MeshingOptions DEFAULT_MESHING_OPTIONS;
 
-    std::map<std::string, std::string> meshFromStep(
+    std::map<std::string, std::string> meshFromInput(
         const std::string& inputFile,
         const std::string& caseName = "",
         const MeshingOptions* meshingOptions = nullptr);

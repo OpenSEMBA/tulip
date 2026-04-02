@@ -31,7 +31,7 @@ TEST_F(ShapesClassificationTest, getNumberFromName) {
 }
 
 TEST_F(ShapesClassificationTest, dielectricShieldedPairClassification) {
-    auto* sc = initShapeClassification(stepFileFromCaseName("DielectricShieldedPair"));
+    auto* sc = initShapeClassification(inputFileFromCaseName("DielectricShieldedPair"));
 
     EntityList expectedAllShapes = {
         {2, 1},{2, 2},{2, 3},{2, 4},{2, 5},
@@ -57,7 +57,7 @@ TEST_F(ShapesClassificationTest, dielectricShieldedPairClassification) {
 }
 
 TEST_F(ShapesClassificationTest, dielectricUnshieldedPairClassification) {
-    auto* sc = initShapeClassification(stepFileFromCaseName("DielectricUnshieldedPair"));
+    auto* sc = initShapeClassification(inputFileFromCaseName("DielectricUnshieldedPair"));
 
     EntityList expectedAllShapes = {
         {2, 1},{2, 2},{2, 3},{2, 4},
@@ -82,31 +82,31 @@ TEST_F(ShapesClassificationTest, dielectricUnshieldedPairClassification) {
 }
 
 TEST_F(ShapesClassificationTest, partiallyFilledCoaxHasTwoPecs) {
-    auto* sc = initShapeClassification(stepFileFromCaseName("partially_filled_coax"));
+    auto* sc = initShapeClassification(inputFileFromCaseName("partially_filled_coax"));
     EXPECT_EQ(sc->pecs.size(), 2u);
     EXPECT_EQ(sc->dielectrics.size(), 1u);
     delete sc;
 }
 
 TEST_F(ShapesClassificationTest, fusedConductors) {
-    auto* sc = initShapeClassification(stepFileFromCaseName("FusedConductor"));
+    auto* sc = initShapeClassification(inputFileFromCaseName("FusedConductor"));
     delete sc;
 }
 
 TEST_F(ShapesClassificationTest, complexNesting) {
-    auto* sc = initShapeClassification(stepFileFromCaseName("ComplexNesting"));
+    auto* sc = initShapeClassification(inputFileFromCaseName("ComplexNesting"));
     delete sc;
 }
 
 TEST_F(ShapesClassificationTest, fiveWiresStepShapes) {
-    auto* sc = initShapeClassification(stepFileFromCaseName("five_wires"));
+    auto* sc = initShapeClassification(inputFileFromCaseName("five_wires"));
     EXPECT_EQ(sc->pecs.size(), 6u);
     EXPECT_EQ(sc->dielectrics.size(), 5u);
     delete sc;
 }
 
 TEST_F(ShapesClassificationTest, threeWiresRibbonStepShapes) {
-    auto* sc = initShapeClassification(stepFileFromCaseName("three_wires_ribbon"));
+    auto* sc = initShapeClassification(inputFileFromCaseName("three_wires_ribbon"));
     EXPECT_EQ(sc->open.size(), 0u);
     EXPECT_EQ(sc->pecs.size(), 3u);
     EXPECT_EQ(sc->dielectrics.size(), 3u);
@@ -114,7 +114,7 @@ TEST_F(ShapesClassificationTest, threeWiresRibbonStepShapes) {
 }
 
 TEST_F(ShapesClassificationTest, conductorOnlyGraphDielectricUnshielded) {
-    auto* sc = initShapeClassification(stepFileFromCaseName("DielectricUnshieldedPair"));
+    auto* sc = initShapeClassification(inputFileFromCaseName("DielectricUnshieldedPair"));
 
     const Graph& originalGraph = sc->nestedGraph;
     const Graph  conductorGraph = sc->getConductorOnlyGraph();
@@ -148,7 +148,7 @@ TEST_F(ShapesClassificationTest, conductorOnlyGraphDielectricUnshielded) {
 }
 
 TEST_F(ShapesClassificationTest, conductorOnlyGraphFiveWires) {
-    auto* sc = initShapeClassification(stepFileFromCaseName("five_wires"));
+    auto* sc = initShapeClassification(inputFileFromCaseName("five_wires"));
 
     const Graph conductorGraph = sc->getConductorOnlyGraph();
     std::set<std::string> graphNodes(

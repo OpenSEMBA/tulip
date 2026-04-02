@@ -65,9 +65,9 @@ protected:
 TEST_F(AdapterTest, empty_coax)
 {
     const std::string caseName = "empty_coax";
-    Adapter().meshFromStep(stepFileFromCaseName(caseName), caseName);
+    Adapter().meshFromInput(inputFileFromCaseName(caseName), caseName);
 
-    const std::vector<std::string> expectedNames = {"Conductor_0", "Conductor_1", "Vacuum_0"};
+    const std::vector<std::string> expectedNames = {"Shield", "Inner", "Vacuum"};
     assertPhysicalGroups(expectedNames, {1, 1, 1});
 }
 
@@ -75,7 +75,7 @@ TEST_F(AdapterTest, partially_filled_coax)
 {
     const std::string caseName = "partially_filled_coax";
     Adapter mesher;
-    mesher.meshFromStep(stepFileFromCaseName(caseName), caseName);
+    mesher.meshFromInput(inputFileFromCaseName(caseName), caseName);
 
     gmsh::vectorpair pGs;
     gmsh::model::getPhysicalGroups(pGs);
@@ -104,7 +104,7 @@ TEST_F(AdapterTest, partially_filled_coax)
 TEST_F(AdapterTest, two_wires_coax)
 {
     const std::string caseName = "two_wires_coax";
-    Adapter().meshFromStep(stepFileFromCaseName(caseName), caseName);
+    Adapter().meshFromInput(inputFileFromCaseName(caseName), caseName);
 
     const std::vector<std::string> expectedNames = {
         "Conductor_0", "Conductor_1", "Conductor_2", "Vacuum_0"};
@@ -114,7 +114,7 @@ TEST_F(AdapterTest, two_wires_coax)
 TEST_F(AdapterTest, two_wires_open)
 {
     const std::string caseName = "two_wires_open";
-    Adapter().meshFromStep(stepFileFromCaseName(caseName), caseName);
+    Adapter().meshFromInput(inputFileFromCaseName(caseName), caseName);
 
     // gmsh::write(caseName + ".msh");
     // gmsh::write(caseName + ".vtk");
@@ -127,7 +127,7 @@ TEST_F(AdapterTest, two_wires_open)
 TEST_F(AdapterTest, dielectric_unshielded_pair)
 {
     const std::string caseName = "DielectricUnshieldedPair";
-    Adapter().meshFromStep(stepFileFromCaseName(caseName), caseName);
+    Adapter().meshFromInput(inputFileFromCaseName(caseName), caseName);
 
     const std::vector<std::string> expectedNames = {
         "Conductor_0", "Conductor_1",
@@ -141,7 +141,7 @@ TEST_F(AdapterTest, dielectric_unshielded_pair_defined_boundary)
     const std::string caseName = "DielectricUnshieldedPairDefinedBoundary";
     auto opts = Adapter::DEFAULT_MESHING_OPTIONS;
     opts["Mesh.ElementOrder"] = 1;
-    Adapter().meshFromStep(stepFileFromCaseName(caseName), caseName, &opts);
+    Adapter().meshFromInput(inputFileFromCaseName(caseName), caseName, &opts);
 
     const std::vector<std::string> expectedNames = {
         "Conductor_0", "Conductor_1",
@@ -157,7 +157,7 @@ TEST_F(AdapterTest, dielectric_unshielded_pair_defined_boundary)
 TEST_F(AdapterTest, five_wires)
 {
     const std::string caseName = "five_wires";
-    Adapter().meshFromStep(stepFileFromCaseName(caseName), caseName);
+    Adapter().meshFromInput(inputFileFromCaseName(caseName), caseName);
 
     const std::vector<std::string> expectedNames = {
         "Conductor_0", "Conductor_1", "Conductor_2", "Conductor_3",
@@ -171,7 +171,7 @@ TEST_F(AdapterTest, five_wires)
 TEST_F(AdapterTest, three_wires_ribbon)
 {
     const std::string caseName = "three_wires_ribbon";
-    Adapter().meshFromStep(stepFileFromCaseName(caseName), caseName);
+    Adapter().meshFromInput(inputFileFromCaseName(caseName), caseName);
 
     const std::vector<std::string> expectedNames = {
         "Conductor_0", "Conductor_1", "Conductor_2",
@@ -188,7 +188,7 @@ TEST_F(AdapterTest, three_wires_ribbon)
 TEST_F(AdapterTest, nested_coax)
 {
     const std::string caseName = "nested_coax";
-    Adapter().meshFromStep(stepFileFromCaseName(caseName), caseName);
+    Adapter().meshFromInput(inputFileFromCaseName(caseName), caseName);
 
     const std::vector<std::string> expectedNames = {
         "Conductor_0", "Conductor_1", "Conductor_2", "Vacuum_0"};
@@ -198,7 +198,7 @@ TEST_F(AdapterTest, nested_coax)
 TEST_F(AdapterTest, agrawal1981)
 {
     const std::string caseName = "agrawal1981";
-    Adapter().meshFromStep(stepFileFromCaseName(caseName), caseName);
+    Adapter().meshFromInput(inputFileFromCaseName(caseName), caseName);
 
     const std::vector<std::string> expectedNames = {
         "Conductor_0", "Conductor_1", "Conductor_2", "Conductor_3",
@@ -211,7 +211,7 @@ TEST_F(AdapterTest, agrawal1981)
 TEST_F(AdapterTest, unshielded_multiwire)
 {
     const std::string caseName = "unshielded_multiwire";
-    Adapter().meshFromStep(stepFileFromCaseName(caseName), caseName);
+    Adapter().meshFromInput(inputFileFromCaseName(caseName), caseName);
 
     const std::vector<std::string> expectedNames = {
         "Conductor_0", "Conductor_1", "Dielectric_0",
@@ -222,7 +222,7 @@ TEST_F(AdapterTest, unshielded_multiwire)
 TEST_F(AdapterTest, conductor_and_outer_dielectric)
 {
     const std::string caseName = "conductor_and_outer_dielectric";
-    Adapter().meshFromStep(stepFileFromCaseName(caseName), caseName);
+    Adapter().meshFromInput(inputFileFromCaseName(caseName), caseName);
 
     const std::vector<std::string> expectedNames = {
         "Conductor_0", "Dielectric_0",
@@ -235,7 +235,7 @@ TEST_F(AdapterTest, realistic_case_with_dielectrics_fdtd_cell)
     const std::string caseName = "realistic_case_with_dielectrics_fdtd_cell";
     auto opts = Adapter::DEFAULT_MESHING_OPTIONS;
     opts["Mesh.ElementOrder"] = 1;
-    Adapter().meshFromStep(stepFileFromCaseName(caseName), caseName, &opts);
+    Adapter().meshFromInput(inputFileFromCaseName(caseName), caseName, &opts);
 
     std::vector<std::string> expectedNames;
     for (int i = 0; i <= 30; ++i)
@@ -251,7 +251,7 @@ TEST_F(AdapterTest, realistic_case_with_dielectrics_fdtd_cell)
 TEST_F(AdapterTest, lansink2024_single_wire_multipolar)
 {
     const std::string caseName = "lansink2024_single_wire_multipolar";
-    Adapter().meshFromStep(stepFileFromCaseName(caseName), caseName);
+    Adapter().meshFromInput(inputFileFromCaseName(caseName), caseName);
 
     const std::vector<std::string> expectedNames = {
         "Conductor_0", "Dielectric_0",
@@ -262,7 +262,7 @@ TEST_F(AdapterTest, lansink2024_single_wire_multipolar)
 TEST_F(AdapterTest, single_wire)
 {
     const std::string caseName = "single_wire";
-    Adapter().meshFromStep(stepFileFromCaseName(caseName), caseName);
+    Adapter().meshFromInput(inputFileFromCaseName(caseName), caseName);
 
     const std::vector<std::string> expectedNames = {
         "Conductor_0", "OpenBoundary_0", "Vacuum_0", "Vacuum_1"};
@@ -272,7 +272,7 @@ TEST_F(AdapterTest, single_wire)
 TEST_F(AdapterTest, unshielded_nesting)
 {
     const std::string caseName = "UnshieldedNested";
-    Adapter().meshFromStep(stepFileFromCaseName(caseName), caseName);
+    Adapter().meshFromInput(inputFileFromCaseName(caseName), caseName);
 
     const std::vector<std::string> expectedNames = {
         "Conductor_0", "Conductor_1", "Conductor_2",
@@ -283,7 +283,7 @@ TEST_F(AdapterTest, unshielded_nesting)
 TEST_F(AdapterTest, two_wires_with_touching_dielectric)
 {
     const std::string caseName = "two_wires_with_touching_dielectric";
-    Adapter().meshFromStep(stepFileFromCaseName(caseName), caseName);
+    Adapter().meshFromInput(inputFileFromCaseName(caseName), caseName);
 
     const std::vector<std::string> expectedNames = {
         "Conductor_0", "Conductor_1",

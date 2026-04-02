@@ -4,6 +4,6 @@
 
 static std::string testDataPath() { return "./testData/"; }
 
-static std::string stepFileFromCaseName(const std::string& caseName) {
-    return testDataPath() + caseName + "/" + caseName + ".step";
+static std::string inputFileFromCaseName(const std::string& caseName) {
+    return testDataPath() + caseName + "/" + caseName + ".tulip.input.json";
 }

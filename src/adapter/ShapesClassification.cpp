@@ -210,7 +210,7 @@ EntityMap ShapesClassification::buildClosedVacuumDomain() {
     gmsh::model::occ::cut(dom, toRemove, outDimTags, outMap, -1, false, false);
     gmsh::model::occ::synchronize();
 
-    return {{"Vacuum_0", outDimTags}};
+    return {{"Vacuum", outDimTags}};
 }
 
 EntityMap ShapesClassification::buildOpenVacuumDomain() {
@@ -238,7 +238,7 @@ EntityMap ShapesClassification::buildOpenVacuumDomain() {
         }
         open = {{openName, externalBoundaries}};
 
-        return {{"Vacuum_0", outDimTags}};
+        return {{"Vacuum", outDimTags}};
     } else {
         auto boundingBox = BoundingBox::getBoundingBoxFromGroup(nonVacuumSurfaces);
         auto lengths     = boundingBox.getLengths();
@@ -263,7 +263,7 @@ EntityMap ShapesClassification::buildOpenVacuumDomain() {
 
         gmsh::vectorpair farBoundary;
         gmsh::model::getBoundary(farVacuum, farBoundary, true, true, false);
-        open = {{"OpenBoundary_0", farBoundary}};
+        open = {{"OpenBoundary", farBoundary}};
 
         {
             gmsh::vectorpair out;
@@ -280,7 +280,7 @@ EntityMap ShapesClassification::buildOpenVacuumDomain() {
 
         gmsh::model::occ::synchronize();
 
-        // Set mesh size for near-vacuum inner boundary
+        // Set mesh size for inner region.
         BoundingBox bb = BoundingBox::getBoundingBox(2, nearVacuum[0].second);
         auto nlen = bb.getLengths();
         double minSide = std::min(nlen[0], nlen[1]);
@@ -291,7 +291,7 @@ EntityMap ShapesClassification::buildOpenVacuumDomain() {
 
         gmsh::model::occ::synchronize();
 
-        return {{"Vacuum_0", nearVacuum}, {"Vacuum_1", farVacuum}};
+        return {{"InnerRegion", nearVacuum}, {"OuterRegion", farVacuum}};
     }
 }
 
