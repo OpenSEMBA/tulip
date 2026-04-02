@@ -8,24 +8,20 @@
 
 #include "ShapesClassification.h"
 #include "AdapterOptions.h"
-#include "../core/Materials.h"
 
 namespace tulip {
 
-struct StepLayers {
-    std::string name;
-    std::size_t id;
-    Material material;
-};
-
 class Adapter {
 public:
-    Adapter(
-        const std::string& inputFile,
-        const AdapterOptions& options);
+    using MeshingOptions = std::map<std::string, double>;
 
-    
-    std::map<std::string, std::string> meshFromStep();
+    // Baseline gmsh options used by adapter tests and CLI code.
+    static const MeshingOptions DEFAULT_MESHING_OPTIONS;
+
+    std::map<std::string, std::string> meshFromStep(
+        const std::string& inputFile,
+        const std::string& caseName = "",
+        const MeshingOptions* meshingOptions = nullptr);
 
     void buildPhysicalModel(ShapesClassification& shapes,
                             const std::map<std::string, std::string>& labelMapping);
@@ -35,8 +31,6 @@ public:
     EntityMap extractBoundaries(const EntityMap& shapes);
 
 private:
-    
-
     static std::pair<bool,
                      std::map<std::tuple<double, double, double>,
                               std::vector<std::size_t>>>

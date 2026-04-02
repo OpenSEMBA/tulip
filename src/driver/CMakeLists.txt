@@ -15,7 +15,7 @@ add_library(${LIBRARY_NAME} STATIC
     "Domain.cpp"
     "Materials.cpp"
     "Model.cpp"
-    "Parser.cpp"
+    "AdaptedInputParser.cpp"
 )
 
 target_include_directories(${LIBRARY_NAME} PUBLIC

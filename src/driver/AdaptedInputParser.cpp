@@ -1,7 +1,8 @@
-#include "Parser.h"
+#include "AdaptedInputParser.h"
 #include "constants.h"
 
 #include <filesystem>
+#include <fstream>
 
 
 using json = nlohmann::json;
@@ -26,7 +27,7 @@ json readJSON(const std::string& fn)
 {
 	std::ifstream stream(fn);
 	if (!stream.is_open()) {
-		std::runtime_error("Unable to open file: " + fn);
+		throw std::runtime_error("Unable to open file: " + fn);
 	}
 
 	return json::parse(stream);

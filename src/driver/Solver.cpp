@@ -230,7 +230,7 @@ void Solver::Solve()
         applyBoundaryConstantValuesToGridFunction(parameters_.dirichletBoundaries, *phi_);
 
         // Determine the essential BC degrees of freedom
-        if (dbcs.Size() > 0) {
+        if (dbcs.size() > 0) {
             H1FESpace_->GetEssentialTrueDofs(ess_bdr_, ess_bdr_tdofs_);
         }
         else {

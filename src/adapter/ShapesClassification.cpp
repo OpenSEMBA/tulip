@@ -10,6 +10,11 @@
 
 namespace tulip {
 
+namespace {
+constexpr double innerRegionBoxScalingFactor = 1.15;
+constexpr double farRegionBoxScalingFactor = 4.0;
+}
+
 ShapesClassification::ShapesClassification(const EntityList& shapes,
                                            const std::string& jsonFile)
 {

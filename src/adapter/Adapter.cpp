@@ -1,5 +1,6 @@
-#include "Mesher.h"
+#include "Adapter.h"
 
+#include <algorithm>
 #include <cassert>
 #include <filesystem>
 #include <map>
@@ -8,6 +9,15 @@
 #include <gmsh.h>
 
 namespace tulip {
+
+const Adapter::MeshingOptions Adapter::DEFAULT_MESHING_OPTIONS{
+    {"Mesh.MshFileVersion", 2.2},
+    {"Mesh.MeshSizeFromCurvature", 50.0},
+    {"Mesh.ElementOrder", 3.0},
+    {"Mesh.ScalingFactor", 1e-3},
+    {"Mesh.SurfaceFaces", 1.0},
+    {"Mesh.MeshSizeMax", 40.0},
+};
 
 std::pair<bool,
           std::map<std::tuple<double, double, double>,
@@ -37,13 +47,16 @@ Adapter::findDuplicateNodes()
 }
 
 std::map<std::string, std::string> Adapter::meshFromStep(
-    const std::string& inputFile
-    const AdapterOptions& adapterOptions)
+    const std::string& inputFile,
+    const std::string& caseName,
+    const MeshingOptions* meshingOptions)
 {
-    
-    meshingOptions = &adapterOptions.gmsh;
+    const auto& opts = meshingOptions ? *meshingOptions : DEFAULT_MESHING_OPTIONS;
+    const auto modelName = caseName.empty()
+        ? std::filesystem::path(inputFile).stem().string()
+        : caseName;
 
-    gmsh::model::add(caseName);
+    gmsh::model::add(modelName);
 
     EntityList shapes;
     gmsh::model::occ::importShapes(inputFile, shapes, false);
@@ -62,7 +75,7 @@ std::map<std::string, std::string> Adapter::meshFromStep(
     buildPhysicalModel(allShapes, mappedComponents);
 
     // Meshing options
-    for (const auto& [opt, val] : *meshingOptions) {
+    for (const auto& [opt, val] : opts) {
         gmsh::option::setNumber(opt, val);
     }
 

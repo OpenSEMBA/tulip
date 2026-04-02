@@ -10,7 +10,6 @@ add_library(${ADAPTER_LIB} STATIC
     Graph.cpp
     BoundingBox.cpp
     ShapesClassification.cpp
-    AreaExporterService.cpp
     Adapter.cpp
 )
 

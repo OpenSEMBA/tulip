@@ -7,9 +7,9 @@
 
 namespace tulip {
 
-class AdaptedInputParser {
+class Parser {
 public:
-	AdaptedInputParser(const std::string& filename);
+	Parser(const std::string& filename);
 
 	Model readModel() const;
 	DriverOptions readDriverOptions() const;
@@ -18,5 +18,7 @@ private:
 	nlohmann::json json_;
 	std::string filename_;
 };
+
+using AdaptedInputParser = Parser;
 
 }
