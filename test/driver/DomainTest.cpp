@@ -3,7 +3,7 @@
 #include "TestUtils.h"
 
 #include "Domain.h"
-#include "Parser.h"
+#include "AdaptedInputParser.h"
 
 using namespace tulip;
 

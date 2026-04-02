@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 
 #include "Model.h"
-#include "Parser.h"
+#include "AdaptedInputParser.h"
 #include "TestUtils.h"
 
 using namespace tulip;

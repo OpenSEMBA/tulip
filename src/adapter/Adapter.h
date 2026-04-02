@@ -6,6 +6,8 @@
 #include <utility>
 #include <vector>
 
+#include <nlohmann/json.hpp>
+
 #include "ShapesClassification.h"
 #include "AdapterOptions.h"
 
@@ -18,9 +20,8 @@ public:
     // Baseline gmsh options used by adapter tests and CLI code.
     static const MeshingOptions DEFAULT_MESHING_OPTIONS;
 
-    std::map<std::string, std::string> meshFromInput(
-        const std::string& inputFile);
-
+    Adapter(const std::string& inputFile);
+    
     void buildPhysicalModel(ShapesClassification& shapes,
                             const std::map<std::string, std::string>& labelMapping);
 
@@ -28,7 +29,13 @@ public:
 
     EntityMap extractBoundaries(const EntityMap& shapes);
 
+    nlohmann::json getAdaptedInputJSON() const;
+
 private:
+    std::string caseName_;
+    std::string inputDir_;
+    nlohmann::json adaptedInputJSON_;
+
     static std::pair<bool,
                      std::map<std::tuple<double, double, double>,
                               std::vector<std::size_t>>>

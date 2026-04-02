@@ -1,10 +1,12 @@
 #include <gtest/gtest.h>
 
 #include <algorithm>
+#include <fstream>
 #include <string>
 #include <vector>
 
 #include <gmsh.h>
+#include <nlohmann/json.hpp>
 
 #include "Mesher.h"
 #include "TestUtils.h"
@@ -65,10 +67,19 @@ protected:
 TEST_F(AdapterTest, empty_coax)
 {
     const std::string caseName = "empty_coax";
-    Adapter().meshFromInput(inputFileFromCaseName(caseName));
+
+    Adapter adapter(inputFileFromCaseName(caseName));
 
     const std::vector<std::string> expectedNames = {"Shield", "Inner", "Vacuum"};
     assertPhysicalGroups(expectedNames, {1, 1, 1});
+
+    auto adaptedJSON = adapter.getAdaptedInputJSON();
+    std::ifstream expectedFile(
+        testDataPath() + caseName + "/" + caseName + ".tulip.adapted.json");
+    ASSERT_TRUE(expectedFile.is_open());
+    nlohmann::json expectedJSON;
+    expectedFile >> expectedJSON;
+    EXPECT_EQ(adaptedJSON, expectedJSON);
 }
 
 // TEST_F(AdapterTest, partially_filled_coax)

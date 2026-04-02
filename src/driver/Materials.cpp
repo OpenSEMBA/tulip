@@ -1,5 +1,4 @@
 #include "Materials.h"
-#include "constants.h"
 
 #include <algorithm>
 

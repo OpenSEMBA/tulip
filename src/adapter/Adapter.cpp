@@ -1,4 +1,5 @@
 #include "Adapter.h"
+#include "AdapterOptions.h"
 
 #include <algorithm>
 #include <cassert>
@@ -127,45 +128,136 @@ std::map<std::string, std::string> buildLayerNameMapping(const nlohmann::json& i
     return mapping;
 }
 
+std::map<std::string, std::string> buildLayerTypeMapping(const nlohmann::json& inputJson)
+{
+    std::map<std::string, std::string> mapping;
+    if (!inputJson.contains("layers") || !inputJson["layers"].is_array()) {
+        return mapping;
+    }
+
+    const auto materialTypeById = buildMaterialTypeById(inputJson);
+    for (const auto& layer : inputJson["layers"]) {
+        if (!layer.contains("name") || !layer.contains("materialId")) {
+            continue;
+        }
+        const int materialId = layer["materialId"].get<int>();
+        auto materialIt = materialTypeById.find(materialId);
+        if (materialIt == materialTypeById.end()) {
+            continue;
+        }
+        mapping[layer["name"].get<std::string>()] = materialIt->second;
+    }
+    return mapping;
+}
+
+AdapterOptions parseAdapterOptions(const nlohmann::json& inputJson,
+                                   const std::filesystem::path& inputPath,
+                                   const std::string& caseName)
+{
+    AdapterOptions options;
+    if (inputJson.contains("adapterOptions") && inputJson["adapterOptions"].is_object()) {
+        const auto& adapterOptions = inputJson["adapterOptions"];
+        if (adapterOptions.contains("innerRegionBoxScalingFactor")) {
+            options.innerRegionBoxScalingFactor =
+                adapterOptions["innerRegionBoxScalingFactor"].get<double>();
+        }
+        if (adapterOptions.contains("farRegionDiskScalingFactor")) {
+            options.farRegionDiskScalingFactor =
+                adapterOptions["farRegionDiskScalingFactor"].get<double>();
+        }
+        if (adapterOptions.contains("stepFilename")) {
+            options.stepFilename = adapterOptions["stepFilename"].get<std::string>();
+        }
+        if (adapterOptions.contains("gmshOptions") && adapterOptions["gmshOptions"].is_object()) {
+            for (auto it = adapterOptions["gmshOptions"].begin();
+                 it != adapterOptions["gmshOptions"].end(); ++it) {
+                options.gmshOptions[it.key()] = it.value().get<double>();
+            }
+        }
+    }
+
+    if (options.stepFilename.empty()) {
+        options.stepFilename = (inputPath.parent_path() / (caseName + ".step")).string();
+    } else {
+        options.stepFilename = (inputPath.parent_path() / options.stepFilename).string();
+    }
+
+    return options;
+}
+
+nlohmann::json buildAdaptedJson(const std::string& caseName,
+                                const std::map<std::string, std::string>& layerTypeByName)
+{
+    gmsh::vectorpair groups;
+    gmsh::model::getPhysicalGroups(groups);
+    std::sort(groups.begin(), groups.end(),
+              [](const auto& a, const auto& b) { return a.second < b.second; });
+
+    nlohmann::json materials = nlohmann::json::array();
+    int conductorId = 0;
+    for (const auto& [dim, tag] : groups) {
+        std::string name;
+        gmsh::model::getPhysicalName(dim, tag, name);
+        auto typeIt = layerTypeByName.find(name);
+        const std::string layerType =
+            typeIt == layerTypeByName.end() ? "dielectric" : typeIt->second;
+
+        if (dim == 1 || layerType == "conductor" || layerType == "shield") {
+            materials.push_back({
+                {"type", "conductor"},
+                {"conductorId", conductorId++},
+                {"attribute", tag}
+            });
+        } else if (layerType == "open") {
+            materials.push_back({
+                {"type", "OpenBoundary"},
+                {"attribute", tag}
+            });
+        } else {
+            materials.push_back({
+                {"type", "Dielectric"},
+                {"attribute", tag}
+            });
+        }
+    }
+
+    return {
+        {"DriverOptions", {{"exportFolder", "Results/" + caseName + "/"}}},
+        {"model", {
+            {"materials", materials},
+            {"gmshFile", caseName + ".msh"}
+        }}
+    };
+}
+
 } // namespace
 
-std::map<std::string, std::string> Adapter::meshFromInput(
-    const std::string& inputFile)
+Adapter::Adapter(const std::string& inputFile)
 {
+    if (!gmsh::isInitialized()) {
+        throw std::runtime_error("gmsh is not initialized.");
+    } 
+
+    gmsh::clear();
+    
     const std::filesystem::path inputPath(inputFile);
     if (!hasSuffix(inputPath.filename().string(), ".tulip.input.json")) {
         throw std::runtime_error("Unsupported input file extension: " + inputPath.string());
     }
 
     const nlohmann::json inputJson = readJsonFile(inputPath);
-    const std::string caseName = getCaseNameFromInputPath(inputPath);
+    caseName_ = getCaseNameFromInputPath(inputPath);
+    inputDir_ = inputPath.parent_path().string();
 
-    MeshingOptions opts = DEFAULT_MESHING_OPTIONS;
-    if (inputJson.contains("adapterOptions") && inputJson["adapterOptions"].contains("gmshOptions")) {
-        const auto& gmshOptions = inputJson["adapterOptions"]["gmshOptions"];
-        if (gmshOptions.is_object()) {
-            for (auto it = gmshOptions.begin(); it != gmshOptions.end(); ++it) {
-                opts[it.key()] = it.value().get<double>();
-            }
-        }
+    const AdapterOptions adapterOptions = parseAdapterOptions(inputJson, inputPath, caseName_);
+    if (!std::filesystem::exists(adapterOptions.stepFilename)) {
+        throw std::runtime_error("STEP file not found: " + adapterOptions.stepFilename);
     }
 
-    std::filesystem::path stepPath;
-    if (inputJson.contains("adapterOptions") && inputJson["adapterOptions"].contains("stepFilename")) {
-        stepPath = inputPath.parent_path() /
-                   inputJson["adapterOptions"]["stepFilename"].get<std::string>();
-    } else {
-        stepPath = inputPath.parent_path() / (caseName + ".step");
-    }
-
-    if (!std::filesystem::exists(stepPath)) {
-        throw std::runtime_error("STEP file not found: " + stepPath.string());
-    }
-
-    gmsh::model::add(caseName);
+    gmsh::model::add(caseName_);
 
     EntityList shapes;
-    gmsh::model::occ::importShapes(stepPath.string(), shapes, false);
+    gmsh::model::occ::importShapes(adapterOptions.stepFilename, shapes, false);
 
     ShapesClassification allShapes(shapes, inputFile);
 
@@ -175,9 +267,10 @@ std::map<std::string, std::string> Adapter::meshFromInput(
     allShapes.conductors = extractBoundaries(allShapes.conductors);
 
     const auto layerNameMapping = buildLayerNameMapping(inputJson);
+    const auto layerTypeMapping = buildLayerTypeMapping(inputJson);
     buildPhysicalModel(allShapes, layerNameMapping);
 
-    for (const auto& [opt, val] : opts) {
+    for (const auto& [opt, val] : adapterOptions.gmshOptions) {
         gmsh::option::setNumber(opt, val);
     }
 
@@ -185,9 +278,18 @@ std::map<std::string, std::string> Adapter::meshFromInput(
     gmsh::model::mesh::removeDuplicateNodes();
 
     auto [hasDups, _] = findDuplicateNodes();
-    assert(!hasDups);
+    if (hasDups) {
+        throw std::runtime_error("Duplicate mesh nodes found after meshing.");
+    }
 
-    return layerNameMapping;
+    const std::filesystem::path mshPath = std::filesystem::path(inputDir_) / (caseName_ + ".msh");
+    gmsh::write(mshPath.string());
+
+    adaptedInputJSON_ = buildAdaptedJson(caseName_, layerTypeMapping);
+}
+
+nlohmann::json Adapter::getAdaptedInputJSON() const {
+    return adaptedInputJSON_;
 }
 
 void Adapter::buildPhysicalModel(

@@ -4,7 +4,7 @@
 
 #include "TestUtils.h"
 #include "Solver.h"
-#include "Parser.h"
+#include "AdaptedInputParser.h"
 #include "Driver.h"
 
 using namespace mfem;
