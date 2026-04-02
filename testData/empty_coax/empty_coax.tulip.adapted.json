@@ -6,7 +6,7 @@
     "materials": [
       {"type": "conductor", "conductorId": 0, "attribute": 1 },
       {"type": "conductor", "conductorId": 1, "attribute": 2 },
-      {"type": "Dielectric", "attribute": 3}
+      {"type": "dielectric", "attribute": 3}
     ],  
     "gmshFile": "empty_coax.msh"
   }

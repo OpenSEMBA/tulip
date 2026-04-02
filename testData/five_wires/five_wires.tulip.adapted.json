@@ -1,23 +1,22 @@
 {
-  "analysis": {
-    "order": 3,
-    "exportParaViewSolution": true,
+  "DriverOptions": {
     "exportFolder": "Results/five_wires/"
   },
   "model": {
-    "materials": {
-      "Conductor_0": {"type": "PEC", "tag": 1 },
-      "Conductor_1": {"type": "PEC", "tag": 2 },
-      "Conductor_2": {"type": "PEC", "tag": 3 },
-      "Conductor_3": {"type": "PEC", "tag": 4 },
-      "Conductor_4": {"type": "PEC", "tag": 5 },
-      "Conductor_5": {"type": "PEC", "tag": 6 },
-      "Dielectric_1": {"type": "Dielectric", "eps_r": 2.0, "tag": 8},
-      "Dielectric_2": {"type": "Dielectric", "eps_r": 2.0, "tag": 9},
-      "Dielectric_3": {"type": "Dielectric", "eps_r": 2.0, "tag": 10},
-      "Dielectric_4": {"type": "Dielectric", "eps_r": 2.0, "tag": 11},
-      "Dielectric_5": {"type": "Dielectric", "eps_r": 2.0, "tag": 12}
-    },  
+    "materials": [
+      {"type": "conductor", "conductorId": 0, "attribute": 1},
+      {"type": "conductor", "conductorId": 1, "attribute": 2},
+      {"type": "conductor", "conductorId": 2, "attribute": 3},
+      {"type": "conductor", "conductorId": 3, "attribute": 4},
+      {"type": "conductor", "conductorId": 4, "attribute": 5},
+      {"type": "conductor", "conductorId": 5, "attribute": 6},
+      {"type": "dielectric", "relativePermittivity": 2.0, "attribute": 8 },
+      {"type": "dielectric", "relativePermittivity": 2.0, "attribute": 9 },
+      {"type": "dielectric", "relativePermittivity": 2.0, "attribute": 10},
+      {"type": "dielectric", "relativePermittivity": 2.0, "attribute": 11},
+      {"type": "dielectric", "relativePermittivity": 2.0, "attribute": 12},
+      {"type": "dielectric", "relativePermittivity": 2.0, "attribute": 13}
+    ],
     "gmshFile": "five_wires.msh"
   }
 }

@@ -1,0 +1,14 @@
+{
+  "DriverOptions": {
+    "exportFolder": "Results/two_wires_coax/"
+  },
+  "materials": [
+    { "id": 1, "type": "shield" },
+    { "id": 2, "type": "conductor" }
+  ],
+  "layers": [
+    { "name": "Conductor_0", "id": 0, "materialId": 1 },
+    { "name": "Conductor_1", "id": 1, "materialId": 2 },
+    { "name": "Conductor_2", "id": 2, "materialId": 2 }
+  ]
+}

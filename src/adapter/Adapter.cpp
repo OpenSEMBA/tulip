@@ -210,12 +210,12 @@ nlohmann::json buildAdaptedJson(const std::string& caseName,
             });
         } else if (layerType == "open") {
             materials.push_back({
-                {"type", "OpenBoundary"},
+                {"type", "openBoundary"},
                 {"attribute", tag}
             });
         } else {
             materials.push_back({
-                {"type", "Dielectric"},
+                {"type", "dielectric"},
                 {"attribute", tag}
             });
         }

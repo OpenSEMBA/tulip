@@ -1,16 +1,14 @@
 {
-  "analysis": {
-    "order": 3,
-    "makeMatricesSymmetric": true,
-    "exportParaViewSolution": true,
+  "DriverOptions": {
     "exportFolder": "Results/two_wires_coax/"
   },
   "model": {
-    "materials": {
-      "Conductor_0": {"type": "PEC", "tag": 1 },
-      "Conductor_1": {"type": "PEC", "tag": 2 },
-      "Conductor_2": {"type": "PEC", "tag": 3 }
-    },  
+    "materials": [
+      {"type": "conductor", "conductorId": 0, "attribute": 1},
+      {"type": "conductor", "conductorId": 1, "attribute": 2},
+      {"type": "conductor", "conductorId": 2, "attribute": 3},
+      {"type": "dielectric", "attribute": 4}
+    ],
     "gmshFile": "two_wires_coax.msh"
   }
 }

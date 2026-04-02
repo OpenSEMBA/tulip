@@ -62,6 +62,18 @@ protected:
                 << expectedNames[i];
         }
     }
+
+    void assertAdaptedJsonMatchesExpected(const std::string& caseName,
+                                          const Adapter& adapter)
+    {
+        auto adaptedJSON = adapter.getAdaptedInputJSON();
+        std::ifstream expectedFile(
+            testDataPath() + caseName + "/" + caseName + ".tulip.adapted.json");
+        ASSERT_TRUE(expectedFile.is_open());
+        nlohmann::json expectedJSON;
+        expectedFile >> expectedJSON;
+        EXPECT_EQ(adaptedJSON, expectedJSON);
+    }
 };
 
 TEST_F(AdapterTest, empty_coax)
@@ -73,54 +85,51 @@ TEST_F(AdapterTest, empty_coax)
     const std::vector<std::string> expectedNames = {"Shield", "Inner", "Vacuum"};
     assertPhysicalGroups(expectedNames, {1, 1, 1});
 
-    auto adaptedJSON = adapter.getAdaptedInputJSON();
-    std::ifstream expectedFile(
-        testDataPath() + caseName + "/" + caseName + ".tulip.adapted.json");
-    ASSERT_TRUE(expectedFile.is_open());
-    nlohmann::json expectedJSON;
-    expectedFile >> expectedJSON;
-    EXPECT_EQ(adaptedJSON, expectedJSON);
+    assertAdaptedJsonMatchesExpected(caseName, adapter);
 }
 
-// TEST_F(AdapterTest, partially_filled_coax)
-// {
-//     const std::string caseName = "partially_filled_coax";
-//     Adapter mesher;
-//     mesher.meshFromInput(inputFileFromCaseName(caseName), caseName);
+TEST_F(AdapterTest, partially_filled_coax)
+{
+    const std::string caseName = "partially_filled_coax";
+    Adapter adapter(inputFileFromCaseName(caseName));
 
-//     gmsh::vectorpair pGs;
-//     gmsh::model::getPhysicalGroups(pGs);
-//     EXPECT_EQ(pGs.size(), 4u);
+    gmsh::vectorpair pGs;
+    gmsh::model::getPhysicalGroups(pGs);
+    EXPECT_EQ(pGs.size(), 4u);
 
-//     std::vector<std::string> pgNames;
-//     for (const auto &[dim, tag] : pGs)
-//     {
-//         std::string name;
-//         gmsh::model::getPhysicalName(dim, tag, name);
-//         pgNames.push_back(name);
-//     }
-//     std::sort(pgNames.begin(), pgNames.end());
+    std::vector<std::string> pgNames;
+    for (const auto &[dim, tag] : pGs)
+    {
+        std::string name;
+        gmsh::model::getPhysicalName(dim, tag, name);
+        pgNames.push_back(name);
+    }
+    std::sort(pgNames.begin(), pgNames.end());
 
-//     std::vector<std::string> expected = {
-//         "Conductor_0", "Conductor_1", "Dielectric_0", "Vacuum_0"};
-//     std::sort(expected.begin(), expected.end());
-//     EXPECT_EQ(pgNames, expected);
+    std::vector<std::string> expected = {
+        "Conductor_0", "Conductor_1", "Dielectric_1", "Vacuum"};
+    std::sort(expected.begin(), expected.end());
+    EXPECT_EQ(pgNames, expected);
 
-//     for (const auto &name : expected)
-//     {
-//         EXPECT_EQ(countEntitiesInPhysicalGroupWithName(name), 1) << name;
-//     }
-// }
+    for (const auto &name : expected)
+    {
+        EXPECT_EQ(countEntitiesInPhysicalGroupWithName(name), 1) << name;
+    }
 
-// TEST_F(AdapterTest, two_wires_coax)
-// {
-//     const std::string caseName = "two_wires_coax";
-//     Adapter().meshFromInput(inputFileFromCaseName(caseName), caseName);
+    assertAdaptedJsonMatchesExpected(caseName, adapter);
+}
 
-//     const std::vector<std::string> expectedNames = {
-//         "Conductor_0", "Conductor_1", "Conductor_2", "Vacuum_0"};
-//     assertPhysicalGroups(expectedNames, {1, 1, 1, 1});
-// }
+TEST_F(AdapterTest, two_wires_coax)
+{
+    const std::string caseName = "two_wires_coax";
+    Adapter adapter(inputFileFromCaseName(caseName));
+
+    const std::vector<std::string> expectedNames = {
+        "Conductor_0", "Conductor_1", "Conductor_2", "Vacuum"};
+    assertPhysicalGroups(expectedNames, {1, 1, 1, 1});
+
+    assertAdaptedJsonMatchesExpected(caseName, adapter);
+}
 
 // TEST_F(AdapterTest, two_wires_open)
 // {
@@ -165,19 +174,22 @@ TEST_F(AdapterTest, empty_coax)
 //     // gmsh::write(caseName + ".vtk");
 // }
 
-// TEST_F(AdapterTest, five_wires)
-// {
-//     const std::string caseName = "five_wires";
-//     Adapter().meshFromInput(inputFileFromCaseName(caseName), caseName);
+TEST_F(AdapterTest, five_wires)
+{
+    const std::string caseName = "five_wires";
+    Adapter adapter(inputFileFromCaseName(caseName));
 
-//     const std::vector<std::string> expectedNames = {
-//         "Conductor_0", "Conductor_1", "Conductor_2", "Conductor_3",
-//         "Conductor_4", "Conductor_5",
-//         "Dielectric_0", "Dielectric_1", "Dielectric_2", "Dielectric_3",
-//         "Dielectric_4", "Vacuum_0"};
-//     assertPhysicalGroups(expectedNames,
-//                          {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1});
-// }
+    const std::vector<std::string> expectedNames = {
+        "Conductor_0", "Conductor_1", "Conductor_002", "Conductor_003",
+        "Conductor_004", "Conductor_005",
+        "Dielectric_1", "Dielectric_002", "Dielectric_003", "Dielectric_004",
+        "Dielectric_005", "Vacuum"};
+    assertPhysicalGroups(expectedNames,
+        {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1});
+}
+
+    assertAdaptedJsonMatchesExpected(caseName, adapter);
+}
 
 // TEST_F(AdapterTest, three_wires_ribbon)
 // {

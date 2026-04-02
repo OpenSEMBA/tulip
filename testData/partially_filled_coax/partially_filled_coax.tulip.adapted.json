@@ -1,16 +1,14 @@
 {
-  "analysis": {
-    "order": 3,
-    "exportParaViewSolution": true,
+  "DriverOptions": {
     "exportFolder": "Results/partially_filled_coax/"
   },
   "model": {
-    "materials": {
-      "Conductor_0": {"type": "PEC", "tag": 1 },
-      "Conductor_1": {"type": "PEC", "tag": 2 },
-      "Vacuum_0":    {"type": "Vacuum", "tag": 3},
-      "Dielectric_1": {"type": "Dielectric", "eps_r": 4.0, "tag": 4}
-    },  
+    "materials": [
+      {"type": "conductor", "conductorId": 0, "attribute": 1 },
+      {"type": "conductor", "conductorId": 1, "attribute": 2 },
+      {"type": "dielectric", "attribute": 3},
+      {"type": "dielectric", "relativePermittivity": 4.0, "attribute": 4}
+    ],
     "gmshFile": "partially_filled_coax.msh"
   }
 }
