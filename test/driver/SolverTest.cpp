@@ -649,14 +649,12 @@ TEST_F(SolverTest, lansink2024_fdtd_in_cell_C00_with_floating)
 	const std::string fn{ casesFolder() + CASE + "/" + CASE + ".tulip.adapted.json" };
 	auto model{ Parser{fn}.readModel() };
 
-	auto fp = Driver::loadFromAdaptedFile(fn).getFloatingPotentials().electric;
+	auto fp = Driver::loadFromAdaptedFile(fn).getFloatingPotentials(0,false);
 
 	SolverInputs p;
-	p.dirichletBoundaries = {
-		{
-			{1, fp(0,0)}, // Conductor 0,
-			{2, fp(0,1)}  // Conductor 1
-		}
+	p.dirichletBoundaries = AttrToValueMap{
+		{1, fp.at(0)}, // Conductor 0,
+		{2, fp.at(1)}  // Conductor 1
 	};
 	p.openBoundaries = { 3 };
 
@@ -670,14 +668,18 @@ TEST_F(SolverTest, lansink2024_fdtd_in_cell_C00_with_floating)
 	auto Q0 = s.getChargeInBoundary(1);
 	auto Q1 = s.getChargeInBoundary(2);
 
-	auto areaVacuum = model.getAreaOfMaterial("Vacuum_0");
-	auto areaCond0 = model.getAreaOfMaterial("Conductor_0");
-	auto areaCond1 = model.getAreaOfMaterial("Conductor_1");
+	
+	Dielectric vacuum{5, VACUUM_RELATIVE_PERMITTIVITY};
+	Conductor conductor0{1, 0};
+	Conductor conductor1{2, 1};
+	auto areaVacuum = model.getAreaOfMaterial(&vacuum);
+	auto areaCond0 = model.getAreaOfMaterial(&conductor0);
+	auto areaCond1 = model.getAreaOfMaterial(&conductor1);
 	auto totalArea = areaVacuum + areaCond0 + areaCond1;
 
 	auto avV =
 		(avVVacuum * areaVacuum + avV0 * areaCond0 + avV1 * areaCond1) / (totalArea);
-	avV = -avV + fp(0, 0); // In the paper, Conductor_0 is assumed to have zero voltage.
+	avV = -avV + fp.at(0); // In the paper, Conductor_0 is assumed to have zero voltage.
 
 	auto computedC00 = std::abs(Q0 / avV * EPSILON0_SI); // C11 in paper.
 
@@ -704,14 +706,12 @@ TEST_F(SolverTest, lansink2024_fdtd_in_cell_C01_with_floating)
 	const std::string fn{ casesFolder() + CASE + "/" + CASE + ".tulip.adapted.json" };
 	auto model{ Parser{fn}.readModel() };
 
-	auto fp = Driver::loadFromAdaptedFile(fn).getFloatingPotentials().electric;
+	auto fp = Driver::loadFromAdaptedFile(fn).getFloatingPotentials(1, false);
 
 	SolverInputs p;
-	p.dirichletBoundaries = {
-		{
-			{1, fp(1,0)}, // Conductor 0,
-			{2, fp(1,1)}  // Conductor 1
-		}
+	p.dirichletBoundaries = AttrToValueMap{
+		{1, fp.at(0)}, // Conductor 0,
+		{2, fp.at(1)}  // Conductor 1
 	};
 	p.openBoundaries = { 3 };
 
@@ -725,14 +725,17 @@ TEST_F(SolverTest, lansink2024_fdtd_in_cell_C01_with_floating)
 	auto Q0 = s.getChargeInBoundary(1);
 	auto Q1 = s.getChargeInBoundary(2);
 
-	auto areaVacuum = model.getAreaOfMaterial("Vacuum_0");
-	auto areaCond0 = model.getAreaOfMaterial("Conductor_0");
-	auto areaCond1 = model.getAreaOfMaterial("Conductor_1");
+	Dielectric vacuum{5, VACUUM_RELATIVE_PERMITTIVITY};
+	Conductor conductor0{1, 0};
+	Conductor conductor1{2, 1};
+	auto areaVacuum = model.getAreaOfMaterial(&vacuum);
+	auto areaCond0 = model.getAreaOfMaterial(&conductor0);
+	auto areaCond1 = model.getAreaOfMaterial(&conductor1);
 	auto totalArea = areaVacuum + areaCond0;
 
 	auto avV =
 		(avVVacuum * areaVacuum + avV0 * areaCond0) / (totalArea);
-	avV = -avV + fp(1,0); // In the paper, Conductor_0 is assumed to have zero voltage.
+	avV = -avV + fp.at(0); // In the paper, Conductor_0 is assumed to have zero voltage.
 
 	auto computedC01 = std::abs(Q1 / avV * EPSILON0_SI);
 
@@ -759,13 +762,9 @@ TEST_F(SolverTest, lansink2024_single_wire_L00_with_floating)
 	const std::string fn{ casesFolder() + CASE + "/" + CASE + ".tulip.adapted.json" };
 	auto model{ Parser{fn}.readModel() };
 
-	auto fp = Driver::loadFromAdaptedFile(fn).getFloatingPotentials().electric;
-
 	SolverInputs p;
-	p.dirichletBoundaries = {
-		{
-			{1, 1.0}, // Conductor 0,
-		}
+	p.dirichletBoundaries = AttrToValueMap{
+		{1, 1.0}, // Conductor 0,
 	};
 	p.openBoundaries = { 2 };
 
@@ -778,9 +777,12 @@ TEST_F(SolverTest, lansink2024_single_wire_L00_with_floating)
 
 	auto Q0 = s.getChargeInBoundary(1);
 
-	auto areaVacuum = model.getAreaOfMaterial("Vacuum_0");
-	auto areaDielectric = model.getAreaOfMaterial("Dielectric_0");
-	auto areaCond0 = model.getAreaOfMaterial("Conductor_0");
+	Dielectric vacuum{4, VACUUM_RELATIVE_PERMITTIVITY};
+	Dielectric dielectric0{5, 1.0};
+	Conductor conductor0{1, 0};
+	auto areaVacuum = model.getAreaOfMaterial(&vacuum);
+	auto areaDielectric = model.getAreaOfMaterial(&dielectric0);
+	auto areaCond0 = model.getAreaOfMaterial(&conductor0);
 	auto totalArea = areaVacuum + areaDielectric + areaCond0;
 
 	auto avV =
@@ -815,14 +817,12 @@ TEST_F(SolverTest, lansink2024_small_one_centered_bem_comparison)
 	const std::string fn{ casesFolder() + CASE + "/" + CASE + ".tulip.adapted.json" };
 	auto model{ Parser{fn}.readModel() };
 
-	auto fp = Driver::loadFromAdaptedFile(fn).getFloatingPotentials().electric;
+	auto fp = Driver::loadFromAdaptedFile(fn).getFloatingPotentials(0, false);
 
 	SolverInputs p;
-	p.dirichletBoundaries = {
-		{
-			{1, fp(0,0)}, // Conductor 0,
-			{2, fp(0,1)}, // Conductor 1,
-		}
+	p.dirichletBoundaries = AttrToValueMap{
+		{1, fp.at(0)}, // Conductor 0,
+		{2, fp.at(1)}, // Conductor 1,
 	};
 	p.openBoundaries = { 3 };
 

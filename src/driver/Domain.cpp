@@ -28,7 +28,7 @@ Domain::ElementIds getBdrElemsInDomain(
 	
 	for (auto e{ 0 }; e < mesh.GetNBE(); ++e) {
 		const mfem::Element* elem{ mesh.GetBdrElement(e) };
-		if (elem->GetAttribute() != mat->attribute) {
+		if (elem->GetAttribute() != mat->getAttribute()) {
 			continue;
 		}
 		IdSet verticesWithAttribute;
@@ -124,10 +124,10 @@ Domain::IdToDomain Domain::buildDomains(const Model& model)
 		}
 
 		// Determine conductors in domain.
-		for (const auto& pec : model.getMaterials().pecs) {
-			auto bdrElems = getBdrElemsInDomain(&pec, vsInDomain, mesh);
+		for (const auto* pec : model.getMaterials().getConductors()) {
+			auto bdrElems = getBdrElemsInDomain(pec, vsInDomain, mesh);
 			if (!bdrElems.empty()) {
-				domain.conductorIds.insert(Materials::getMaterialIdFromName(pec.name));
+				domain.conductorIds.insert(pec->getConductorId());
 				domain.bdrElems.insert(bdrElems.begin(), bdrElems.end());
 			}
 		}
@@ -206,7 +206,7 @@ Model Domain::buildModelForDomain(
 			globalMesh.GetBdrAttribute(
 				faceToBdrElem[
 					parentFaceIdMap[
-						domainMesh.GetBdrFace(b)]]
+						domainMesh.GetBdrElementFaceIndex(b)]]
 			)
 		);
 	}

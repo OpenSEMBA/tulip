@@ -1,5 +1,6 @@
 #include "Model.h"
 
+#include <cmath>
 #include <set>
 #include <assert.h>
 
@@ -9,113 +10,100 @@ namespace tulip {
 
 using namespace mfem;
 
-std::vector<const Element*> getElementsWithAttribute(const Mesh& mesh, int attr)
+bool isAttributePresentInMesh(const Mesh& mesh, int attr)
 {
-	std::vector<const Element*> res;
-	for (auto e{ 0 }; e < mesh.GetNBE(); ++e) {
-		const auto elemPtr{ mesh.GetBdrElement(e) };
-		if (elemPtr->GetAttribute() == attr) {
-			res.push_back(elemPtr);
+	for (int e = 0; e < mesh.GetNBE(); ++e) {
+		if (mesh.GetBdrElement(e)->GetAttribute() == attr) {
+			return true;
 		}
 	}
-	return res;
-}
-
-std::multimap<int, const Element*> determineClosedLoops(const std::vector<const Element*>& elems)
-{
-	DirectedGraph g;
-	std::map<int, const Element*> vToE;
-	for (const auto& e : elems) {
-		assert(e->GetType() == Element::Type::SEGMENT);
-		int v0{ e->GetVertices()[0] };
-		int v1{ e->GetVertices()[1] };
-		g.addEdge(v0, v1);
-		vToE[v0] = e;
-	}
-
-	std::multimap<int, const Element*> res;
-	int cycleCount{ 0 };
-	for (const auto& cycle : g.findCycles()) {
-		for (const auto& v : cycle) {
-			res.emplace(cycleCount, vToE.at(v));
+	for (int e = 0; e < mesh.GetNE(); ++e) {
+		if (mesh.GetElement(e)->GetAttribute() == attr) {
+			return true;
 		}
-		cycleCount++;
 	}
-
-	return res;
+	return false;
 }
+
 
 Materials filterOutMaterialsNotPresentInMesh(
 	const Materials& materials, 
 	const Mesh& mesh)
 {
-	NameToAttrMap matInMesh;
-	NameToAttrMap allMats{ materials.buildNameToAttrMap() };
-	for (const auto& [name, attr] : allMats) {
-		for (auto e{ 0 }; e < mesh.GetNBE(); e++) {
-			if (mesh.GetBdrElement(e)->GetAttribute() == attr) {
-				matInMesh.emplace(name, attr);
-				break;
-			}
+	Materials res;
+	for (const auto* m : materials.getAll()) {
+		if (!isAttributePresentInMesh(mesh, m->getAttribute())) {
+			continue;
+		}
+		if (const auto* c = dynamic_cast<const Conductor*>(m)) {
+			res.addConductor(c->getAttribute(), c->getConductorId(), c->isGround());
+		} else if (const auto* d = dynamic_cast<const Dielectric*>(m)) {
+			res.addDielectric(d->getAttribute(), d->getRelativePermittivity());
+		} else if (dynamic_cast<const Open*>(m) != nullptr) {
+			res.addOpenBoundary(m->getAttribute());
 		}
 	}
-	for (const auto& [name, attr] : allMats) {
-		for (auto e{ 0 }; e < mesh.GetNE(); e++) {
-			if (mesh.GetElement(e)->GetAttribute() == attr) {
-				matInMesh.emplace(name, attr);
-				break;
-			}
-		}
-	}
-
-	Materials res{ materials };
-	res.removeMaterialsNotInList(matInMesh);
 	return res;
 }
 
 Model::Model(
 	Mesh&& mesh,  
 	const Materials& materials) :
+	materials_{},
 	mesh_{ std::make_unique<mfem::Mesh>(std::move(mesh)) }
 {
 	materials_ = filterOutMaterialsNotPresentInMesh(materials, *mesh_);
 }
 
-bool elementsFormOpenLoops(const std::vector<const Element*>& elems)
-{
-	return determineClosedLoops(elems).size() != elems.size();
-}
-
 Model::Openness Model::determineOpenness() const
 {
-	if (materials_.openBoundaries.size() == 0) {
+	if (materials_.getOpenBoundaries().empty()) {
 		return Openness::closed;
 	} else {
 		return Openness::open;
 	}
 }
 
-double Model::getAreaOfMaterial(const std::string& materialName) const
+double getBoundaryElementMeasure(const Mesh& mesh, int bdrElemId)
 {
-	auto materials{ getMaterials().buildNameToAttrMap() };
-	if (!materials.count(materialName)) {
-		throw std::runtime_error("Unable to determine inner region.");
+	const auto* elem = mesh.GetBdrElement(bdrElemId);
+	if (elem->GetNVertices() != 2) {
+		return 0.0;
 	}
-	int innerRegionTag{ materials.at(materialName) };
+	const int v0 = elem->GetVertices()[0];
+	const int v1 = elem->GetVertices()[1];
+	const auto* p0 = mesh.GetVertex(v0);
+	const auto* p1 = mesh.GetVertex(v1);
 
-	if (getMaterials().isDomainMaterial(materialName)) {
-		Mesh m{ *getMesh() };
+	double sumSq = 0.0;
+	for (int d = 0; d < mesh.SpaceDimension(); ++d) {
+		double dx = p1[d] - p0[d];
+		sumSq += dx * dx;
+	}
+	return std::sqrt(sumSq);
+}
+
+double Model::getAreaOfMaterial(const Material* m) const
+{
+	const int attr = m->getAttribute();
+
+	if (m->isDomainMaterial()) {
 		double area = 0.0;
-		for (int i = 0; i < m.GetNE(); ++i) {
-			if (innerRegionTag == m.GetAttribute(i)) {
-				area += m.GetElementVolume(i);
+		for (int i = 0; i < mesh_->GetNE(); ++i) {
+			if (mesh_->GetElement(i)->GetAttribute() == attr) {
+				area += mesh_->GetElementVolume(i);
 			}
 		}
 		return area;
 	}
-	else {
-		return getMaterials().get<PEC>(materialName).area;
+
+	double length = 0.0;
+	for (int i = 0; i < mesh_->GetNBE(); ++i) {
+		if (mesh_->GetBdrElement(i)->GetAttribute() == attr) {
+			length += getBoundaryElementMeasure(*mesh_, i);
+		}
 	}
+	return length;
 
 }
 

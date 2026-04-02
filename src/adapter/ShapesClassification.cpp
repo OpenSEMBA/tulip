@@ -374,4 +374,32 @@ Graph ShapesClassification::getConductorOnlyGraph() const {
     return conductorGraph;
 }
 
+std::map<std::string, std::string> ShapesClassification::getMappedComponents() const {
+    std::map<std::string, std::string> mappedComponents;
+
+    std::vector<std::string> sortedNodes = nestedGraph.getNodesByLevels();
+
+    int conductorIdx = 0;
+    for (const auto& node : sortedNodes) {
+        if (pecs.count(node)) {
+            mappedComponents[node] = "Conductor_" + std::to_string(conductorIdx++);
+        }
+    }
+
+    int dielectricIdx = 0;
+    for (const auto& [name, _] : dielectrics) {
+        mappedComponents[name] = "Dielectric_" + std::to_string(dielectricIdx++);
+    }
+
+    for (const auto& [domain, _] : vacuum) {
+        mappedComponents[domain] = domain;
+    }
+    for (const auto& [openBoundary, _] : open) {
+        mappedComponents[openBoundary] = "OpenBoundary_0";
+    }
+
+    return mappedComponents;
+}
+
+
 } // namespace tulip

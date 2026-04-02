@@ -41,6 +41,7 @@ Parser::Parser(const std::string& filename) :
 Materials readMaterials(const json& j)
 {
 	Materials res;
+	ConductorId nextConductorId = 0;
 	for (const auto& jMat : j.items()) {
 		auto name = jMat.key();
 		auto mat = jMat.value();
@@ -53,20 +54,19 @@ Materials readMaterials(const json& j)
 		switch (type) {
 		case MaterialType::PEC:
 		{
-			double area = mat.value("area", 0.0)*1e-6;
-			res.pecs.push_back({ name, attribute, area });
+			res.addConductor(attribute, nextConductorId++);
 			break;
 		}
 		case MaterialType::OpenBoundary:
-			res.openBoundaries.push_back({ name, attribute });
+			res.addOpenBoundary(attribute);
 			break;
 		case MaterialType::Vacuum:
-			res.dielectrics.push_back({ name, attribute, VACUUM_RELATIVE_PERMITTIVITY });
+			res.addDielectric(attribute, VACUUM_RELATIVE_PERMITTIVITY);
 			break;
 		case MaterialType::Dielectric:
 		{
 			double epsR{ mat.at("eps_r").get<double>() };
-			res.dielectrics.push_back({ name, attribute, epsR });
+			res.addDielectric(attribute, epsR);
 			break;
 		}
 		default:

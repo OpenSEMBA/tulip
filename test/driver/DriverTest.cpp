@@ -119,12 +119,10 @@ TEST_F(DriverTest, two_wires_shielded_floating_potentials)
 
 	const double rTol{ 2.5e-2 };
 
-	auto fp{ Driver::loadFromAdaptedFile(fn).getFloatingPotentials().electric };
+	auto fp = Driver::loadFromAdaptedFile(fn).getFloatingPotentials(0, false);
 
-	const int N{ 2 };
-	ASSERT_EQ(N, fp.NumCols());
-	ASSERT_EQ(N, fp.NumRows());
-
+	ASSERT_EQ(2, fp.size());
+	
 	// Solves problem and checks that charge is zero in the floating conductor.
 	{
 		auto m{ Mesh::LoadFromFile(casesFolder() + CASE + "/" + CASE + ".msh") };
@@ -133,8 +131,8 @@ TEST_F(DriverTest, two_wires_shielded_floating_potentials)
 		p.dirichletBoundaries = {
 			{
 				{1, 0.0},     // Conductor 0 bdr (GND).
-				{2, fp(0,0)}, // Conductor 1 prescribed potential.
-				{3, fp(0,1)}, // Conductor 2 floating potential.
+				{2, fp.at(0)}, // Conductor 1 prescribed potential.
+				{3, fp.at(1)}, // Conductor 2 floating potential.
 			}
 		};
 
@@ -159,11 +157,9 @@ TEST_F(DriverTest, two_wires_open_floating_potentials)
 	const std::string CASE{ "two_wires_open" };
 	auto fn{ casesFolder() + CASE + "/" + CASE + ".tulip.adapted.json" };
 
-	auto fp{ Driver::loadFromAdaptedFile(fn).getFloatingPotentials().electric };
+	auto fp{ Driver::loadFromAdaptedFile(fn).getFloatingPotentials(0,false) };
 
-	const int N{ 2 };
-	ASSERT_EQ(N, fp.NumCols());
-	ASSERT_EQ(N, fp.NumRows());
+	ASSERT_EQ(2, fp.size());
 
 	// Solves problem and checks that charge is zero in the floating conductor.
 	{
@@ -173,8 +169,8 @@ TEST_F(DriverTest, two_wires_open_floating_potentials)
 		SolverInputs p;
 		p.dirichletBoundaries = {
 			{
-				{1, fp(0,0)}, // Conductor 0, prescribed.
-				{2, fp(0,1)}, // Conductor 1, floating.
+				{1, fp.at(0)}, // Conductor 0, prescribed.
+				{2, fp.at(1)}, // Conductor 1, floating.
 			}
 		};
 		p.openBoundaries = { 3 };
@@ -322,7 +318,7 @@ TEST_F(DriverTest, three_wires_ribbon_floating_potentials)
 	const std::string CASE{ "three_wires_ribbon" };
 	auto fn{ casesFolder() + CASE + "/" + CASE + ".tulip.adapted.json" };
 
-	auto fp = Driver::loadFromAdaptedFile(fn).getFloatingPotentials().electric;
+	auto fp = Driver::loadFromAdaptedFile(fn).getFloatingPotentials(1, false);
 
 	// Solves problem and checks that charge is zero in the floating conductor.
 	{
@@ -332,9 +328,9 @@ TEST_F(DriverTest, three_wires_ribbon_floating_potentials)
 		SolverInputs p;
 		p.dirichletBoundaries = {
 			{
-				{1, fp(1,0)}, // Conductor 0 floating potential.
-				{2, fp(1,1)}, // Conductor 1 prescribed potential.
-				{3, fp(1,2)}, // Conductor 2 floating potential.
+				{1, fp.at(0)}, // Conductor 0 floating potential.
+				{2, fp.at(1)}, // Conductor 1 prescribed potential.
+				{3, fp.at(2)}, // Conductor 2 floating potential.
 			}
 		};
 		p.openBoundaries = { 4 };
@@ -461,7 +457,7 @@ TEST_F(DriverTest, lansink2024_floating_potentials)
 
 	auto dr{ Driver::loadFromAdaptedFile(casesFolder() + CASE + "/" + CASE + ".tulip.adapted.json") };
 
-	auto fp{ dr.getFloatingPotentials().electric };
+	auto fp = dr.getFloatingPotentials(0, false);
 	auto inCell{ dr.getInCellPotentials() };
 
 	auto m{ Mesh::LoadFromFile(casesFolder() + CASE + "/" + CASE + ".msh") };
@@ -469,8 +465,8 @@ TEST_F(DriverTest, lansink2024_floating_potentials)
 	SolverInputs p;
 	p.dirichletBoundaries = {
 		{
-			{1, fp(0,0)}, // Conductor 0 floating potential.
-			{2, fp(0,1)}, // Conductor 1 prescribed potential.
+			{1, fp.at(0)}, // Conductor 0 floating potential.
+			{2, fp.at(1)}, // Conductor 1 prescribed potential.
 		}
 	};
 	p.openBoundaries = { 3 };
@@ -735,7 +731,8 @@ TEST_F(DriverTest, getCFromGeneralizedC_two_wires_open)
 	const std::string CASE{ "two_wires_open" };
 	auto fn{ casesFolder() + CASE + "/" + CASE + ".tulip.adapted.json" };
 
-	auto gC{ Driver::loadFromAdaptedFile(fn).getGeneralizedCMatrix() };
+	auto driver = Driver::loadFromAdaptedFile(fn);
+	auto gC{ driver.getGeneralizedCMatrix() };
 
 	double d = 50;
 	double rw1 = 2;
@@ -746,7 +743,7 @@ TEST_F(DriverTest, getCFromGeneralizedC_two_wires_open)
 		std::acosh((d * d - rw1 * rw1 - rw2 * rw2) / (2 * rw1 * rw2))
 	};
 
-	auto C = Driver::getCFromGeneralizedC(gC, Model::Openness::open);
+	auto C = driver.getCFromGeneralizedC(gC, Model::Openness::open);
 
 	const double rTol{ 0.001 };
 	ASSERT_EQ(1, C.NumRows());
@@ -761,6 +758,9 @@ TEST_F(DriverTest, getCFromGeneralizedC_three_wires)
 	// Comparison with Clayton Paul's book:  
 	// Analysis of multiconductor transmision lines. 2007.
 	// Sec. 5.2.3, p. 187.
+	const std::string CASE{ "two_wires_open" };
+	auto fn{ casesFolder() + CASE + "/" + CASE + ".tulip.adapted.json" };
+	auto driver = Driver::loadFromAdaptedFile(fn);
 
 	double gCData[9] = {
 	  26.2148,  -18.0249,  -5.03325,
@@ -780,7 +780,10 @@ TEST_F(DriverTest, getCFromGeneralizedC_three_wires)
 	CExpected.UseExternalData(CExpectedData, 2, 2);
 	CExpected *= 1e-12;
 
-	auto C = Driver::getCFromGeneralizedC(gC, Model::Openness::open);
+
+
+
+	auto C = driver.getCFromGeneralizedC(gC, Model::Openness::open);
 
 	const double rTol{ 0.001 };
 	ASSERT_EQ(CExpected.NumRows(), C.NumRows());

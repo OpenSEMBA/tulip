@@ -20,18 +20,25 @@ TEST_F(ParserTest, empty_coax)
 	EXPECT_EQ(true, opts.exportParaViewSolution);
 
 	auto model{ parser.readModel() };
-	const auto& pecs{ model.getMaterials().pecs };
+	auto pecs = model.getMaterials().getConductors();
 	ASSERT_EQ(2, pecs.size());
-	EXPECT_EQ(pecs[0].name, "Conductor_0");
-	EXPECT_EQ(pecs[0].attribute, 1);
-	EXPECT_EQ(pecs[1].name, "Conductor_1");
-	EXPECT_EQ(pecs[1].attribute, 2);
 
-	const auto& diels{ model.getMaterials().dielectrics };
+	auto it = pecs.begin();
+	ASSERT_NE(it, pecs.end());
+	EXPECT_EQ((*it)->getConductorId(), 0);
+	EXPECT_EQ((*it)->getAttribute(), 1);
+
+	++it;
+	ASSERT_NE(it, pecs.end());
+	EXPECT_EQ((*it)->getConductorId(), 1);
+	EXPECT_EQ((*it)->getAttribute(), 2);
+
+	auto diels = model.getMaterials().getDielectrics();
 	ASSERT_EQ(1, diels.size());
-	EXPECT_EQ(diels[0].name, "Vacuum_0");
-	EXPECT_EQ(diels[0].attribute, 3);
-	EXPECT_EQ(diels[0].relativePermittivity, VACUUM_RELATIVE_PERMITTIVITY);
+	auto dIt = diels.begin();
+	ASSERT_NE(dIt, diels.end());
+	EXPECT_EQ((*dIt)->getAttribute(), 3);
+	EXPECT_EQ((*dIt)->getRelativePermittivity(), VACUUM_RELATIVE_PERMITTIVITY);
 
 	EXPECT_NE(0, model.getMesh()->GetNE());
 	EXPECT_EQ(2, model.getMesh()->bdr_attributes.Size());
@@ -49,21 +56,35 @@ TEST_F(ParserTest, partially_filled_coax)
 	EXPECT_EQ(true, opts.exportParaViewSolution);
 
 	auto model{ parser.readModel() };
-	const auto& pecs{ model.getMaterials().pecs };
+	auto pecs = model.getMaterials().getConductors();
 	ASSERT_EQ(2, pecs.size());
-	EXPECT_EQ(pecs[0].name, "Conductor_0");
-	EXPECT_EQ(pecs[0].attribute, 1);
-	EXPECT_EQ(pecs[1].name, "Conductor_1");
-	EXPECT_EQ(pecs[1].attribute, 2);
 
-	const auto& diels{ model.getMaterials().dielectrics };
+	auto it = pecs.begin();
+	ASSERT_NE(it, pecs.end());
+	EXPECT_EQ((*it)->getConductorId(), 0);
+	EXPECT_EQ((*it)->getAttribute(), 1);
+
+	++it;
+	ASSERT_NE(it, pecs.end());
+	EXPECT_EQ((*it)->getConductorId(), 1);
+	EXPECT_EQ((*it)->getAttribute(), 2);
+
+	auto diels = model.getMaterials().getDielectrics();
 	ASSERT_EQ(2, diels.size());
-	EXPECT_EQ(diels[0].name, "Dielectric_1");
-	EXPECT_EQ(diels[0].attribute, 4);
-	EXPECT_EQ(diels[0].relativePermittivity, 4.0);
-	EXPECT_EQ(diels[1].name, "Vacuum_0");
-	EXPECT_EQ(diels[1].attribute, 3);
-	EXPECT_EQ(diels[1].relativePermittivity, VACUUM_RELATIVE_PERMITTIVITY);
+
+	bool foundDielectric = false;
+	bool foundVacuum = false;
+	for (const auto* d : diels) {
+		if (d->getAttribute() == 4 && d->getRelativePermittivity() == 4.0) {
+			foundDielectric = true;
+		}
+		if (d->getAttribute() == 3 &&
+			d->getRelativePermittivity() == VACUUM_RELATIVE_PERMITTIVITY) {
+			foundVacuum = true;
+		}
+	}
+	EXPECT_TRUE(foundDielectric);
+	EXPECT_TRUE(foundVacuum);
 
 	EXPECT_NE(0, model.getMesh()->GetNE());
 	EXPECT_EQ(2, model.getMesh()->bdr_attributes.Size());

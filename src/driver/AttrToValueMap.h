@@ -1,6 +1,8 @@
 #pragma once
 
 #include <map>
+#include <string>
+#include <vector>
 
 namespace tulip {
 
@@ -12,6 +14,16 @@ public:
 	AttrToValueMap(const std::map<int,double>& attVals) :
 		std::map<int,double>{attVals}
 	{}
+
+	AttrToValueMap(std::initializer_list<std::pair<const int, double>> init) :
+		std::map<int, double>{init}
+	{}
+
+	AttrToValueMap& operator=(std::initializer_list<std::pair<const int, double>> init)
+	{
+		this->std::map<int, double>::operator=(init);
+		return *this;
+	}
 	
 	std::vector<int> getAttributesAsArray() const
 	{

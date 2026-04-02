@@ -3,6 +3,11 @@
 #include "AttrToValueMap.h"
 #include "Materials.h"
 
+#include "mfem.hpp"
+
+#include <array>
+#include <memory>
+
 namespace tulip {
 
 struct Box {

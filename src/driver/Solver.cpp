@@ -92,7 +92,7 @@ Solver::Solver(
     // Select surface attributes for Dirichlet BCs
     ess_bdr_ = AttrToMarker(
         *mesh_,
-        parameters.dirichletBoundaries.getAttributesAsArray()
+        toArray(parameters.dirichletBoundaries.getAttributesAsArray())
     );
 
     // Setup domain permittivity coefficients.
@@ -200,13 +200,13 @@ void Solver::applyBoundaryConstantValuesToGridFunction(
 {
     auto attributes{ bdrValues.getAttributesAsArray() };
     auto values{ bdrValues.getValuesAsArray() };
-    if (attributes.Size() == 0) {
+    if (attributes.empty()) {
         return;
     }
 
     // Apply piecewise constant boundary condition
     Array<int> bdr_attr(mesh_->bdr_attributes.Max());
-    for (int i = 0; i < attributes.Size(); i++)
+    for (size_t i = 0; i < attributes.size(); i++)
     {
         ConstantCoefficient val(values[i]);
         bdr_attr = 0;

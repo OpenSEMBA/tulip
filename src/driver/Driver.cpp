@@ -457,8 +457,9 @@ std::map<ConductorId, FieldReconstruction> Driver::getFieldParameters(
 			centerOfCharge.begin(), centerOfCharge.end(), 
 			res[condI].expansionCenter.begin());
 		res[condI].ab = s.getMultipolarCoefficients(opts_.multipolarExpansionOrder);
-		for (const auto& [condJ, bdrAttJ] : conductors) {
-			res[condI].conductorPotentials[condJ] = fp(condI, condJ);
+		for (const auto& cJ : conductors) {
+			auto condJ = cJ->getConductorId();
+			res[condI].conductorPotentials[condJ] = fp.at(condJ);
 		}
 	}
 

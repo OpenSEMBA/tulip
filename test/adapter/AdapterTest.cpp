@@ -6,7 +6,6 @@
 
 #include <gmsh.h>
 
-#include "AreaExporterService.h"
 #include "Mesher.h"
 #include "TestUtils.h"
 
@@ -293,19 +292,3 @@ TEST_F(AdapterTest, two_wires_with_touching_dielectric)
     assertPhysicalGroups(expectedNames, {1, 1, 1, 1, 1, 1, 1});
 }
 
-TEST_F(AdapterTest, area_exporter_returns_true_values_for_dielectric_unshielded_pair)
-{
-    const std::string caseName = "DielectricUnshieldedPair";
-    auto mappedElements = Adapter().meshFromStep(
-        stepFileFromCaseName(caseName), caseName);
-
-    AreaExporterService exporter;
-    exporter.addPhysicalModelForConductors(mappedElements);
-    const auto &geometries = exporter.computedAreas["geometries"];
-
-    ASSERT_EQ(geometries.size(), 2u);
-    for (const auto &g : geometries)
-    {
-        EXPECT_NEAR(g["area"].get<double>(), 201.06193, 1e-4);
-    }
-}

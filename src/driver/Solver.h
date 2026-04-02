@@ -53,9 +53,9 @@ public:
     SolverSolution getSolution() const;
     void setSolution(const SolverSolution&);
 
-    double getChargeInBoundary(Attribute bdrAttribute) const;
-    double getAveragePotentialInDomain(Attribute attr) const;
-    double getAveragePotentialInBoundary(Attribute bdrAttribute) const;
+    double getChargeInBoundary(int bdrAttribute) const;
+    double getAveragePotentialInDomain(int attr) const;
+    double getAveragePotentialInBoundary(int bdrAttribute) const;
     double getTotalEnergy() const;
 
     Mesh* getMesh() { return mesh_; }
