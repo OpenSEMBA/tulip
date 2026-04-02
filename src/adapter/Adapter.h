@@ -19,9 +19,7 @@ public:
     static const MeshingOptions DEFAULT_MESHING_OPTIONS;
 
     std::map<std::string, std::string> meshFromInput(
-        const std::string& inputFile,
-        const std::string& caseName = "",
-        const MeshingOptions* meshingOptions = nullptr);
+        const std::string& inputFile);
 
     void buildPhysicalModel(ShapesClassification& shapes,
                             const std::map<std::string, std::string>& labelMapping);

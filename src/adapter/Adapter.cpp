@@ -3,10 +3,13 @@
 #include <algorithm>
 #include <cassert>
 #include <filesystem>
+#include <fstream>
 #include <map>
+#include <stdexcept>
 #include <tuple>
 
 #include <gmsh.h>
+#include <nlohmann/json.hpp>
 
 namespace tulip {
 
@@ -37,7 +40,6 @@ Adapter::findDuplicateNodes()
         groups[key].push_back(nodeTags[idx]);
     }
 
-    // Keep only groups with duplicates
     for (auto it = groups.begin(); it != groups.end();) {
         if (it->second.size() <= 1) it = groups.erase(it);
         else ++it;
@@ -46,35 +48,135 @@ Adapter::findDuplicateNodes()
     return {!groups.empty(), groups};
 }
 
-std::map<std::string, std::string> Adapter::meshFromInput(
-    const std::string& inputFile,
-    const std::string& caseName,
-    const MeshingOptions* meshingOptions)
-{
-    const auto& opts = meshingOptions ? *meshingOptions : DEFAULT_MESHING_OPTIONS;
-    const auto modelName = caseName.empty()
-        ? std::filesystem::path(inputFile).stem().string()
-        : caseName;
+namespace {
 
-    gmsh::model::add(modelName);
+bool hasSuffix(const std::string& value, const std::string& suffix)
+{
+    return value.size() >= suffix.size() &&
+           value.compare(value.size() - suffix.size(), suffix.size(), suffix) == 0;
+}
+
+std::string getCaseNameFromInputPath(const std::filesystem::path& inputPath)
+{
+    const std::string fileName = inputPath.filename().string();
+    constexpr const char* suffix = ".tulip.input.json";
+    if (!hasSuffix(fileName, suffix)) {
+        throw std::runtime_error("Input file must end with .tulip.input.json: " + fileName);
+    }
+    return fileName.substr(0, fileName.size() - std::string(suffix).size());
+}
+
+nlohmann::json readJsonFile(const std::filesystem::path& path)
+{
+    std::ifstream inputStream(path);
+    if (!inputStream.is_open()) {
+        throw std::runtime_error("Cannot open JSON file: " + path.string());
+    }
+    nlohmann::json json;
+    inputStream >> json;
+    return json;
+}
+
+std::map<int, std::string> buildMaterialTypeById(const nlohmann::json& inputJson)
+{
+    std::map<int, std::string> materialTypeById;
+    if (!inputJson.contains("materials") || !inputJson["materials"].is_array()) {
+        return materialTypeById;
+    }
+    for (const auto& material : inputJson["materials"]) {
+        if (material.contains("id") && material.contains("type")) {
+            materialTypeById[material["id"].get<int>()] = material["type"].get<std::string>();
+        }
+    }
+    return materialTypeById;
+}
+
+std::map<std::string, std::string> buildLayerNameMapping(const nlohmann::json& inputJson)
+{
+    std::map<std::string, std::string> mapping;
+    mapping["Vacuum"] = "Vacuum";
+    mapping["Vacuum_0"] = "Vacuum";
+
+    if (!inputJson.contains("layers") || !inputJson["layers"].is_array()) {
+        return mapping;
+    }
+
+    const auto materialTypeById = buildMaterialTypeById(inputJson);
+    for (const auto& layer : inputJson["layers"]) {
+        if (!layer.contains("name") || !layer.contains("materialId")) {
+            continue;
+        }
+        const std::string layerName = layer["name"].get<std::string>();
+        const int materialId = layer["materialId"].get<int>();
+        auto materialIt = materialTypeById.find(materialId);
+        if (materialIt == materialTypeById.end()) {
+            continue;
+        }
+
+        const std::string& materialType = materialIt->second;
+        if (materialType == "conductor" || materialType == "shield" ||
+            materialType == "dielectric" || materialType == "open") {
+            mapping[layerName] = layerName;
+            if ((materialType == "conductor" || materialType == "shield") &&
+                layer.contains("id")) {
+                mapping["Conductor_" + std::to_string(layer["id"].get<int>())] = layerName;
+            }
+        }
+    }
+
+    return mapping;
+}
+
+} // namespace
+
+std::map<std::string, std::string> Adapter::meshFromInput(
+    const std::string& inputFile)
+{
+    const std::filesystem::path inputPath(inputFile);
+    if (!hasSuffix(inputPath.filename().string(), ".tulip.input.json")) {
+        throw std::runtime_error("Unsupported input file extension: " + inputPath.string());
+    }
+
+    const nlohmann::json inputJson = readJsonFile(inputPath);
+    const std::string caseName = getCaseNameFromInputPath(inputPath);
+
+    MeshingOptions opts = DEFAULT_MESHING_OPTIONS;
+    if (inputJson.contains("adapterOptions") && inputJson["adapterOptions"].contains("gmshOptions")) {
+        const auto& gmshOptions = inputJson["adapterOptions"]["gmshOptions"];
+        if (gmshOptions.is_object()) {
+            for (auto it = gmshOptions.begin(); it != gmshOptions.end(); ++it) {
+                opts[it.key()] = it.value().get<double>();
+            }
+        }
+    }
+
+    std::filesystem::path stepPath;
+    if (inputJson.contains("adapterOptions") && inputJson["adapterOptions"].contains("stepFilename")) {
+        stepPath = inputPath.parent_path() /
+                   inputJson["adapterOptions"]["stepFilename"].get<std::string>();
+    } else {
+        stepPath = inputPath.parent_path() / (caseName + ".step");
+    }
+
+    if (!std::filesystem::exists(stepPath)) {
+        throw std::runtime_error("STEP file not found: " + stepPath.string());
+    }
+
+    gmsh::model::add(caseName);
 
     EntityList shapes;
-    gmsh::model::occ::importShapes(inputFile, shapes, false);
+    gmsh::model::occ::importShapes(stepPath.string(), shapes, false);
 
-    auto jsonFile = std::filesystem::path(inputFile).replace_extension(".json").string();
-    ShapesClassification allShapes(shapes, jsonFile);
+    ShapesClassification allShapes(shapes, inputFile);
 
-    // Geometry manipulation
     allShapes.ensureDielectricsDoNotOverlap();
     allShapes.removeConductorsFromDielectrics();
     allShapes.vacuum = allShapes.buildVacuumDomain();
-    allShapes.pecs = extractBoundaries(allShapes.pecs);
+    allShapes.conductors = extractBoundaries(allShapes.conductors);
 
-    // Mapping
-    auto mappedComponents = allShapes.getMappedComponents();
-    buildPhysicalModel(allShapes, mappedComponents);
+    const auto layerNameMapping = buildLayerNameMapping(inputJson);
+    buildPhysicalModel(allShapes, layerNameMapping);
 
-    // Meshing options
     for (const auto& [opt, val] : opts) {
         gmsh::option::setNumber(opt, val);
     }
@@ -85,7 +187,7 @@ std::map<std::string, std::string> Adapter::meshFromInput(
     auto [hasDups, _] = findDuplicateNodes();
     assert(!hasDups);
 
-    return mappedComponents;
+    return layerNameMapping;
 }
 
 void Adapter::buildPhysicalModel(
@@ -93,7 +195,7 @@ void Adapter::buildPhysicalModel(
     const std::map<std::string, std::string>& labelMapping)
 {
     EntityMap components;
-    for (const auto& [k, v] : shapes.pecs)        components[k] = v;
+    for (const auto& [k, v] : shapes.conductors)  components[k] = v;
     for (const auto& [k, v] : shapes.dielectrics) components[k] = v;
     for (const auto& [k, v] : shapes.open)        components[k] = v;
     for (const auto& [k, v] : shapes.vacuum)      components[k] = v;

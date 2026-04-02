@@ -13,6 +13,49 @@ namespace tulip {
 namespace {
 constexpr double innerRegionBoxScalingFactor = 1.15;
 constexpr double farRegionBoxScalingFactor = 4.0;
+
+std::string toLegacyMaterialType(const std::string& type) {
+    if (type == "conductor" || type == "shield") return "PEC";
+    if (type == "dielectric") return "Dielectric";
+    if (type == "open") return "OpenBoundary";
+    return type;
+}
+
+nlohmann::json buildCrossSectionFromInputFormat(const nlohmann::json& jsonData) {
+    nlohmann::json crossSection = nlohmann::json::array();
+    if (!jsonData.contains("materials") || !jsonData.contains("layers") ||
+        !jsonData["materials"].is_array() || !jsonData["layers"].is_array()) {
+        return crossSection;
+    }
+
+    std::map<int, std::string> materialTypeById;
+    for (const auto& material : jsonData["materials"]) {
+        if (material.contains("id") && material.contains("type")) {
+            materialTypeById[material["id"].get<int>()] = material["type"].get<std::string>();
+        }
+    }
+
+    for (const auto& layer : jsonData["layers"]) {
+        if (!layer.contains("name") || !layer.contains("materialId")) {
+            continue;
+        }
+        const int materialId = layer["materialId"].get<int>();
+        auto materialIt = materialTypeById.find(materialId);
+        if (materialIt == materialTypeById.end()) {
+            continue;
+        }
+        const std::string mappedType = toLegacyMaterialType(materialIt->second);
+        std::string geometryName = layer["name"].get<std::string>();
+        if (layer.contains("id") && mappedType == "PEC") {
+            geometryName = "Conductor_" + std::to_string(layer["id"].get<int>());
+        }
+        crossSection.push_back({
+            {"name", geometryName},
+            {"material", {{"type", mappedType}}}
+        });
+    }
+    return crossSection;
+}
 }
 
 ShapesClassification::ShapesClassification(const EntityList& shapes,
@@ -28,9 +71,13 @@ ShapesClassification::ShapesClassification(const EntityList& shapes,
     }
     nlohmann::json jsonData;
     f >> jsonData;
-    crossSectionData_ = jsonData["CrossSection"];
+    if (jsonData.contains("CrossSection") && jsonData["CrossSection"].is_array()) {
+        crossSectionData_ = jsonData["CrossSection"];
+    } else {
+        crossSectionData_ = buildCrossSectionFromInputFormat(jsonData);
+    }
 
-    pecs        = getPECs(shapes);
+    conductors  = getPECs(shapes);
     dielectrics = getDielectrics(shapes);
     open        = getOpenBoundaries(shapes);
     nestedGraph = buildNestedGraph();
@@ -128,7 +175,7 @@ bool ShapesClassification::isOpenProblem() const {
     if (!roots.empty()) {
         const auto& root = roots[0];
         if (dielectrics.count(root)) return true;
-        if (pecs.count(root)) {
+        if (conductors.count(root)) {
             auto parentNodes = nestedGraph.getParentNodes();
             if (std::find(parentNodes.begin(), parentNodes.end(), root) == parentNodes.end()) {
                 return true;
@@ -146,8 +193,8 @@ void ShapesClassification::removeConductorsFromDielectrics() {
         auto it = connections.find(dielName);
         if (it != connections.end()) {
             for (const auto& childName : it->second) {
-                if (pecs.count(childName)) {
-                    const auto& surf = pecs.at(childName);
+                if (conductors.count(childName)) {
+                    const auto& surf = conductors.at(childName);
                     pecSurfs.insert(pecSurfs.end(), surf.begin(), surf.end());
                 }
             }
@@ -194,10 +241,10 @@ EntityMap ShapesClassification::buildVacuumDomain() {
 EntityMap ShapesClassification::buildClosedVacuumDomain() {
     const auto  roots   = nestedGraph.roots();
     const auto& root    = roots[0];
-    EntityList  dom     = pecs.at(root);
+    EntityList  dom     = conductors.at(root);
     EntityList  toRemove;
 
-    for (const auto& [name, surf] : pecs) {
+    for (const auto& [name, surf] : conductors) {
         if (name == root) continue;
         toRemove.insert(toRemove.end(), surf.begin(), surf.end());
     }
@@ -215,7 +262,7 @@ EntityMap ShapesClassification::buildClosedVacuumDomain() {
 
 EntityMap ShapesClassification::buildOpenVacuumDomain() {
     EntityList nonVacuumSurfaces;
-    for (const auto& [name, surf] : pecs) {
+    for (const auto& [name, surf] : conductors) {
         nonVacuumSurfaces.insert(nonVacuumSurfaces.end(), surf.begin(), surf.end());
     }
     for (const auto& [name, surf] : dielectrics) {
@@ -299,9 +346,9 @@ Graph ShapesClassification::buildNestedGraph() {
     gmsh::model::occ::synchronize();
     Graph graph;
 
-    // Merge pecs, dielectrics, open into a single map
+    // Merge conductors, dielectrics, open into a single map
     EntityMap elements;
-    for (const auto& [k, v] : pecs)        elements[k] = v;
+    for (const auto& [k, v] : conductors)    elements[k] = v;
     for (const auto& [k, v] : dielectrics) elements[k] = v;
     for (const auto& [k, v] : open)        elements[k] = v;
 
@@ -343,7 +390,7 @@ Graph ShapesClassification::buildNestedGraph() {
 Graph ShapesClassification::getConductorOnlyGraph() const {
     Graph conductorGraph;
 
-    for (const auto& [name, _] : pecs) {
+    for (const auto& [name, _] : conductors) {
         auto& nodes = nestedGraph.nodes();
         if (std::find(nodes.begin(), nodes.end(), name) != nodes.end()) {
             conductorGraph.addNode(name);
@@ -354,15 +401,15 @@ Graph ShapesClassification::getConductorOnlyGraph() const {
         const auto& src  = edge.first;
         const auto& dest = edge.second;
 
-        bool srcIsPec  = pecs.count(src)  > 0;
-        bool destIsPec = pecs.count(dest) > 0;
+        bool srcIsPec  = conductors.count(src)  > 0;
+        bool destIsPec = conductors.count(dest) > 0;
         bool destIsDiel = dielectrics.count(dest) > 0;
 
         if (srcIsPec && destIsPec) {
             conductorGraph.addEdge(src, dest);
         } else if (srcIsPec && destIsDiel) {
             for (const auto& childEdge : nestedGraph.edges()) {
-                if (childEdge.first == dest && pecs.count(childEdge.second)) {
+                if (childEdge.first == dest && conductors.count(childEdge.second)) {
                     conductorGraph.addEdge(src, childEdge.second);
                 }
             }
@@ -381,7 +428,7 @@ std::map<std::string, std::string> ShapesClassification::getMappedComponents() c
 
     int conductorIdx = 0;
     for (const auto& node : sortedNodes) {
-        if (pecs.count(node)) {
+        if (conductors.count(node)) {
             mappedComponents[node] = "Conductor_" + std::to_string(conductorIdx++);
         }
     }

@@ -19,7 +19,8 @@ using EntityMap  = std::map<std::string, EntityList>;
 class ShapesClassification {
 public:
     bool isOpenCase;
-    EntityMap pecs;
+    EntityMap conductors;
+    EntityMap shields;  
     EntityMap dielectrics;
     EntityMap open;
     EntityMap vacuum;

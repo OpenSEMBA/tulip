@@ -49,7 +49,7 @@ TEST_F(ShapesClassificationTest, dielectricShieldedPairClassification) {
     };
 
     EXPECT_EQ(sc->allShapes,   expectedAllShapes);
-    EXPECT_EQ(sc->pecs,        expectedPecs);
+    EXPECT_EQ(sc->conductors,  expectedPecs);
     EXPECT_EQ(sc->dielectrics, expectedDielectrics);
     EXPECT_FALSE(sc->isOpenCase);
 
@@ -74,7 +74,7 @@ TEST_F(ShapesClassificationTest, dielectricUnshieldedPairClassification) {
     };
 
     EXPECT_EQ(sc->allShapes,   expectedAllShapes);
-    EXPECT_EQ(sc->pecs,        expectedPecs);
+    EXPECT_EQ(sc->conductors,        expectedPecs);
     EXPECT_EQ(sc->dielectrics, expectedDielectrics);
     EXPECT_TRUE(sc->isOpenCase);
 
@@ -83,7 +83,7 @@ TEST_F(ShapesClassificationTest, dielectricUnshieldedPairClassification) {
 
 TEST_F(ShapesClassificationTest, partiallyFilledCoaxHasTwoPecs) {
     auto* sc = initShapeClassification(inputFileFromCaseName("partially_filled_coax"));
-    EXPECT_EQ(sc->pecs.size(), 2u);
+    EXPECT_EQ(sc->conductors.size(), 2u);
     EXPECT_EQ(sc->dielectrics.size(), 1u);
     delete sc;
 }
@@ -100,7 +100,7 @@ TEST_F(ShapesClassificationTest, complexNesting) {
 
 TEST_F(ShapesClassificationTest, fiveWiresStepShapes) {
     auto* sc = initShapeClassification(inputFileFromCaseName("five_wires"));
-    EXPECT_EQ(sc->pecs.size(), 6u);
+    EXPECT_EQ(sc->conductors.size(), 6u);
     EXPECT_EQ(sc->dielectrics.size(), 5u);
     delete sc;
 }
@@ -108,7 +108,7 @@ TEST_F(ShapesClassificationTest, fiveWiresStepShapes) {
 TEST_F(ShapesClassificationTest, threeWiresRibbonStepShapes) {
     auto* sc = initShapeClassification(inputFileFromCaseName("three_wires_ribbon"));
     EXPECT_EQ(sc->open.size(), 0u);
-    EXPECT_EQ(sc->pecs.size(), 3u);
+    EXPECT_EQ(sc->conductors.size(), 3u);
     EXPECT_EQ(sc->dielectrics.size(), 3u);
     delete sc;
 }
@@ -120,7 +120,7 @@ TEST_F(ShapesClassificationTest, conductorOnlyGraphDielectricUnshielded) {
     const Graph  conductorGraph = sc->getConductorOnlyGraph();
 
     std::set<std::string> conductorNames;
-    for (auto& [name, _] : sc->pecs)
+    for (auto& [name, _] : sc->conductors)
         conductorNames.insert(name);
 
     std::set<std::string> graphNodes(
@@ -155,7 +155,7 @@ TEST_F(ShapesClassificationTest, conductorOnlyGraphFiveWires) {
         conductorGraph.nodes().begin(), conductorGraph.nodes().end());
 
     std::set<std::string> conductorNames;
-    for (auto& [name, _] : sc->pecs)
+    for (auto& [name, _] : sc->conductors)
         conductorNames.insert(name);
 
     std::set<std::string> dielectricNames;
