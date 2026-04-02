@@ -5,17 +5,17 @@
   "model": {
     "materials": [
       {"type": "conductor", "conductorId": 0, "attribute": 1},
-      {"type": "conductor", "conductorId": 1, "attribute": 2},
-      {"type": "conductor", "conductorId": 2, "attribute": 3},
-      {"type": "conductor", "conductorId": 3, "attribute": 4},
-      {"type": "conductor", "conductorId": 4, "attribute": 5},
-      {"type": "conductor", "conductorId": 5, "attribute": 6},
-      {"type": "dielectric", "relativePermittivity": 2.0, "attribute": 8 },
-      {"type": "dielectric", "relativePermittivity": 2.0, "attribute": 9 },
+      {"type": "conductor", "conductorId": 1, "attribute": 6},
+      {"type": "conductor", "conductorId": 2, "attribute": 2},
+      {"type": "conductor", "conductorId": 3, "attribute": 3},
+      {"type": "conductor", "conductorId": 4, "attribute": 4},
+      {"type": "conductor", "conductorId": 5, "attribute": 5},
+      {"type": "dielectric", "relativePermittivity": 2.0, "attribute": 7},
+      {"type": "dielectric", "relativePermittivity": 2.0, "attribute": 8},
+      {"type": "dielectric", "relativePermittivity": 2.0, "attribute": 9},
       {"type": "dielectric", "relativePermittivity": 2.0, "attribute": 10},
       {"type": "dielectric", "relativePermittivity": 2.0, "attribute": 11},
-      {"type": "dielectric", "relativePermittivity": 2.0, "attribute": 12},
-      {"type": "dielectric", "relativePermittivity": 2.0, "attribute": 13}
+      {"type": "dielectric", "attribute": 12}
     ],
     "gmshFile": "five_wires.msh"
   }

@@ -5,6 +5,7 @@
 #include <cassert>
 #include <filesystem>
 #include <fstream>
+#include <limits>
 #include <map>
 #include <stdexcept>
 #include <tuple>
@@ -92,6 +93,20 @@ std::map<int, std::string> buildMaterialTypeById(const nlohmann::json& inputJson
     return materialTypeById;
 }
 
+std::map<int, nlohmann::json> buildMaterialById(const nlohmann::json& inputJson)
+{
+    std::map<int, nlohmann::json> materialById;
+    if (!inputJson.contains("materials") || !inputJson["materials"].is_array()) {
+        return materialById;
+    }
+    for (const auto& material : inputJson["materials"]) {
+        if (material.contains("id")) {
+            materialById[material["id"].get<int>()] = material;
+        }
+    }
+    return materialById;
+}
+
 std::map<std::string, std::string> buildLayerNameMapping(const nlohmann::json& inputJson)
 {
     std::map<std::string, std::string> mapping;
@@ -150,6 +165,70 @@ std::map<std::string, std::string> buildLayerTypeMapping(const nlohmann::json& i
     return mapping;
 }
 
+std::map<std::string, nlohmann::json> buildLayerDielectricPropertiesMapping(
+    const nlohmann::json& inputJson)
+{
+    std::map<std::string, nlohmann::json> mapping;
+    if (!inputJson.contains("layers") || !inputJson["layers"].is_array()) {
+        return mapping;
+    }
+
+    const auto materialById = buildMaterialById(inputJson);
+    for (const auto& layer : inputJson["layers"]) {
+        if (!layer.contains("name") || !layer.contains("materialId")) {
+            continue;
+        }
+        const int materialId = layer["materialId"].get<int>();
+        auto materialIt = materialById.find(materialId);
+        if (materialIt == materialById.end()) {
+            continue;
+        }
+
+        const auto& material = materialIt->second;
+        if (!material.contains("type") || material["type"] != "dielectric") {
+            continue;
+        }
+
+        nlohmann::json properties = nlohmann::json::object();
+        if (material.contains("relativePermittivity")) {
+            properties["relativePermittivity"] = material["relativePermittivity"];
+        }
+        if (!properties.empty()) {
+            mapping[layer["name"].get<std::string>()] = properties;
+        }
+    }
+
+    return mapping;
+}
+
+std::map<std::string, int> buildLayerConductorIdMapping(const nlohmann::json& inputJson)
+{
+    std::map<std::string, int> mapping;
+    if (!inputJson.contains("layers") || !inputJson["layers"].is_array()) {
+        return mapping;
+    }
+
+    const auto materialTypeById = buildMaterialTypeById(inputJson);
+    for (const auto& layer : inputJson["layers"]) {
+        if (!layer.contains("name") || !layer.contains("materialId") || !layer.contains("id")) {
+            continue;
+        }
+
+        const int materialId = layer["materialId"].get<int>();
+        auto materialIt = materialTypeById.find(materialId);
+        if (materialIt == materialTypeById.end()) {
+            continue;
+        }
+
+        const std::string& materialType = materialIt->second;
+        if (materialType == "conductor" || materialType == "shield") {
+            mapping[layer["name"].get<std::string>()] = layer["id"].get<int>();
+        }
+    }
+
+    return mapping;
+}
+
 AdapterOptions parseAdapterOptions(const nlohmann::json& inputJson,
                                    const std::filesystem::path& inputPath,
                                    const std::string& caseName)
@@ -186,7 +265,10 @@ AdapterOptions parseAdapterOptions(const nlohmann::json& inputJson,
 }
 
 nlohmann::json buildAdaptedJson(const std::string& caseName,
-                                const std::map<std::string, std::string>& layerTypeByName)
+                                const std::map<std::string, std::string>& layerTypeByName,
+                                const std::map<std::string, int>& conductorIdByLayerName,
+                                const std::map<std::string, nlohmann::json>&
+                                    dielectricPropertiesByLayerName)
 {
     gmsh::vectorpair groups;
     gmsh::model::getPhysicalGroups(groups);
@@ -194,7 +276,7 @@ nlohmann::json buildAdaptedJson(const std::string& caseName,
               [](const auto& a, const auto& b) { return a.second < b.second; });
 
     nlohmann::json materials = nlohmann::json::array();
-    int conductorId = 0;
+    int fallbackConductorId = 0;
     for (const auto& [dim, tag] : groups) {
         std::string name;
         gmsh::model::getPhysicalName(dim, tag, name);
@@ -203,9 +285,14 @@ nlohmann::json buildAdaptedJson(const std::string& caseName,
             typeIt == layerTypeByName.end() ? "dielectric" : typeIt->second;
 
         if (dim == 1 || layerType == "conductor" || layerType == "shield") {
+            auto conductorIdIt = conductorIdByLayerName.find(name);
+            const int conductorId =
+                conductorIdIt == conductorIdByLayerName.end()
+                    ? fallbackConductorId++
+                    : conductorIdIt->second;
             materials.push_back({
                 {"type", "conductor"},
-                {"conductorId", conductorId++},
+                {"conductorId", conductorId},
                 {"attribute", tag}
             });
         } else if (layerType == "open") {
@@ -214,12 +301,38 @@ nlohmann::json buildAdaptedJson(const std::string& caseName,
                 {"attribute", tag}
             });
         } else {
-            materials.push_back({
+            nlohmann::json material = {
                 {"type", "dielectric"},
                 {"attribute", tag}
-            });
+            };
+            auto propertiesIt = dielectricPropertiesByLayerName.find(name);
+            if (propertiesIt != dielectricPropertiesByLayerName.end()) {
+                for (const auto& [key, value] : propertiesIt->second.items()) {
+                    material[key] = value;
+                }
+            }
+            materials.push_back(material);
         }
     }
+
+    std::sort(materials.begin(), materials.end(), [](const auto& a, const auto& b) {
+        const std::string typeA = a.value("type", "");
+        const std::string typeB = b.value("type", "");
+
+        const int priorityA = typeA == "conductor" ? 0 : (typeA == "openBoundary" ? 1 : 2);
+        const int priorityB = typeB == "conductor" ? 0 : (typeB == "openBoundary" ? 1 : 2);
+        if (priorityA != priorityB) {
+            return priorityA < priorityB;
+        }
+
+        if (typeA == "conductor" && typeB == "conductor") {
+            return a.value("conductorId", std::numeric_limits<int>::max()) <
+                   b.value("conductorId", std::numeric_limits<int>::max());
+        }
+
+        return a.value("attribute", std::numeric_limits<int>::max()) <
+               b.value("attribute", std::numeric_limits<int>::max());
+    });
 
     return {
         {"DriverOptions", {{"exportFolder", "Results/" + caseName + "/"}}},
@@ -268,6 +381,9 @@ Adapter::Adapter(const std::string& inputFile)
 
     const auto layerNameMapping = buildLayerNameMapping(inputJson);
     const auto layerTypeMapping = buildLayerTypeMapping(inputJson);
+    const auto layerDielectricPropertiesMapping =
+        buildLayerDielectricPropertiesMapping(inputJson);
+    const auto layerConductorIdMapping = buildLayerConductorIdMapping(inputJson);
     buildPhysicalModel(allShapes, layerNameMapping);
 
     for (const auto& [opt, val] : adapterOptions.gmshOptions) {
@@ -285,7 +401,11 @@ Adapter::Adapter(const std::string& inputFile)
     const std::filesystem::path mshPath = std::filesystem::path(inputDir_) / (caseName_ + ".msh");
     gmsh::write(mshPath.string());
 
-    adaptedInputJSON_ = buildAdaptedJson(caseName_, layerTypeMapping);
+    adaptedInputJSON_ = buildAdaptedJson(
+        caseName_,
+        layerTypeMapping,
+        layerConductorIdMapping,
+        layerDielectricPropertiesMapping);
 }
 
 nlohmann::json Adapter::getAdaptedInputJSON() const {

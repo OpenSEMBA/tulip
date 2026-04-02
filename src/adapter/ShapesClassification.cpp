@@ -45,14 +45,23 @@ nlohmann::json buildCrossSectionFromInputFormat(const nlohmann::json& jsonData) 
             continue;
         }
         const std::string mappedType = toLegacyMaterialType(materialIt->second);
-        std::string geometryName = layer["name"].get<std::string>();
-        if (layer.contains("id") && mappedType == "PEC") {
-            geometryName = "Conductor_" + std::to_string(layer["id"].get<int>());
-        }
+        const std::string geometryName = layer["name"].get<std::string>();
         crossSection.push_back({
             {"name", geometryName},
             {"material", {{"type", mappedType}}}
         });
+        // Also register the legacy "Conductor_<id>" alias for PEC layers so that
+        // STEP files using that naming convention are still matched correctly.
+        if (mappedType == "PEC" && layer.contains("id")) {
+            const std::string alias =
+                "Conductor_" + std::to_string(layer["id"].get<int>());
+            if (alias != geometryName) {
+                crossSection.push_back({
+                    {"name", alias},
+                    {"material", {{"type", mappedType}}}
+                });
+            }
+        }
     }
     return crossSection;
 }

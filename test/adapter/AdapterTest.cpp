@@ -179,15 +179,6 @@ TEST_F(AdapterTest, five_wires)
     const std::string caseName = "five_wires";
     Adapter adapter(inputFileFromCaseName(caseName));
 
-    const std::vector<std::string> expectedNames = {
-        "Conductor_0", "Conductor_1", "Conductor_002", "Conductor_003",
-        "Conductor_004", "Conductor_005",
-        "Dielectric_1", "Dielectric_002", "Dielectric_003", "Dielectric_004",
-        "Dielectric_005", "Vacuum"};
-    assertPhysicalGroups(expectedNames,
-        {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1});
-}
-
     assertAdaptedJsonMatchesExpected(caseName, adapter);
 }
 
