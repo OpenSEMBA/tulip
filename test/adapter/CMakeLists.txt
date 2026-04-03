@@ -7,7 +7,6 @@ find_package(GTest CONFIG REQUIRED)
 add_executable(adapter_tests
     GraphTest.cpp
     BoundingBoxTest.cpp
-    ShapesClassificationTest.cpp
     AdapterTest.cpp
 )
 

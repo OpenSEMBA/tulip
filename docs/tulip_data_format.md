@@ -51,17 +51,16 @@ If none is specified, the conductor is considered to be a perfect electric condu
 Conductors associated with layers cannot intersect any other layer which is also associated with a conductor. They can however intersect layers associated with `shield`, `dielectric`, or `open`, taking precedence over them.
 
 ### `shield`
-A shield is a special kind of conductor which defines a transfer impedance model, specified with:
+A shield is a special kind of conductor which defines a transfer impedance model which separates two levels, it is specified with:
 - `[resistancePerMeter]` defined by a real representing transfer impedance resistance. Defaults to `0.0`
 - `[inductancePerMeter]` defined by a real representing transfer impedance inductance. Defaults to `0.0`.
 - `[direction]` which can be `both`, `inwards`, or `outwards`. Indicating the type of coupling considered. Defaults to `both` meaning that fields can couple from the exterior to interior and the other way round.
 
-Shield layers can never intersect any other `shield` layer. They can be used in two ways:
+They can be used in two ways:
 + To represent a _closed problem_, or the interior of a shielded domain. In that case:
-  - Shields can intersect conductor or dielectric layers.
-  - The problem cannot contain any open layer. 
-  - The shield is assumed to be the ground conductor. 
-  - There can only be one shield.
+  - The most external shield can intersect other conductors. The rest of the shields can not.
+  - The problem cannot contain any open layer.
+  
 + In _open problems_ they act as the boundary between an internal and external domain. In that case:
   - They follow the same rules as conductors about intersections
   - Must have a non-null area.

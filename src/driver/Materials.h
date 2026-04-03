@@ -40,18 +40,15 @@ private:
 class Conductor : public Material {
 public:
 	explicit Conductor(Attribute attr, ConductorId id, bool isGround = false)
-		: Material(attr), conductorId(id), isGround_(isGround)
+		: Material(attr), conductorId(id)
 	{}
 
 	ConductorId getConductorId() const {
 		return conductorId;
 	}
-	bool isGround() const { return isGround_; }
-	void setAsGround() { isGround_ = true; }
 	bool isDomainMaterial() const { return false; }
 private:	
 	ConductorId conductorId = -1;
-	bool isGround_ = false;
 };
 
 class Dielectric : public Material {
