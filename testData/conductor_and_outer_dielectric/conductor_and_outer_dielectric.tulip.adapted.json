@@ -1,9 +1,9 @@
 {
   "DriverOptions": {
-    "exportFolder": "Results/lansink2024_single_wire_multipolar/"
+    "exportFolder": "Results/conductor_and_outer_dielectric/"
   },
   "model": {
-    "gmshFile": "lansink2024_single_wire_multipolar.msh",
+    "gmshFile": "conductor_and_outer_dielectric.msh",
     "materials": [
       {
         "attribute": 1,

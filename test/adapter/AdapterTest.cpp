@@ -183,7 +183,7 @@ TEST_F(AdapterTest, single_wire)
 
 TEST_F(AdapterTest, DISABLED_unshielded_nesting)
 {
-    const std::string caseName = "UnshieldedNested";
+    const std::string caseName = "unshielded_nested";
     Adapter adapter(inputFileFromCaseName(caseName));
     assertAdaptedJsonMatchesExpected(caseName, adapter);
 }

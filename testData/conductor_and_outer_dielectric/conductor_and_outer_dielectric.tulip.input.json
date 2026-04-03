@@ -1,0 +1,24 @@
+{
+  "materials": [
+    {
+      "id": 1,
+      "type": "conductor"
+    },
+    {
+      "id": 2,
+      "type": "dielectric"
+    }
+  ],
+  "layers": [
+    {
+      "name": "Conductor_000",
+      "id": 0,
+      "materialId": 1
+    },
+    {
+      "name": "Dielectric_000",
+      "id": 1,
+      "materialId": 2
+    }
+  ]
+}

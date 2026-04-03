@@ -1,20 +1,49 @@
 {
-  "analysis": {
-    "order": 3,
-    "exportParaViewSolution": true,
+  "DriverOptions": {
     "exportFolder": "Results/three_wires_ribbon/"
   },
   "model": {
-    "materials": {
-      "Conductor_0":    {"type": "PEC", "tag": 1 },
-      "Conductor_1":    {"type": "PEC", "tag": 2 },
-      "Conductor_2":    {"type": "PEC", "tag": 3 },
-      "OpenBoundary_0": {"type": "OpenBoundary", "tag": 4},
-      "Vacuum_0":       {"type": "Vacuum", "tag": 5},
-      "Dielectric_1":   {"type": "Dielectric", "eps_r": 3.5, "tag": 6},
-      "Dielectric_2":   {"type": "Dielectric", "eps_r": 3.5, "tag": 7},
-      "Dielectric_3":   {"type": "Dielectric", "eps_r": 3.5, "tag": 8}
-    },  
-    "gmshFile": "three_wires_ribbon.msh"
+    "gmshFile": "three_wires_ribbon.msh",
+    "materials": [
+      {
+        "attribute": 1,
+        "conductorId": 0,
+        "type": "conductor"
+      },
+      {
+        "attribute": 2,
+        "conductorId": 1,
+        "type": "conductor"
+      },
+      {
+        "attribute": 3,
+        "conductorId": 2,
+        "type": "conductor"
+      },
+      {
+        "attribute": 4,
+        "type": "dielectric"
+      },
+      {
+        "attribute": 5,
+        "type": "dielectric"
+      },
+      {
+        "attribute": 6,
+        "type": "dielectric"
+      },
+      {
+        "attribute": 7,
+        "type": "dielectric"
+      },
+      {
+        "attribute": 8,
+        "type": "dielectric"
+      },
+      {
+        "attribute": 9,
+        "type": "open"
+      }
+    ]
   }
 }

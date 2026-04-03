@@ -1,12 +1,12 @@
 {
   "DriverOptions": {
-    "exportFolder": "Results/agrawal1981/"
+    "exportFolder": "Results/dielectric_unshielded_pair_defined_boundary/"
   },
   "model": {
-    "gmshFile": "agrawal1981.msh",
+    "gmshFile": "dielectric_unshielded_pair_defined_boundary.msh",
     "materials": [
       {
-        "attribute": 1,
+        "attribute": 4,
         "conductorId": 0,
         "type": "conductor"
       },
@@ -17,13 +17,7 @@
       },
       {
         "attribute": 3,
-        "conductorId": 2,
-        "type": "conductor"
-      },
-      {
-        "attribute": 4,
-        "conductorId": 3,
-        "type": "conductor"
+        "type": "dielectric"
       },
       {
         "attribute": 5,
@@ -34,12 +28,8 @@
         "type": "dielectric"
       },
       {
-        "attribute": 7,
-        "type": "dielectric"
-      },
-      {
-        "attribute": 8,
-        "type": "dielectric"
+        "attribute": 1,
+        "type": "open"
       }
     ]
   }

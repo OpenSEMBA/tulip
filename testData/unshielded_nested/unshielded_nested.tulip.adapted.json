@@ -1,17 +1,17 @@
 {
   "DriverOptions": {
-    "exportFolder": "Results/agrawal1981/"
+    "exportFolder": "Results/unshielded_nested/"
   },
   "model": {
-    "gmshFile": "agrawal1981.msh",
+    "gmshFile": "unshielded_nested.msh",
     "materials": [
       {
-        "attribute": 1,
+        "attribute": 2,
         "conductorId": 0,
         "type": "conductor"
       },
       {
-        "attribute": 2,
+        "attribute": 1,
         "conductorId": 1,
         "type": "conductor"
       },
@@ -22,8 +22,7 @@
       },
       {
         "attribute": 4,
-        "conductorId": 3,
-        "type": "conductor"
+        "type": "dielectric"
       },
       {
         "attribute": 5,
@@ -31,15 +30,7 @@
       },
       {
         "attribute": 6,
-        "type": "dielectric"
-      },
-      {
-        "attribute": 7,
-        "type": "dielectric"
-      },
-      {
-        "attribute": 8,
-        "type": "dielectric"
+        "type": "open"
       }
     ]
   }
