@@ -21,8 +21,6 @@ class Material {
 public:
 	virtual ~Material() = default;
 	Attribute getAttribute() const { return attribute; }
-	void setAsOuterRegion() { isOuterRegion_ = true; }
-	bool isOuterRegion() const { return isOuterRegion_; }
 	virtual bool isDomainMaterial() const = 0;
 
 protected:
@@ -34,7 +32,6 @@ protected:
 
 private:
 	Attribute attribute = -1;
-	bool isOuterRegion_ = false;
 };
 
 class Conductor : public Material {

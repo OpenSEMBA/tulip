@@ -95,16 +95,84 @@ double Model::getAreaOfMaterial(const Material* m) const
 			}
 		}
 		return area;
+	} else {
+		MFEM_VERIFY(mesh_->Dimension() == 2,
+			"Boundary-enclosed area is implemented for 2D meshes only.");
+
+		const int maxAttrInMesh =
+			mesh_->bdr_attributes.Size() > 0 ? mesh_->bdr_attributes.Max() : 0;
+		const int maxAttr = std::max(attr, maxAttrInMesh);
+		Array<int> bdrMarker(maxAttr);
+		bdrMarker = 0;
+		if (attr > 0) {
+			bdrMarker[attr - 1] = 1;
+		}
+
+		H1_FECollection fec(1, mesh_->Dimension());
+		FiniteElementSpace fes(mesh_.get(), &fec);
+
+		auto g_fun = [](const Vector& x, Vector& g) {
+			g.SetSize(2);
+			g = 0.0;
+			g(0) = x(0);
+		};
+		VectorFunctionCoefficient gcoef(2, g_fun);
+
+		LinearForm lf(&fes);
+		lf.AddBoundaryIntegrator(new BoundaryNormalLFIntegrator(gcoef), bdrMarker);
+		lf.Assemble();
+
+		GridFunction one(&fes);
+		one = 1.0;
+
+		const double signedArea = lf * one;
+		return std::abs(signedArea);
+	}
+}
+
+bool Model::isOuterRegion(const Material* material) const
+{
+	if (dynamic_cast<const Open*>(material) != nullptr) {
+		return true;
 	}
 
-	double length = 0.0;
-	for (int i = 0; i < mesh_->GetNBE(); ++i) {
-		if (mesh_->GetBdrElement(i)->GetAttribute() == attr) {
-			length += getBoundaryElementMeasure(*mesh_, i);
+	const auto* dielectric = dynamic_cast<const Dielectric*>(material);
+	if (dielectric == nullptr) {
+		return false;
+	}
+
+	std::set<int> openBoundaryAttributes;
+	for (const auto* openBoundary : materials_.getOpenBoundaries()) {
+		openBoundaryAttributes.insert(openBoundary->getAttribute());
+	}
+	if (openBoundaryAttributes.empty()) {
+		return false;
+	}
+
+	std::set<int> verticesOnOpenBoundary;
+	for (int b = 0; b < mesh_->GetNBE(); ++b) {
+		const auto* bdrElem = mesh_->GetBdrElement(b);
+		if (!openBoundaryAttributes.count(bdrElem->GetAttribute())) {
+			continue;
+		}
+		for (int v = 0; v < bdrElem->GetNVertices(); ++v) {
+			verticesOnOpenBoundary.insert(bdrElem->GetVertices()[v]);
 		}
 	}
-	return length;
 
+	for (int e = 0; e < mesh_->GetNE(); ++e) {
+		const auto* elem = mesh_->GetElement(e);
+		if (elem->GetAttribute() != dielectric->getAttribute()) {
+			continue;
+		}
+		for (int v = 0; v < elem->GetNVertices(); ++v) {
+			if (verticesOnOpenBoundary.count(elem->GetVertices()[v])) {
+				return true;
+			}
+		}
+	}
+
+	return false;
 }
 
 Box Model::getInnerRegionBoundingBox() const
@@ -115,7 +183,7 @@ Box Model::getInnerRegionBoundingBox() const
 	};
 
 	for (auto m: materials_.getAll()) {
-		if (m->isOuterRegion()) {
+		if (isOuterRegion(m)) {
 			continue;
 		}
 		

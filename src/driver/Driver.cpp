@@ -402,7 +402,6 @@ std::map<ConductorId, double> Driver::getFloatingPotentials(
 	return res;
 }
 
-
 double Driver::getInnerRegionAveragePotential(
 	const Solver& s,
 	bool includeConductors)
@@ -412,7 +411,7 @@ double Driver::getInnerRegionAveragePotential(
 	double totalArea = 0.0;
 	
 	for (const auto& m: model_.getMaterials().getAll() ) {
-		if (m->isOuterRegion()) {
+		if (model_.isOuterRegion(m)) {
 			continue;
 		}
 		auto area = model_.getAreaOfMaterial(m); 

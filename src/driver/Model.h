@@ -63,6 +63,8 @@ public:
 	
 	double getAreaOfMaterial(const Material* m) const;
 	Box getInnerRegionBoundingBox() const;
+	
+    bool isOuterRegion(const Material*) const;
 
 private:
 	Materials materials_;
