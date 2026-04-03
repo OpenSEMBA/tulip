@@ -1,0 +1,12 @@
+{
+  "materials": [
+    { "id": 1, "type": "conductor" },
+    { "id": 2, "type": "dielectric", "relativePermittivity": 2.0 }
+  ],
+  "layers": [
+    { "name": "RightConductor", "id": 0, "materialId": 1 },
+    { "name": "LeftConductor", "id": 1, "materialId": 1 },
+    { "name": "LeftDielectric", "id": 2, "materialId": 2 },
+    { "name": "RightDielectric", "id": 3, "materialId": 2 }
+  ]
+}

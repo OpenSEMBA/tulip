@@ -111,87 +111,87 @@ TEST_F(AdapterTest, two_wires_open)
     assertAdaptedJsonMatchesExpected(caseName, adapter);
 }
 
-// TEST_F(AdapterTest, dielectric_unshielded_pair)
-// {
-//     const std::string caseName = "DielectricUnshieldedPair";
-//     Adapter adapter(inputFileFromCaseName(caseName));
-//     assertAdaptedJsonMatchesExpected(caseName, adapter);
-// }
+TEST_F(AdapterTest, dielectric_unshielded_pair)
+{
+    const std::string caseName = "dielectric_unshielded_pair";
+    Adapter adapter(inputFileFromCaseName(caseName));
+    assertAdaptedJsonMatchesExpected(caseName, adapter);
+}
 
-// TEST_F(AdapterTest, dielectric_unshielded_pair_defined_boundary)
-// {
-//     const std::string caseName = "DielectricUnshieldedPairDefinedBoundary";
-//     Adapter adapter(inputFileFromCaseName(caseName));
-//     assertAdaptedJsonMatchesExpected(caseName, adapter);
-// }
+TEST_F(AdapterTest, dielectric_unshielded_pair_defined_boundary)
+{
+    const std::string caseName = "dielectric_unshielded_pair_defined_boundary";
+    Adapter adapter(inputFileFromCaseName(caseName));
+    assertAdaptedJsonMatchesExpected(caseName, adapter);
+}
 
-// TEST_F(AdapterTest, three_wires_ribbon)
-// {
-//     const std::string caseName = "three_wires_ribbon";
-//     Adapter adapter(inputFileFromCaseName(caseName));
-//     assertAdaptedJsonMatchesExpected(caseName, adapter);
-// }
+TEST_F(AdapterTest, three_wires_ribbon)
+{
+    const std::string caseName = "three_wires_ribbon";
+    Adapter adapter(inputFileFromCaseName(caseName));
+    assertAdaptedJsonMatchesExpected(caseName, adapter);
+}
 
-// TEST_F(AdapterTest, nested_coax)
-// {
-//     const std::string caseName = "nested_coax";
-//     Adapter adapter(inputFileFromCaseName(caseName));
-//     assertAdaptedJsonMatchesExpected(caseName, adapter);
-// }
+TEST_F(AdapterTest, nested_coax)
+{
+    const std::string caseName = "nested_coax";
+    Adapter adapter(inputFileFromCaseName(caseName));
+    assertAdaptedJsonMatchesExpected(caseName, adapter);
+}
 
-// TEST_F(AdapterTest, agrawal1981)
-// {
-//     const std::string caseName = "agrawal1981";
-//     Adapter adapter(inputFileFromCaseName(caseName));
-//     assertAdaptedJsonMatchesExpected(caseName, adapter);
-// }
+TEST_F(AdapterTest, agrawal1981)
+{
+    const std::string caseName = "agrawal1981";
+    Adapter adapter(inputFileFromCaseName(caseName));
+    assertAdaptedJsonMatchesExpected(caseName, adapter);
+}
 
-// TEST_F(AdapterTest, unshielded_multiwire)
-// {
-//     const std::string caseName = "unshielded_multiwire";
-//     Adapter adapter(inputFileFromCaseName(caseName));
-//     assertAdaptedJsonMatchesExpected(caseName, adapter);
-// }
+TEST_F(AdapterTest, unshielded_multiwire)
+{
+    const std::string caseName = "unshielded_multiwire";
+    Adapter adapter(inputFileFromCaseName(caseName));
+    assertAdaptedJsonMatchesExpected(caseName, adapter);
+}
 
-// TEST_F(AdapterTest, conductor_and_outer_dielectric)
-// {
-//     const std::string caseName = "conductor_and_outer_dielectric";
-//     Adapter adapter(inputFileFromCaseName(caseName));
-//     assertAdaptedJsonMatchesExpected(caseName, adapter);
-// }
+TEST_F(AdapterTest, conductor_and_outer_dielectric)
+{
+    const std::string caseName = "conductor_and_outer_dielectric";
+    Adapter adapter(inputFileFromCaseName(caseName));
+    assertAdaptedJsonMatchesExpected(caseName, adapter);
+}
 
-// TEST_F(AdapterTest, realistic_case_with_dielectrics_fdtd_cell)
-// {
-//     const std::string caseName = "realistic_case_with_dielectrics_fdtd_cell";
-//     Adapter adapter(inputFileFromCaseName(caseName));
-//     assertAdaptedJsonMatchesExpected(caseName, adapter);
-// }
+TEST_F(AdapterTest, realistic_case_with_dielectrics_fdtd_cell)
+{
+    const std::string caseName = "realistic_case_with_dielectrics_fdtd_cell";
+    Adapter adapter(inputFileFromCaseName(caseName));
+    assertAdaptedJsonMatchesExpected(caseName, adapter);
+}
 
-// TEST_F(AdapterTest, lansink2024_single_wire_multipolar)
-// {
-//     const std::string caseName = "lansink2024_single_wire_multipolar";
-//     Adapter adapter(inputFileFromCaseName(caseName));
-//     assertAdaptedJsonMatchesExpected(caseName, adapter);
-// }
+TEST_F(AdapterTest, lansink2024_single_wire_multipolar)
+{
+    const std::string caseName = "lansink2024_single_wire_multipolar";
+    Adapter adapter(inputFileFromCaseName(caseName));
+    assertAdaptedJsonMatchesExpected(caseName, adapter);
+}
 
-// TEST_F(AdapterTest, single_wire)
-// {
-//     const std::string caseName = "single_wire";
-//     Adapter adapter(inputFileFromCaseName(caseName));
-//     assertAdaptedJsonMatchesExpected(caseName, adapter);
-// }
+TEST_F(AdapterTest, single_wire)
+{
+    const std::string caseName = "single_wire";
+    Adapter adapter(inputFileFromCaseName(caseName));
+    assertAdaptedJsonMatchesExpected(caseName, adapter);
+}
 
-// TEST_F(AdapterTest, DISABLED_unshielded_nesting)
-// {
-//     const std::string caseName = "UnshieldedNested";
-//     Adapter adapter(inputFileFromCaseName(caseName));
-//     assertAdaptedJsonMatchesExpected(caseName, adapter);
-// }
+TEST_F(AdapterTest, DISABLED_unshielded_nesting)
+{
+    const std::string caseName = "UnshieldedNested";
+    Adapter adapter(inputFileFromCaseName(caseName));
+    assertAdaptedJsonMatchesExpected(caseName, adapter);
+}
 
-// TEST_F(AdapterTest, two_wires_with_touching_dielectric)
-// {
-//     const std::string caseName = "two_wires_with_touching_dielectric";
-//     Adapter adapter(inputFileFromCaseName(caseName));
-//     assertAdaptedJsonMatchesExpected(caseName, adapter);
-// }
+TEST_F(AdapterTest, two_wires_with_touching_dielectric)
+{
+    const std::string caseName = "two_wires_with_touching_dielectric";
+    Adapter adapter(inputFileFromCaseName(caseName));
+    assertAdaptedJsonMatchesExpected(caseName, adapter);
+}
 

@@ -68,6 +68,12 @@ std::string getCaseNameFromInputPath(const std::filesystem::path& inputPath)
     return fileName.substr(0, fileName.size() - std::string(suffix).size());
 }
 
+bool hasPrefix(const std::string& value, const std::string& prefix)
+{
+    return value.size() >= prefix.size() &&
+           value.compare(0, prefix.size(), prefix) == 0;
+}
+
 nlohmann::json readJsonFile(const std::filesystem::path& path)
 {
     std::ifstream inputStream(path);
@@ -135,7 +141,11 @@ std::map<std::string, std::string> buildLayerNameMapping(const nlohmann::json& i
             mapping[layerName] = layerName;
             if ((materialType == "conductor" || materialType == "shield") &&
                 layer.contains("id")) {
-                mapping["Conductor_" + std::to_string(layer["id"].get<int>())] = layerName;
+                const std::string alias =
+                    "Conductor_" + std::to_string(layer["id"].get<int>());
+                if (mapping.find(alias) == mapping.end()) {
+                    mapping[alias] = layerName;
+                }
             }
         }
     }
@@ -280,11 +290,20 @@ nlohmann::json buildAdaptedJson(const std::string& caseName,
     for (const auto& [dim, tag] : groups) {
         std::string name;
         gmsh::model::getPhysicalName(dim, tag, name);
+
         auto typeIt = layerTypeByName.find(name);
-        const std::string layerType =
+        std::string layerType =
             typeIt == layerTypeByName.end() ? "dielectric" : typeIt->second;
 
-        if (dim == 1 || layerType == "conductor" || layerType == "shield") {
+        if (typeIt == layerTypeByName.end()) {
+            if (name == "OuterRegion") {
+                layerType = "open";
+            } else if (hasPrefix(name, "OpenBoundary") || name == "OpenBoundary") {
+                layerType = "dielectric";
+            }
+        }
+
+        if (layerType == "conductor" || layerType == "shield") {
             auto conductorIdIt = conductorIdByLayerName.find(name);
             const int conductorId =
                 conductorIdIt == conductorIdByLayerName.end()
@@ -297,7 +316,7 @@ nlohmann::json buildAdaptedJson(const std::string& caseName,
             });
         } else if (layerType == "open") {
             materials.push_back({
-                {"type", "openBoundary"},
+                {"type", "open"},
                 {"attribute", tag}
             });
         } else {
@@ -319,8 +338,8 @@ nlohmann::json buildAdaptedJson(const std::string& caseName,
         const std::string typeA = a.value("type", "");
         const std::string typeB = b.value("type", "");
 
-        const int priorityA = typeA == "conductor" ? 0 : (typeA == "openBoundary" ? 1 : 2);
-        const int priorityB = typeB == "conductor" ? 0 : (typeB == "openBoundary" ? 1 : 2);
+        const int priorityA = typeA == "conductor" ? 0 : (typeA == "dielectric" ? 1 : 2);
+        const int priorityB = typeB == "conductor" ? 0 : (typeB == "dielectric" ? 1 : 2);
         if (priorityA != priorityB) {
             return priorityA < priorityB;
         }
@@ -456,8 +475,8 @@ void Adapter::createPhysicalGroups(
 {
     for (const auto& [name, elements] : objsDict) {
         auto it = labelMapping.find(name);
-        if (it == labelMapping.end()) continue;
-        const std::string& mappedName = it->second;
+        const std::string& mappedName = (it == labelMapping.end()) ? name : it->second;
+        if (elements.empty()) continue;
         int dim = elements[0].first;
         std::vector<int> tags;
         for (const auto& [d, t] : elements) tags.push_back(t);
