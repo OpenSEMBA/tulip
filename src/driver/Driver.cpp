@@ -69,13 +69,14 @@ mfem::DenseMatrix Driver::getCFromGeneralizedC(
 
 	if (opennness == Model::Openness::closed) {
 		int i = 0;
+		auto groundId = conductors.front()->getConductorId();
 		for (auto cI : conductors) {
-			if (cI->isGround()) {
+			if (cI->getConductorId() == groundId) {
 				continue;
 			}
 			int j = 0;
 			for (auto cJ : conductors) {
-				if (cJ->isGround()) {
+				if (cJ->getConductorId() == groundId) {
 					continue;
 				}
 				C(i - 1, j - 1) = gC(i, j);
@@ -318,14 +319,28 @@ std::map<ConductorId, double> Driver::getFloatingPotentials(
 	// which other conductors must have in order to be "floating",
 	// i.e. with zero charge.
 	// For open problems returns a map with N entries.
-	// For closed problems, returns a map with N-1 terms and assumes that conductor 0 has always a prescribed potential of zero.
 
 	std::map<ConductorId, double> res;
 
 	auto conductors = model_.getMaterials().getConductors();
 
-	// TODO Precondition to check if the prescribed Id belongs to an conductor.
+	bool prescribedIdExists = false;
+	for (auto c : conductors ) {
+		if (c->getConductorId() == prescribedId) {
+			prescribedIdExists = true;
+			break;
+		}
+	}
+	if (!prescribedIdExists) {
+		throw std::runtime_error("Invalid prescribed id");
+	}
+	
+	if (model_.determineOpenness() == Model::Openness::closed) {
+		throw std::runtime_error("Floating potentials not implemented for open problems");
+	}
 
+
+	// Special case for one conductor.
 	if (conductors.size() == 1) {
 		auto cId = conductors.front()->getConductorId();
 		res[cId] = 1.0;
@@ -380,9 +395,6 @@ std::map<ConductorId, double> Driver::getFloatingPotentials(
 
 	i = 0;
 	for (auto c: conductors) {
-		if (c->isGround()) {
-			continue;
-		}
 		res[c->getConductorId()] = x(i);
 		i++;
 	}

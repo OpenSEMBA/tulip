@@ -36,7 +36,7 @@ Materials filterOutMaterialsNotPresentInMesh(
 			continue;
 		}
 		if (const auto* c = dynamic_cast<const Conductor*>(m)) {
-			res.addConductor(c->getAttribute(), c->getConductorId(), c->isGround());
+			res.addConductor(c->getAttribute(), c->getConductorId());
 		} else if (const auto* d = dynamic_cast<const Dielectric*>(m)) {
 			res.addDielectric(d->getAttribute(), d->getRelativePermittivity());
 		} else if (dynamic_cast<const Open*>(m) != nullptr) {
