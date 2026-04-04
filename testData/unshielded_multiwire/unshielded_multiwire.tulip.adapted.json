@@ -17,15 +17,18 @@
       },
       {
         "attribute": 3,
-        "type": "dielectric"
+        "type": "dielectric",
+        "relativePermittivity": 2.0
       },
       {
         "attribute": 4,
-        "type": "dielectric"
+        "type": "dielectric",
+        "relativePermittivity": 2.0
       },
       {
         "attribute": 5,
-        "type": "dielectric"
+        "type": "dielectric",
+        "relativePermittivity": 2.0
       },
       {
         "attribute": 6,

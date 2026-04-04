@@ -162,127 +162,158 @@
       },
       {
         "attribute": 32,
-        "type": "dielectric"
+        "type": "dielectric",
+        "relativePermittivity": 2.0
       },
       {
         "attribute": 33,
-        "type": "dielectric"
+        "type": "dielectric",
+        "relativePermittivity": 2.0
       },
       {
         "attribute": 34,
-        "type": "dielectric"
+        "type": "dielectric",
+        "relativePermittivity": 2.0
       },
       {
         "attribute": 35,
-        "type": "dielectric"
+        "type": "dielectric",
+        "relativePermittivity": 2.0
       },
       {
         "attribute": 36,
-        "type": "dielectric"
+        "type": "dielectric",
+        "relativePermittivity": 2.0
       },
       {
         "attribute": 37,
-        "type": "dielectric"
+        "type": "dielectric",
+        "relativePermittivity": 2.0
       },
       {
         "attribute": 38,
-        "type": "dielectric"
+        "type": "dielectric",
+        "relativePermittivity": 2.0
       },
       {
         "attribute": 39,
-        "type": "dielectric"
+        "type": "dielectric",
+        "relativePermittivity": 2.0
       },
       {
         "attribute": 40,
-        "type": "dielectric"
+        "type": "dielectric",
+        "relativePermittivity": 2.0
       },
       {
         "attribute": 41,
-        "type": "dielectric"
+        "type": "dielectric",
+        "relativePermittivity": 2.0
       },
       {
         "attribute": 42,
-        "type": "dielectric"
+        "type": "dielectric",
+        "relativePermittivity": 2.0
       },
       {
         "attribute": 43,
-        "type": "dielectric"
+        "type": "dielectric",
+        "relativePermittivity": 2.0
       },
       {
         "attribute": 44,
-        "type": "dielectric"
+        "type": "dielectric",
+        "relativePermittivity": 2.0
       },
       {
         "attribute": 45,
-        "type": "dielectric"
+        "type": "dielectric",
+        "relativePermittivity": 2.0
       },
       {
         "attribute": 46,
-        "type": "dielectric"
+        "type": "dielectric",
+        "relativePermittivity": 2.0
       },
       {
         "attribute": 47,
-        "type": "dielectric"
+        "type": "dielectric",
+        "relativePermittivity": 2.0
       },
       {
         "attribute": 48,
-        "type": "dielectric"
+        "type": "dielectric",
+        "relativePermittivity": 2.0
       },
       {
         "attribute": 49,
-        "type": "dielectric"
+        "type": "dielectric",
+        "relativePermittivity": 2.0
       },
       {
         "attribute": 50,
-        "type": "dielectric"
+        "type": "dielectric",
+        "relativePermittivity": 2.0
       },
       {
         "attribute": 51,
-        "type": "dielectric"
+        "type": "dielectric",
+        "relativePermittivity": 2.0
       },
       {
         "attribute": 52,
-        "type": "dielectric"
+        "type": "dielectric",
+        "relativePermittivity": 2.0
       },
       {
         "attribute": 53,
-        "type": "dielectric"
+        "type": "dielectric",
+        "relativePermittivity": 2.0
       },
       {
         "attribute": 54,
-        "type": "dielectric"
+        "type": "dielectric",
+        "relativePermittivity": 2.0
       },
       {
         "attribute": 55,
-        "type": "dielectric"
+        "type": "dielectric",
+        "relativePermittivity": 2.0
       },
       {
         "attribute": 56,
-        "type": "dielectric"
+        "type": "dielectric",
+        "relativePermittivity": 2.0
       },
       {
         "attribute": 57,
-        "type": "dielectric"
+        "type": "dielectric",
+        "relativePermittivity": 2.0
       },
       {
         "attribute": 58,
-        "type": "dielectric"
+        "type": "dielectric",
+        "relativePermittivity": 2.0
       },
       {
         "attribute": 59,
-        "type": "dielectric"
+        "type": "dielectric",
+        "relativePermittivity": 2.0
       },
       {
         "attribute": 60,
-        "type": "dielectric"
+        "type": "dielectric",
+        "relativePermittivity": 2.0
       },
       {
         "attribute": 61,
-        "type": "dielectric"
+        "type": "dielectric",
+        "relativePermittivity": 2.0
       },
       {
         "attribute": 62,
-        "type": "dielectric"
+        "type": "dielectric",
+        "relativePermittivity": 2.0
       },
       {
         "attribute": 64,

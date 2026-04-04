@@ -25,7 +25,7 @@
         "type": "dielectric"
       },
       {
-        "attribute": 4,
+        "attribute": 5,
         "type": "dielectric"
       },
       {
@@ -34,7 +34,7 @@
         "type": "dielectric"
       },
       {
-        "attribute": 5,
+        "attribute": 4,
         "type": "open"
       }
     ]

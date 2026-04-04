@@ -3,18 +3,22 @@
     {
       "id": 1,
       "type": "conductor"
+    },
+    {
+      "id": 2,
+      "type": "shield"
     }
   ],
   "layers": [
     {
       "name": "Conductor_0",
       "id": 0,
-      "materialId": 1
+      "materialId": 2
     },
     {
       "name": "Conductor_1",
       "id": 1,
-      "materialId": 1
+      "materialId": 2
     },
     {
       "name": "Conductor_2",

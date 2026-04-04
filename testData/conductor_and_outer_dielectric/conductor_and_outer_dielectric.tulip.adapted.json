@@ -12,18 +12,19 @@
       },
       {
         "attribute": 2,
-        "type": "dielectric"
+        "type": "dielectric",
+        "relativePermittivity": 2.0
       },
       {
         "attribute": 3,
         "type": "dielectric"
       },
       {
-        "attribute": 4,
+        "attribute": 5,
         "type": "dielectric"
       },
       {
-        "attribute": 5,
+        "attribute": 4,
         "type": "open"
       }
     ]
