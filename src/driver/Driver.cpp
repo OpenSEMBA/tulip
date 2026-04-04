@@ -364,7 +364,6 @@ std::map<ConductorId, double> Driver::getFloatingPotentials(
 	mfem::Vector b(N);
 	mfem::Vector x(N);
 	mfem::Vector negativeQ(N);
-	negativeQ = 0.0;
 	
 	int iPrescribed = 0;
 	int i = 0;
@@ -375,7 +374,8 @@ std::map<ConductorId, double> Driver::getFloatingPotentials(
 		}
 		i++;
 	}
-
+	
+	negativeQ = 0.0;
 	negativeQ(iPrescribed) = -1.0;
 	
 	A.SetCol(iPrescribed, negativeQ);
@@ -388,7 +388,11 @@ std::map<ConductorId, double> Driver::getFloatingPotentials(
 
 	i = 0;
 	for (auto c: conductors) {
-		res[c->getConductorId()] = x(i);
+		if (i == iPrescribed) {
+			res[c->getConductorId()] = 1.0;
+		} else {
+			res[c->getConductorId()] = x(i);
+		}
 		i++;
 	}
 
