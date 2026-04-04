@@ -361,24 +361,28 @@ std::map<ConductorId, double> Driver::getFloatingPotentials(
 	auto N = C.NumRows();
 	
 	mfem::DenseMatrix A{ C };
+	mfem::Vector b(N);
+	mfem::Vector x(N);
 	mfem::Vector negativeQ(N);
 	negativeQ = 0.0;
-
+	
+	int iPrescribed = 0;
 	int i = 0;
 	for (auto cI : conductors) {
 		if (cI->getConductorId() == prescribedId) {
-			negativeQ(i) = -1.0;
+			iPrescribed = i;
+			break;
 		}
 		i++;
 	}
 
-	A.SetCol(i, negativeQ);
+	negativeQ(iPrescribed) = -1.0;
+	
+	A.SetCol(iPrescribed, negativeQ);
 
-	mfem::Vector b(N);
-	b = C.GetColumn(i);
+	b = C.GetColumn(iPrescribed);
 	b *= -1.0;
 
-	mfem::Vector x(N);
 	mfem::DenseMatrixInverse Ainv(A);
 	Ainv.Mult(b, x);
 

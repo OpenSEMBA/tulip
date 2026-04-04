@@ -79,6 +79,7 @@ public:
 	
 	// List of conductors sorted by their conductorId.
 	std::list<const Conductor*> getConductors() const;
+	const Conductor* getConductorWithId(ConductorId) const;
 
 	std::list<const Dielectric*> getDielectrics() const;
 	

@@ -47,6 +47,14 @@ std::list<const Conductor*> Materials::getConductors() const
 	return res;
 }
 
+const Conductor* Materials::getConductorWithId(ConductorId cId) const {
+	for (auto c : getConductors()) {
+		if (c->getConductorId() == cId) {
+			return c;
+		}
+	}
+}
+
 std::list<const Dielectric*> Materials::getDielectrics() const
 {
 	std::list<const Dielectric*> res;

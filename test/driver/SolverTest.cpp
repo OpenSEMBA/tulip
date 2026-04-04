@@ -429,7 +429,7 @@ TEST_F(SolverTest, two_wires_open_capacitance)
 		{1,  V}, // Conductor 1 bdr.
 		{2, -V}, // Conductor 2 bdr.
 	} };
-	p.openBoundaries = { 3 };
+	p.openBoundaries = { 4 };
 
 	tulip::Solver s{ m, p };
 	s.Solve();
@@ -446,7 +446,7 @@ TEST_F(SolverTest, two_wires_open_capacitance)
 		std::acosh( (d*d - rw1*rw1 - rw2*rw2) / (2*rw1*rw2) )
 	};
 	
-	double chargeInOpenBoundary{ s.getChargeInBoundary(3) };
+	double chargeInOpenBoundary{ s.getChargeInBoundary(4) };
 	EXPECT_LE(1e-6, std::abs(chargeInOpenBoundary));
 
 	const double rTol{ 5e-4 };

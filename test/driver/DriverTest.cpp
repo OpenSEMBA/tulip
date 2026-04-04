@@ -140,8 +140,9 @@ TEST_F(DriverTest, two_wires_open_floating_potentials)
 	auto s = *eSol->solver;
 	ParaViewDataCollection pd(outFolder() + CASE + "_floating", s.getMesh());
 	s.writeParaViewFields(pd);
-
-	auto Q1 = s.getChargeInBoundary(2);
+	
+	auto cond1 = driver.getModel().getMaterials().getConductorWithId(1);
+	auto Q1 = s.getChargeInBoundary(cond1->getAttribute());
 
 	EXPECT_NEAR(0.0, Q1, 1e-4); // Floating conductor should have zero charge.
 }

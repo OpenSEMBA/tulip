@@ -75,10 +75,10 @@ TEST_F(ParserTest, partially_filled_coax)
 	bool foundDielectric = false;
 	bool foundVacuum = false;
 	for (const auto* d : diels) {
-		if (d->getAttribute() == 4 && d->getRelativePermittivity() == 4.0) {
+		if (d->getAttribute() == 3 && d->getRelativePermittivity() == 4.0) {
 			foundDielectric = true;
 		}
-		if (d->getAttribute() == 3 &&
+		if (d->getAttribute() == 4 &&
 			d->getRelativePermittivity() == VACUUM_RELATIVE_PERMITTIVITY) {
 			foundVacuum = true;
 		}
