@@ -68,21 +68,10 @@ mfem::DenseMatrix Driver::getCFromGeneralizedC(
 	auto conductors = model_.getMaterials().getConductors();
 
 	if (opennness == Model::Openness::closed) {
-		int i = 0;
-		auto groundId = conductors.front()->getConductorId();
-		for (auto cI : conductors) {
-			if (cI->getConductorId() == groundId) {
-				continue;
-			}
-			int j = 0;
-			for (auto cJ : conductors) {
-				if (cJ->getConductorId() == groundId) {
-					continue;
-				}
+		for (int i = 1; i < gC.NumRows(); ++i) {
+			for (int j = 1; j < gC.NumCols(); ++j) {
 				C(i - 1, j - 1) = gC(i, j);
-				j++;
 			}
-			i++;
 		}
 		return C;
 	}
@@ -147,9 +136,9 @@ SolverInputs Driver::buildSolverInputsFromModel(
 	auto dielectrics = model.getMaterials().getDielectrics();
 	for (const auto& d : dielectrics) {
 		if (ignoreDielectrics) {
-			res.domainPermittivities.at(d->getAttribute()) = 1.0;
+			res.domainPermittivities[d->getAttribute()] = 1.0;
 		} else {
-			res.domainPermittivities.at(d->getAttribute()) = d->getRelativePermittivity();
+			res.domainPermittivities[d->getAttribute()] = d->getRelativePermittivity();
 		}
 	}
 
@@ -191,7 +180,7 @@ DenseMatrix Driver::getGeneralizedCMatrix(bool ignoreDielectrics)
 
 	int condI = 0;
 	for (const auto& c : conductors) {
-		sP->solver->setSolution(sP->solutions[condI]);
+		sP->solver->setSolution(sP->solutions.at(c->getConductorId()));
 
 		// Fills row
 		int condJ = 0;

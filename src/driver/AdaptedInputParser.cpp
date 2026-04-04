@@ -10,17 +10,16 @@ using json = nlohmann::json;
 namespace tulip {
 
 enum class MaterialType {
-	PEC,
+	Conductor,
 	Dielectric,
 	OpenBoundary,
 	Vacuum
 };
 
 const std::map<std::string, MaterialType> LABEL_TO_MATERIAL_TYPE{
-	{"PEC", MaterialType::PEC},
-	{"Dielectric", MaterialType::Dielectric},
-	{"OpenBoundary", MaterialType::OpenBoundary},
-	{"Vacuum", MaterialType::Vacuum}
+	{"conductor", MaterialType::Conductor},
+	{"dielectric", MaterialType::Dielectric},
+	{"open", MaterialType::OpenBoundary}
 };
 
 json readJSON(const std::string& fn)
@@ -42,19 +41,32 @@ Materials readMaterials(const json& j)
 {
 	Materials res;
 	ConductorId nextConductorId = 0;
-	for (const auto& jMat : j.items()) {
-		auto name = jMat.key();
-		auto mat = jMat.value();
-		auto type{ 
-			LABEL_TO_MATERIAL_TYPE.at(
-				mat.at("type").get<std::string>()
-			)
-		};
-		auto attribute{ mat.at("tag").get<int>() };
+	auto parseType = [](const std::string& typeLabel) {
+		auto typeIt = LABEL_TO_MATERIAL_TYPE.find(typeLabel);
+		if (typeIt == LABEL_TO_MATERIAL_TYPE.end()) {
+			throw std::runtime_error("Unknown material type: " + typeLabel);
+		}
+		return typeIt->second;
+	};
+
+	auto readAttribute = [](const json& mat) {
+		if (mat.contains("attribute")) {
+			return mat.at("attribute").get<int>();
+		}
+		if (mat.contains("tag")) {
+			return mat.at("tag").get<int>();
+		}
+		throw std::runtime_error("Missing material attribute/tag");
+	};
+
+	auto parseMaterial = [&](const json& mat) {
+		auto type = parseType(mat.at("type").get<std::string>());
+		auto attribute = readAttribute(mat);
 		switch (type) {
-		case MaterialType::PEC:
+		case MaterialType::Conductor:
 		{
-			res.addConductor(attribute, nextConductorId++);
+			auto conductorId = mat.at("conductorId").get<int>();
+			res.addConductor(attribute, conductorId);
 			break;
 		}
 		case MaterialType::OpenBoundary:
@@ -65,13 +77,24 @@ Materials readMaterials(const json& j)
 			break;
 		case MaterialType::Dielectric:
 		{
-			double epsR{ mat.at("eps_r").get<double>() };
+			double epsR{ VACUUM_RELATIVE_PERMITTIVITY };
+			if (mat.contains("relativePermittivity")) {
+				epsR = mat.at("relativePermittivity").get<double>();
+			}
 			res.addDielectric(attribute, epsR);
 			break;
 		}
 		default:
 			throw std::runtime_error("Invalid material type");
 		}
+	};
+
+	if (j.is_array()) {
+		for (const auto& mat : j) {
+			parseMaterial(mat);
+		}
+	} else {
+		throw std::runtime_error("materials object must be an array.");
 	}
 	return res;
 }
@@ -105,13 +128,13 @@ static void setIfExists(const json& j, T& entry, std::string labelToCheck)
 
 DriverOptions Parser::readDriverOptions() const
 {
-	const auto& j = json_.at("analysis");
+	const auto& j = json_.at("DriverOptions");
 	
 	DriverOptions res;
 	setIfExists<int>(j,  res.solverOptions.order, "order");
 	setIfExists<bool>(j, res.solverOptions.printIterations, "printIterations");
 	
-	setIfExists<bool>(j, res.exportParaViewSolution, "exportParaviewSolution");
+	setIfExists<bool>(j, res.exportParaViewSolution, "exportParaViewSolution");
 	setIfExists<std::string>(j, res.exportFolder, "exportFolder");
 
 	return res;

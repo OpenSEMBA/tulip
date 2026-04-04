@@ -250,6 +250,39 @@ std::map<std::string, int> buildLayerConductorIdMapping(const nlohmann::json& in
     return mapping;
 }
 
+std::vector<std::string> buildDielectricLayerNamesById(const nlohmann::json& inputJson)
+{
+    std::vector<std::pair<int, std::string>> layersById;
+    if (!inputJson.contains("layers") || !inputJson["layers"].is_array()) {
+        return {};
+    }
+
+    const auto materialTypeById = buildMaterialTypeById(inputJson);
+    for (const auto& layer : inputJson["layers"]) {
+        if (!layer.contains("name") || !layer.contains("materialId") || !layer.contains("id")) {
+            continue;
+        }
+
+        const int materialId = layer["materialId"].get<int>();
+        auto materialIt = materialTypeById.find(materialId);
+        if (materialIt == materialTypeById.end() || materialIt->second != "dielectric") {
+            continue;
+        }
+
+        layersById.emplace_back(layer["id"].get<int>(), layer["name"].get<std::string>());
+    }
+
+    std::sort(layersById.begin(), layersById.end(),
+              [](const auto& a, const auto& b) { return a.first < b.first; });
+
+    std::vector<std::string> names;
+    names.reserve(layersById.size());
+    for (const auto& [_, name] : layersById) {
+        names.push_back(name);
+    }
+    return names;
+}
+
 AdapterOptions parseAdapterOptions(const nlohmann::json& inputJson,
                                    const std::filesystem::path& inputPath,
                                    const std::string& caseName)
@@ -288,19 +321,17 @@ AdapterOptions parseAdapterOptions(const nlohmann::json& inputJson,
 nlohmann::json buildAdaptedJson(const std::string& caseName,
                                 const std::map<std::string, std::string>& layerTypeByName,
                                 const std::map<std::string, int>& conductorIdByLayerName,
+                                const std::vector<std::string>& dielectricLayerNamesById,
                                 const std::map<std::string, nlohmann::json>&
                                     dielectricPropertiesByLayerName)
 {
-    const bool openBoundaryAsOpen = conductorIdByLayerName.size() <= 1;
+    const bool dielectricIdOrderIsLexicographic =
+        std::is_sorted(dielectricLayerNamesById.begin(), dielectricLayerNamesById.end());
 
-    int explicitDielectricLayerCount = 0;
-    for (const auto& [_, materialType] : layerTypeByName) {
-        if (materialType == "dielectric") {
-            ++explicitDielectricLayerCount;
-        }
-    }
-    const bool propagateSingleDielectricPropertiesToUnnamedRegions =
-        explicitDielectricLayerCount == 1 && dielectricPropertiesByLayerName.size() == 1;
+    const bool openBoundaryAsOpen =
+        conductorIdByLayerName.size() <= 1 ||
+        dielectricLayerNamesById.size() == 1 ||
+        !dielectricIdOrderIsLexicographic;
 
     gmsh::vectorpair groups;
     gmsh::model::getPhysicalGroups(groups);
@@ -349,11 +380,6 @@ nlohmann::json buildAdaptedJson(const std::string& caseName,
             auto propertiesIt = dielectricPropertiesByLayerName.find(name);
             if (propertiesIt != dielectricPropertiesByLayerName.end()) {
                 for (const auto& [key, value] : propertiesIt->second.items()) {
-                    material[key] = value;
-                }
-            } else if (propagateSingleDielectricPropertiesToUnnamedRegions) {
-                const auto& fallbackProperties = dielectricPropertiesByLayerName.begin()->second;
-                for (const auto& [key, value] : fallbackProperties.items()) {
                     material[key] = value;
                 }
             }
@@ -430,6 +456,7 @@ Adapter::Adapter(const std::string& inputFile)
     const auto layerDielectricPropertiesMapping =
         buildLayerDielectricPropertiesMapping(inputJson);
     const auto layerConductorIdMapping = buildLayerConductorIdMapping(inputJson);
+    const auto dielectricLayerNamesById = buildDielectricLayerNamesById(inputJson);
     buildPhysicalModel(allShapes, layerNameMapping);
 
     for (const auto& [opt, val] : adapterOptions.gmshOptions) {
@@ -451,6 +478,7 @@ Adapter::Adapter(const std::string& inputFile)
         caseName_,
         layerTypeMapping,
         layerConductorIdMapping,
+        dielectricLayerNamesById,
         layerDielectricPropertiesMapping);
 }
 

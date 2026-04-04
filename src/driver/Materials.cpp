@@ -1,6 +1,8 @@
 #include "Materials.h"
+#include "constants.h"
 
 #include <algorithm>
+#include <cmath>
 
 namespace tulip {
 
@@ -21,7 +23,12 @@ void Materials::addOpenBoundary(Attribute attribute)
 
 bool Materials::hasDielectrics() const
 {
-	return !getDielectrics().empty();
+	for (const auto* d : getDielectrics()) {
+		if (std::abs(d->getRelativePermittivity() - VACUUM_RELATIVE_PERMITTIVITY) > 1e-12) {
+			return true;
+		}
+	}
+	return false;
 }
 
 std::list<const Conductor*> Materials::getConductors() const
