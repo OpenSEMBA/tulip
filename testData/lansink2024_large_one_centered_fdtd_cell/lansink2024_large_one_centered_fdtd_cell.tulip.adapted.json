@@ -1,17 +1,17 @@
 {
-  "analysis": {
+  "DriverOptions": {
     "order": 3,
     "exportParaViewSolution": true,
     "exportFolder": "Results/lansink2024_large_one_centered_fdtd_cell/"
   },
   "model": {
-    "materials": {
-      "Conductor_0":    {"type": "conductor", "attribute": 1, "area": 3.141592653589793 },
-      "Conductor_1":    {"type": "conductor", "attribute": 2, "area": 314.1592653589793 },
-      "OpenBoundary_0": {"type": "open", "attribute": 4},
-      "Vacuum_0":       {"type": "dielectric", "attribute": 3},
-      "Vacuum_1":       {"type": "dielectric", "attribute": 5}
-    },
+    "materials": [
+      {"type": "conductor", "conductorId": 0, "attribute": 1},
+      {"type": "conductor", "conductorId": 1, "attribute": 2},
+      {"type": "open", "attribute": 4},
+      {"type": "dielectric", "attribute": 3},
+      {"type": "dielectric", "attribute": 5}
+    ],
     "gmshFile": "lansink2024_large_one_centered_fdtd_cell.msh"
   }
 }

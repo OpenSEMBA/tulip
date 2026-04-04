@@ -1,17 +1,17 @@
 {
-  "analysis": {
+  "DriverOptions": {
     "order": 3,
     "exportParaViewSolution": true,
     "exportFolder": "Results/lansink2024_single_wire/"
   },
   "model": {
-    "materials": {
-      "Conductor_0":    {"type": "conductor", "attribute": 1, "area": 3.141592653589793 },
-      "OpenBoundary_0": {"type": "open", "attribute": 2},
-      "Vacuum_0":       {"type": "dielectric", "attribute": 4},
-      "Vacuum_1":       {"type": "dielectric", "attribute": 3},
-      "Dielectric_0":    {"type": "dielectric", "attribute": 5, "relativePermittivity": 3.2}
-    },
+    "materials": [
+      {"type": "conductor", "conductorId": 0, "attribute": 1},
+      {"type": "open", "attribute": 2},
+      {"type": "dielectric", "attribute": 3},
+      {"type": "dielectric", "attribute": 4},
+      {"type": "dielectric", "relativePermittivity": 3.2, "attribute": 5}
+    ],
     "gmshFile": "lansink2024_single_wire.msh"
   }
 }
