@@ -325,13 +325,10 @@ nlohmann::json buildAdaptedJson(const std::string& caseName,
                                 const std::map<std::string, nlohmann::json>&
                                     dielectricPropertiesByLayerName)
 {
-    const bool dielectricIdOrderIsLexicographic =
-        std::is_sorted(dielectricLayerNamesById.begin(), dielectricLayerNamesById.end());
-
-    const bool openBoundaryAsOpen =
-        conductorIdByLayerName.size() <= 1 ||
-        dielectricLayerNamesById.size() == 1 ||
-        !dielectricIdOrderIsLexicographic;
+    // OpenBoundary is always the 1D outer boundary of the computational domain;
+    // OuterRegion is always the 2D outer vacuum domain. Only the 1D boundary
+    // can carry an open (Robin/absorbing) boundary condition.
+    const bool openBoundaryAsOpen = true;
 
     gmsh::vectorpair groups;
     gmsh::model::getPhysicalGroups(groups);

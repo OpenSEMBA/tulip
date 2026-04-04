@@ -117,39 +117,9 @@ TEST_F(DriverTest, two_wires_shielded_floating_potentials)
 	const std::string CASE{ "two_wires_shielded" };
 	auto fn{ casesFolder() + CASE + "/" + CASE + ".tulip.adapted.json" };
 
-	const double rTol{ 2.5e-2 };
+	auto driver = Driver::loadFromAdaptedFile(fn); 
 
-	auto fp = Driver::loadFromAdaptedFile(fn).getFloatingPotentials(0, false);
-
-	ASSERT_EQ(2, fp.size());
-	
-	// Solves problem and checks that charge is zero in the floating conductor.
-	{
-		auto m{ Mesh::LoadFromFile(casesFolder() + CASE + "/" + CASE + ".msh") };
-
-		SolverInputs p;
-		p.dirichletBoundaries = {
-			{
-				{1, 0.0},     // Conductor 0 bdr (GND).
-				{2, fp.at(0)}, // Conductor 1 prescribed potential.
-				{3, fp.at(1)}, // Conductor 2 floating potential.
-			}
-		};
-
-		SolverOptions solverOpts;
-		tulip::Solver s{ m, p, solverOpts };
-		s.Solve();
-
-		// For debugging.
-		ParaViewDataCollection pd(outFolder() + CASE + "_floating", s.getMesh());
-		s.writeParaViewFields(pd);
-
-		auto Q0 = s.getChargeInBoundary(1);
-		auto Q1 = s.getChargeInBoundary(2);
-		auto Q2 = s.getChargeInBoundary(3);
-		EXPECT_NEAR(0.0, Q2, 1e-4);
-
-	}
+	ASSERT_ANY_THROW(driver.getFloatingPotentials(1,false));
 }
 
 TEST_F(DriverTest, two_wires_open_floating_potentials)
@@ -157,38 +127,23 @@ TEST_F(DriverTest, two_wires_open_floating_potentials)
 	const std::string CASE{ "two_wires_open" };
 	auto fn{ casesFolder() + CASE + "/" + CASE + ".tulip.adapted.json" };
 
-	auto fp{ Driver::loadFromAdaptedFile(fn).getFloatingPotentials(0,false) };
+	auto driver{ Driver::loadFromAdaptedFile(fn) };
+	auto fp{ driver.getFloatingPotentials(0, false) };
 
 	ASSERT_EQ(2, fp.size());
 
-	// Solves problem and checks that charge is zero in the floating conductor.
-	{
-		auto fn{ casesFolder() + CASE + "/" + CASE + ".msh" };
-		auto m{ Mesh::LoadFromFile(fn) };
+	// Verifies that floating potentials result in zero charge on the floating conductor.
+	auto eSol = driver.getElectrostaticSolvedProblem();
+	driver.loadFloatingPotentials(eSol, fp);
 
-		SolverInputs p;
-		p.dirichletBoundaries = {
-			{
-				{1, fp.at(0)}, // Conductor 0, prescribed.
-				{2, fp.at(1)}, // Conductor 1, floating.
-			}
-		};
-		p.openBoundaries = { 3 };
+	// For debugging.
+	auto s = *eSol->solver;
+	ParaViewDataCollection pd(outFolder() + CASE + "_floating", s.getMesh());
+	s.writeParaViewFields(pd);
 
-		tulip::Solver s{ m, p };
-		s.Solve();
+	auto Q1 = s.getChargeInBoundary(2);
 
-		// For debugging.
-		ParaViewDataCollection pd(outFolder() + CASE + "_floating", s.getMesh());
-		s.writeParaViewFields(pd);
-
-		auto Q0 = s.getChargeInBoundary(1);
-		auto Q1 = s.getChargeInBoundary(2);
-		auto Qb = s.getChargeInBoundary(3);
-
-		EXPECT_NEAR(0.0, Q1, 1e-4); // Floating conductor,should not have charge.
-
-	}
+	EXPECT_NEAR(0.0, Q1, 1e-4); // Floating conductor should have zero charge.
 }
 
 TEST_F(DriverTest, five_wires)

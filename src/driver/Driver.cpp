@@ -417,6 +417,23 @@ double Driver::getInnerRegionAveragePotential(
 	return totalPotential / totalArea;
 }
 
+void Driver::loadFloatingPotentials(
+	SolvedProblem* sP, const std::map<ConductorId, double>& fp) const
+{
+	Solver& s = *sP->solver;
+	
+	s.getPhi() *= 0.0;
+	s.getE() *= 0.0;
+	s.getD() *= 0.0;
+	for (const auto& cJ : model_.getMaterials().getConductors()) {
+		auto condJ = cJ->getConductorId();
+		auto fpJ = fp.at(condJ);
+		s.getPhi().Add(fpJ, *sP->solutions[condJ].phi);
+		s.getE().Add(fpJ, *sP->solutions[condJ].e);
+		s.getD().Add(fpJ, *sP->solutions[condJ].d);
+	}
+}
+
 std::map<ConductorId, FieldReconstruction> Driver::getFieldParameters(
 	bool ignoreDielectrics)
 {
@@ -437,16 +454,8 @@ std::map<ConductorId, FieldReconstruction> Driver::getFieldParameters(
 		
 		auto condI = cI->getConductorId();
 		auto fp = getFloatingPotentials(condI, ignoreDielectrics);
-		s.getPhi() *= 0.0;
-		s.getE() *= 0.0;
-		s.getD() *= 0.0;
-		for (const auto& cJ : conductors) {
-			auto condJ = cJ->getConductorId();
-			auto fpJ = fp.at(condJ);
-			s.getPhi().Add(fpJ, *sP->solutions[condJ].phi);
-			s.getE().Add(fpJ, *sP->solutions[condJ].e);
-			s.getD().Add(fpJ, *sP->solutions[condJ].d);
-		}
+		
+		loadFloatingPotentials(sP, fp);
 
 		exportFieldSolutions(opts_, s, condI, ignoreDielectrics, "_floating");
 

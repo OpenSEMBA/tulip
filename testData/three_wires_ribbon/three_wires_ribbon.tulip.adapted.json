@@ -40,11 +40,11 @@
         "type": "dielectric"
       },
       {
-        "attribute": 8,
+        "attribute": 9,
         "type": "dielectric"
       },
       {
-        "attribute": 9,
+        "attribute": 8,
         "type": "open"
       }
     ]

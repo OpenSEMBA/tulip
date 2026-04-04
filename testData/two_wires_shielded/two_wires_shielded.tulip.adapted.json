@@ -1,16 +1,14 @@
 {
-  "analysis": {
-    "order": 3,
-    "makeMatricesSymmetric": true,
+  "DriverOptions": {
     "exportParaViewSolution": true,
     "exportFolder": "Results/two_wires_shielded/"
   },
   "model": {
-    "materials": {
-      "Conductor_0": {"type": "conductor", "attribute": 1 },
-      "Conductor_1": {"type": "conductor", "attribute": 2 },
-      "Conductor_2": {"type": "conductor", "attribute": 3 }
-    },  
+    "materials": [
+      {"type": "conductor", "conductorId": 0, "attribute": 1},
+      {"type": "conductor", "conductorId": 1, "attribute": 2},
+      {"type": "conductor", "conductorId": 2, "attribute": 3}
+    ],
     "gmshFile": "two_wires_shielded.msh"
   }
 }

@@ -39,11 +39,20 @@ public:
     DenseMatrix getGeneralizedCMatrix(bool ignoreDielectrics = false);
     DenseMatrix getCMatrix();
     DenseMatrix getLMatrix();
-    DenseMatrix getFloatingPotentialsMatrix(const bool ignoreDielectrics);
+
+    const Model& getModel() const { return model_; }
 
     static Driver loadFromAdaptedFile(const std::string& filename);
     static Driver adaptFromFile(const std::string& filename);
 
+    SolvedProblem*
+        getElectrostaticSolvedProblem() { return &electric_; }
+    SolvedProblem* 
+        getMagnetostaticSolvedProblem() { return &magnetic_; }
+    
+    void loadFloatingPotentials(
+        SolvedProblem* sP,
+        const std::map<ConductorId, double>& fp) const;
 private:
     Model model_;
     DriverOptions opts_;
@@ -58,6 +67,7 @@ private:
         bool includeConductors);
     std::map<ConductorId, FieldReconstruction> getFieldParameters(
         bool ignoreDielectrics);
+
 };
 
 }
