@@ -74,6 +74,11 @@ bool hasPrefix(const std::string& value, const std::string& prefix)
            value.compare(0, prefix.size(), prefix) == 0;
 }
 
+bool contains(const std::string& value, const std::string& token)
+{
+    return value.find(token) != std::string::npos;
+}
+
 nlohmann::json readJsonFile(const std::filesystem::path& path)
 {
     std::ifstream inputStream(path);
@@ -188,6 +193,7 @@ std::map<std::string, nlohmann::json> buildLayerDielectricPropertiesMapping(
         if (!layer.contains("name") || !layer.contains("materialId")) {
             continue;
         }
+        const std::string layerName = layer["name"].get<std::string>();
         const int materialId = layer["materialId"].get<int>();
         auto materialIt = materialById.find(materialId);
         if (materialIt == materialById.end()) {
@@ -199,12 +205,17 @@ std::map<std::string, nlohmann::json> buildLayerDielectricPropertiesMapping(
             continue;
         }
 
+        // Only propagate dielectric properties to explicit dielectric layers.
+        if (!contains(layerName, "Dielectric")) {
+            continue;
+        }
+
         nlohmann::json properties = nlohmann::json::object();
         if (material.contains("relativePermittivity")) {
             properties["relativePermittivity"] = material["relativePermittivity"];
         }
         if (!properties.empty()) {
-            mapping[layer["name"].get<std::string>()] = properties;
+            mapping[layerName] = properties;
         }
     }
 
@@ -280,6 +291,17 @@ nlohmann::json buildAdaptedJson(const std::string& caseName,
                                 const std::map<std::string, nlohmann::json>&
                                     dielectricPropertiesByLayerName)
 {
+    const bool openBoundaryAsOpen = conductorIdByLayerName.size() <= 1;
+
+    int explicitDielectricLayerCount = 0;
+    for (const auto& [_, materialType] : layerTypeByName) {
+        if (materialType == "dielectric") {
+            ++explicitDielectricLayerCount;
+        }
+    }
+    const bool propagateSingleDielectricPropertiesToUnnamedRegions =
+        explicitDielectricLayerCount == 1 && dielectricPropertiesByLayerName.size() == 1;
+
     gmsh::vectorpair groups;
     gmsh::model::getPhysicalGroups(groups);
     std::sort(groups.begin(), groups.end(),
@@ -296,10 +318,10 @@ nlohmann::json buildAdaptedJson(const std::string& caseName,
             typeIt == layerTypeByName.end() ? "dielectric" : typeIt->second;
 
         if (typeIt == layerTypeByName.end()) {
-            if (name == "OuterRegion") {
-                layerType = "open";
-            } else if (hasPrefix(name, "OpenBoundary") || name == "OpenBoundary") {
-                layerType = "dielectric";
+            if (hasPrefix(name, "OpenBoundary") || name == "OpenBoundary") {
+                layerType = openBoundaryAsOpen ? "open" : "dielectric";
+            } else if (name == "OuterRegion") {
+                layerType = openBoundaryAsOpen ? "dielectric" : "open";
             }
         }
 
@@ -327,6 +349,11 @@ nlohmann::json buildAdaptedJson(const std::string& caseName,
             auto propertiesIt = dielectricPropertiesByLayerName.find(name);
             if (propertiesIt != dielectricPropertiesByLayerName.end()) {
                 for (const auto& [key, value] : propertiesIt->second.items()) {
+                    material[key] = value;
+                }
+            } else if (propagateSingleDielectricPropertiesToUnnamedRegions) {
+                const auto& fallbackProperties = dielectricPropertiesByLayerName.begin()->second;
+                for (const auto& [key, value] : fallbackProperties.items()) {
                     material[key] = value;
                 }
             }

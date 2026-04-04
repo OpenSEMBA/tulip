@@ -6,11 +6,11 @@
   },
   "model": {
     "materials": {
-      "Conductor_0":    {"type": "PEC", "tag": 1, "area": 3.141592653589793 },
-      "OpenBoundary_0": {"type": "OpenBoundary", "tag": 2},
-      "Vacuum_0":       {"type": "Vacuum", "tag": 4},
-      "Vacuum_1":       {"type": "Vacuum", "tag": 3},
-      "Dielectric_0":    {"type": "Dielectric", "tag": 5, "eps_r": 3.2}
+      "Conductor_0":    {"type": "conductor", "attribute": 1, "area": 3.141592653589793 },
+      "OpenBoundary_0": {"type": "open", "attribute": 2},
+      "Vacuum_0":       {"type": "dielectric", "attribute": 4},
+      "Vacuum_1":       {"type": "dielectric", "attribute": 3},
+      "Dielectric_0":    {"type": "dielectric", "attribute": 5, "relativePermittivity": 3.2}
     },
     "gmshFile": "lansink2024_single_wire.msh"
   }

@@ -7,9 +7,9 @@
   },
   "model": {
     "materials": {
-      "Conductor_0": {"type": "PEC", "tag": 1 },
-      "Conductor_1": {"type": "PEC", "tag": 2 },
-      "Conductor_2": {"type": "PEC", "tag": 3 }
+      "Conductor_0": {"type": "conductor", "attribute": 1 },
+      "Conductor_1": {"type": "conductor", "attribute": 2 },
+      "Conductor_2": {"type": "conductor", "attribute": 3 }
     },  
     "gmshFile": "two_wires_shielded.msh"
   }
