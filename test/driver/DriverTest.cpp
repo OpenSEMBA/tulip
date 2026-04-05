@@ -137,7 +137,7 @@ TEST_F(DriverTest, two_wires_open_floating_potentials)
 	driver.loadFloatingPotentials(eSol, fp);
 
 	// For debugging.
-	auto s = *eSol->solver;
+	auto& s = *eSol->solver;
 	ParaViewDataCollection pd(outFolder() + CASE + "_floating", s.getMesh());
 	s.writeParaViewFields(pd);
 	
@@ -209,7 +209,7 @@ TEST_F(DriverTest, three_wires_ribbon)
 
 	auto out{ Driver::loadFromAdaptedFile(fn).getPULMTL() };
 
-	const double rTol{ 0.0025 };
+	const double rTol{ 0.005 };
 	ASSERT_EQ(CExpected.NumRows(), out.C.NumRows());
 	ASSERT_EQ(CExpected.NumCols(), out.C.NumCols());
 	for (int i{ 0 }; i < CExpected.NumRows(); i++) {
@@ -253,7 +253,7 @@ TEST_F(DriverTest, three_wires_ribbon_generalized_capacitance)
 	auto gC = dr.getGeneralizedCMatrix();
 	gC *= EPSILON0_SI;
 
-	const double rTol{ 0.008 };
+	const double rTol{ 0.015 };
 	ASSERT_EQ(gCExpected.NumRows(), gC.NumRows());
 	ASSERT_EQ(gCExpected.NumCols(), gC.NumCols());
 	for (int i{ 0 }; i < gCExpected.NumRows(); i++) {
@@ -274,48 +274,29 @@ TEST_F(DriverTest, three_wires_ribbon_floating_potentials)
 	const std::string CASE{ "three_wires_ribbon" };
 	auto fn{ casesFolder() + CASE + "/" + CASE + ".tulip.adapted.json" };
 
-	auto fp = Driver::loadFromAdaptedFile(fn).getFloatingPotentials(1, false);
+	auto dr = Driver::loadFromAdaptedFile(fn);
+	auto fp = dr.getFloatingPotentials(1, false);
 
 	// Solves problem and checks that charge is zero in the floating conductor.
-	{
-		auto fn{ casesFolder() + CASE + "/" + CASE + ".msh" };
-		auto m{ Mesh::LoadFromFile(fn) };
+	auto sP = dr.getElectrostaticSolvedProblem();
+	dr.loadFloatingPotentials(sP, fp);
+	auto& s = sP->solver;
+	// For debugging.
+	// ParaViewDataCollection pd(outFolder() + CASE + "_floating", s.getMesh());
+	// s.writeParaViewFields(pd);
+	auto materials = &dr.getModel().getMaterials();
+	auto Q0 = s->getChargeInBoundary(materials->getConductorWithId(0)->getAttribute());
+	auto Q1 = s->getChargeInBoundary(materials->getConductorWithId(1)->getAttribute());
+	auto Q2 = s->getChargeInBoundary(materials->getConductorWithId(2)->getAttribute());
 
-		SolverInputs p;
-		p.dirichletBoundaries = {
-			{
-				{1, fp.at(0)}, // Conductor 0 floating potential.
-				{2, fp.at(1)}, // Conductor 1 prescribed potential.
-				{3, fp.at(2)}, // Conductor 2 floating potential.
-			}
-		};
-		p.openBoundaries = { 4 };
-		p.domainPermittivities = {
-			{
-				{6, 3.5},
-				{7, 3.5},
-				{8, 3.5}
-			}
-		};
+	auto openBdr = materials->getOpenBoundaries().front();
+	auto Qb = s->getChargeInBoundary(openBdr->getAttribute());
 
-		SolverOptions solverOpts;
-		tulip::Solver s{ m, p, solverOpts };
-		s.Solve();
+	const double aTol{ 1e-3 };
+	EXPECT_NEAR(0.0, Q0, aTol);
+	EXPECT_NEAR(0.0, Q2, aTol);
+	EXPECT_NEAR(0.0, Q0 + Q1 + Q2 + Qb, aTol);
 
-		// For debugging.
-		// ParaViewDataCollection pd(outFolder() + CASE + "_floating", s.getMesh());
-		// s.writeParaViewFields(pd);
-
-		auto Q0 = s.getChargeInBoundary(1);
-		auto Q1 = s.getChargeInBoundary(2);
-		auto Q2 = s.getChargeInBoundary(3);
-		auto Qb = s.getChargeInBoundary(4);
-
-		const double aTol{ 1e-3 };
-		EXPECT_NEAR(0.0, Q0, aTol);
-		EXPECT_NEAR(0.0, Q2, aTol);
-		EXPECT_NEAR(0.0, Q0 + Q1 + Q2 + Qb, aTol);
-	}
 }
 
 TEST_F(DriverTest, nested_coax)

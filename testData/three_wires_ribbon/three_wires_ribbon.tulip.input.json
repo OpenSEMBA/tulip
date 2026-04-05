@@ -7,7 +7,7 @@
     {
       "id": 2,
       "type": "dielectric",
-      "relativePermittivity": 2.5
+      "relativePermittivity": 3.5
     }
   ],
   "layers": [
