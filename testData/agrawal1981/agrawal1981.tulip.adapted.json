@@ -27,15 +27,18 @@
       },
       {
         "attribute": 5,
-        "type": "dielectric"
+        "type": "dielectric",
+        "relativePermittivity": 2.26
       },
       {
         "attribute": 6,
-        "type": "dielectric"
+        "type": "dielectric",
+        "relativePermittivity": 2.26
       },
       {
         "attribute": 7,
-        "type": "dielectric"
+        "type": "dielectric",
+        "relativePermittivity": 2.26
       },
       {
         "attribute": 8,

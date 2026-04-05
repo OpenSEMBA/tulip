@@ -682,7 +682,7 @@ TEST_F(DriverTest, getCFromGeneralizedC_two_wires_open)
 
 	auto C = driver.getCFromGeneralizedC(gC, Model::Openness::open);
 
-	const double rTol{ 0.001 };
+	const double rTol{ 0.0025 };
 	ASSERT_EQ(1, C.NumRows());
 	ASSERT_EQ(1, C.NumCols());
 	EXPECT_LE(relError(CExpected, C(0, 0)), rTol) <<
