@@ -80,6 +80,95 @@ bool contains(const std::string& value, const std::string& token)
     return value.find(token) != std::string::npos;
 }
 
+void enforceDielectricVacuumContinuity(EntityMap& dielectrics, EntityMap& vacuum)
+{
+    gmsh::vectorpair dielectricSurfaces;
+    gmsh::vectorpair vacuumSurfaces;
+    std::vector<std::string> dielectricOwnerBySurface;
+    std::vector<std::string> vacuumOwnerBySurface;
+
+    for (const auto& [name, entities] : dielectrics) {
+        for (const auto& entity : entities) {
+            if (entity.first != 2) {
+                continue;
+            }
+            dielectricSurfaces.push_back(entity);
+            dielectricOwnerBySurface.push_back(name);
+        }
+    }
+
+    for (const auto& [name, entities] : vacuum) {
+        for (const auto& entity : entities) {
+            if (entity.first != 2) {
+                continue;
+            }
+            vacuumSurfaces.push_back(entity);
+            vacuumOwnerBySurface.push_back(name);
+        }
+    }
+
+    if (dielectricSurfaces.empty() || vacuumSurfaces.empty()) {
+        return;
+    }
+
+    gmsh::vectorpair outDimTags;
+    std::vector<gmsh::vectorpair> outDimTagsMap;
+    gmsh::model::occ::fragment(
+        dielectricSurfaces, vacuumSurfaces, outDimTags, outDimTagsMap, -1, true, true);
+
+    if (outDimTagsMap.size() != dielectricSurfaces.size() + vacuumSurfaces.size()) {
+        throw std::runtime_error(
+            "Unexpected gmsh::model::occ::fragment mapping size while fragmenting "
+            "dielectrics and vacuum.");
+    }
+
+    EntityMap fragmentedDielectrics;
+    EntityMap fragmentedVacuum;
+    for (const auto& [name, _] : dielectrics) {
+        fragmentedDielectrics[name] = {};
+    }
+    for (const auto& [name, _] : vacuum) {
+        fragmentedVacuum[name] = {};
+    }
+
+    for (std::size_t idx = 0; idx < outDimTagsMap.size(); ++idx) {
+        const bool isDielectricInput = idx < dielectricSurfaces.size();
+        auto& targetMap = isDielectricInput ? fragmentedDielectrics : fragmentedVacuum;
+        const auto& owner = isDielectricInput
+            ? dielectricOwnerBySurface[idx]
+            : vacuumOwnerBySurface[idx - dielectricSurfaces.size()];
+
+        for (const auto& entity : outDimTagsMap[idx]) {
+            if (entity.first != 2) {
+                continue;
+            }
+            targetMap[owner].push_back(entity);
+        }
+    }
+
+    const auto deduplicateEntities = [](EntityMap& entitiesByName) {
+        for (auto& [_, entities] : entitiesByName) {
+            std::set<EntityTag> uniqueEntities;
+            EntityList deduplicated;
+            deduplicated.reserve(entities.size());
+
+            for (const auto& entity : entities) {
+                if (uniqueEntities.insert(entity).second) {
+                    deduplicated.push_back(entity);
+                }
+            }
+            entities = std::move(deduplicated);
+        }
+    };
+
+    deduplicateEntities(fragmentedDielectrics);
+    deduplicateEntities(fragmentedVacuum);
+
+    dielectrics = std::move(fragmentedDielectrics);
+    vacuum = std::move(fragmentedVacuum);
+    gmsh::model::occ::synchronize();
+}
+
 std::string getEntityBaseName(const std::string& fullName)
 {
     const auto pos = fullName.rfind('/');
@@ -604,7 +693,9 @@ void Adapter::initialize(const nlohmann::json& inputJson,
     allShapes.ensureDielectricsDoNotOverlap();
     allShapes.removeConductorsFromDielectrics();
     allShapes.vacuum = allShapes.buildVacuumDomain();
+    enforceDielectricVacuumContinuity(allShapes.dielectrics, allShapes.vacuum);
     allShapes.conductors = extractBoundaries(allShapes.conductors);
+    
 
     const auto layerNameMapping = buildLayerNameMapping(inputJson);
     const auto layerTypeMapping = buildLayerTypeMapping(inputJson);
@@ -618,14 +709,17 @@ void Adapter::initialize(const nlohmann::json& inputJson,
         gmsh::option::setNumber(opt, val);
     }
 
+    
     gmsh::model::mesh::generate(2);
     gmsh::model::mesh::removeDuplicateNodes();
-
     auto [hasDups, _] = findDuplicateNodes();
     if (hasDups) {
         throw std::runtime_error("Duplicate mesh nodes found after meshing.");
     }
-
+    
+    gmsh::write("./debug_state.geo_unrolled");
+    gmsh::write("./debug_state.vtk");
+    
     const std::filesystem::path mshPath = std::filesystem::path(inputDir_) / (caseName_ + ".msh");
     gmsh::write(mshPath.string());
 

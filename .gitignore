@@ -83,3 +83,5 @@ vcpkg_installed/
 build
 Testing/Temporary/CTestCostData.txt
 Testing/Temporary/LastTest.log
+debug_state.geo_unrolled
+debug_state.geo_unrolled.xao
