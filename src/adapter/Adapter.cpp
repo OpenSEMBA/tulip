@@ -601,6 +601,7 @@ void Adapter::initialize(const nlohmann::json& inputJson,
 
     ShapesClassification allShapes(shapes, inputJson);
 
+    allShapes.ensureDielectricsDoNotOverlap();
     allShapes.removeConductorsFromDielectrics();
     allShapes.vacuum = allShapes.buildVacuumDomain();
     allShapes.conductors = extractBoundaries(allShapes.conductors);
