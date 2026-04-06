@@ -816,15 +816,17 @@ TEST_F(SolverTest, lansink2024_small_one_centered_bem_comparison)
 	const std::string CASE{ "lansink2024_small_one_centered" };
 	const std::string fn{ casesFolder() + CASE + "/" + CASE + ".tulip.adapted.json" };
 	auto model{ Parser{fn}.readModel() };
+	const auto& materials = model.getMaterials();
 
 	auto fp = Driver::loadFromAdaptedFile(fn).getFloatingPotentials(0, false);
 
+	
 	SolverInputs p;
 	p.dirichletBoundaries = AttrToValueMap{
-		{1, fp.at(0)}, // Conductor 0,
-		{2, fp.at(1)}, // Conductor 1,
+		{materials.getConductorWithId(0)->getAttribute(), fp.at(0)}, // Conductor 0,
+		{materials.getConductorWithId(1)->getAttribute(), fp.at(1)}, // Conductor 1,
 	};
-	p.openBoundaries = { 3 };
+	p.openBoundaries = { materials.getOpenBoundaries().front()->getAttribute() };
 
 	tulip::Solver s{ *model.getMesh(), p };
 	s.Solve();
