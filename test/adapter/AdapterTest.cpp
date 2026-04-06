@@ -201,14 +201,28 @@ TEST_F(AdapterTest, realistic_case_with_dielectrics_fdtd_cell)
 {
     const std::string caseName = "realistic_case_with_dielectrics_fdtd_cell";
     Adapter adapter(testDataPath() + "realistic_case_with_dielectrics/" + caseName + ".tulip.input.json");
-    assertAdaptedJsonMatchesExpected(caseName, adapter);
+    
+    auto adaptedJSON = adapter.getAdaptedInputJSON();
+    std::ifstream expectedFile(
+        testDataPath() + "realistic_case_with_dielectrics/" + caseName + ".tulip.adapted.json");
+    ASSERT_TRUE(expectedFile.is_open());
+    nlohmann::json expectedJSON;
+    expectedFile >> expectedJSON;
+    EXPECT_EQ(adaptedJSON, expectedJSON);
 }
 
 TEST_F(AdapterTest, realistic_case_with_dielectrics_inner_region)
 {
     const std::string caseName = "realistic_case_with_dielectrics_inner_region";
     Adapter adapter(testDataPath() + "realistic_case_with_dielectrics/" + caseName + ".tulip.input.json");
-    assertAdaptedJsonMatchesExpected(caseName, adapter);
+
+    auto adaptedJSON = adapter.getAdaptedInputJSON();
+    std::ifstream expectedFile(
+        testDataPath() + "realistic_case_with_dielectrics/" + caseName + ".tulip.adapted.json");
+    ASSERT_TRUE(expectedFile.is_open());
+    nlohmann::json expectedJSON;
+    expectedFile >> expectedJSON;
+    EXPECT_EQ(adaptedJSON, expectedJSON);
 }
 
 TEST_F(AdapterTest, lansink2024_single_wire_multipolar)

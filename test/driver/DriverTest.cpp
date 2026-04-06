@@ -824,32 +824,39 @@ TEST_F(DriverTest, lansink2024_small_one_centered_different_integration_centers)
 
 TEST_F(DriverTest, DISABLED_realistic_case_with_dielectrics_fdtd_cell)
 {
-	InCellPotentials fdtdCellPotentials;
-	{
-		const std::string CASE{ "realistic_case_with_dielectrics_fdtd_cell" };
-		fdtdCellPotentials = Driver::loadFromAdaptedFile(
-			casesFolder() + CASE + "/" + CASE + ".tulip.adapted.json").getInCellPotentials();
-	}
-	auto fdtdCellComputedC_0 = fdtdCellPotentials.getCapacitanceUsingInnerRegion(0, 0);
-	auto fdtdCellComputedC_16 = fdtdCellPotentials.getCapacitanceUsingInnerRegion(0, 16);
-	auto fdtdCellComputedC_25 = fdtdCellPotentials.getCapacitanceUsingInnerRegion(0, 25);
-	auto fdtdCellComputedC_30 = fdtdCellPotentials.getCapacitanceUsingInnerRegion(0, 30);
+	const std::string CASE{ "realistic_case_with_dielectrics_fdtd_cell" };
+	auto dr = Driver::loadFromAdaptedFile(
+		casesFolder() + "realistic_case_with_dielectrics/" + CASE + ".tulip.adapted.json");
+	auto fdtdCellPotentials = dr.getInCellPotentials();
+	auto fdtdCellComputed_C_0 = fdtdCellPotentials.getCapacitanceUsingInnerRegion(0, 0);
+	auto fdtdCellComputed_C_16 = fdtdCellPotentials.getCapacitanceUsingInnerRegion(0, 16);
+	auto fdtdCellComputed_C_25 = fdtdCellPotentials.getCapacitanceUsingInnerRegion(0, 25);
+	auto fdtdCellComputed_C_30 = fdtdCellPotentials.getCapacitanceUsingInnerRegion(0, 30);
 
-	auto fdtdCellComputedL_0 = fdtdCellPotentials.getInductanceUsingInnerRegion(0, 0);
-	auto fdtdCellComputedL_16 = fdtdCellPotentials.getInductanceUsingInnerRegion(0, 16);
-	auto fdtdCellComputedL_25 = fdtdCellPotentials.getInductanceUsingInnerRegion(0, 25);
-	auto fdtdCellComputedL_30 = fdtdCellPotentials.getInductanceUsingInnerRegion(0, 30);
+	auto fdtdCellComputed_L_0 = fdtdCellPotentials.getInductanceUsingInnerRegion(0, 0);
+	auto fdtdCellComputed_L_16 = fdtdCellPotentials.getInductanceUsingInnerRegion(0, 16);
+	auto fdtdCellComputed_L_25 = fdtdCellPotentials.getInductanceUsingInnerRegion(0, 25);
+	auto fdtdCellComputed_L_30 = fdtdCellPotentials.getInductanceUsingInnerRegion(0, 30);
+
+	auto rTol = 0.001;
+	EXPECT_LE(relError(fdtdCellComputed_C_0, 4.0911726228481947e-11), rTol);
+	EXPECT_LE(relError(fdtdCellComputed_C_16, 1.2547925523607968e-10), rTol);
+	EXPECT_LE(relError(fdtdCellComputed_C_25, 5.9060595987059621e-11), rTol);
+	EXPECT_LE(relError(fdtdCellComputed_C_30, 1.7797154919313720e-10), rTol);
+	EXPECT_LE(relError(fdtdCellComputed_L_0, 2.9989786293920517e-07), rTol);
+	EXPECT_LE(relError(fdtdCellComputed_L_16, 8.7458344767957649e-08), rTol);
+	EXPECT_LE(relError(fdtdCellComputed_L_25, 2.0233814651758583e-07), rTol);
+	EXPECT_LE(relError(fdtdCellComputed_L_30, 5.9647510363871327e-08), rTol);
 }
 
-TEST_F(DriverTest, realistic_case_with_dielectrics)
+TEST_F(DriverTest, realistic_case_with_dielectrics_multipolar)
 {
-	InCellPotentials mP;
-	{
-		const std::string CASE{ "realistic_case_with_dielectrics" };
-		mP = Driver::loadFromAdaptedFile(
-			casesFolder() + CASE + "/" + CASE + ".tulip.adapted.json").getInCellPotentials();
-	}
-
+	
+	const std::string CASE{ "realistic_case_with_dielectrics_inner_region" };
+	auto dr = Driver::loadFromAdaptedFile(
+		casesFolder() + "realistic_case_with_dielectrics/" + CASE + ".tulip.adapted.json");
+	auto mP = dr.getInCellPotentials();
+	
 	Box fdtdCellCenteredOnConductor0{ {-0.016209, -0.009066}, {0.013791, 0.020934} };
 	auto mPComputedC_0 = mP.getCapacitanceOnBox(0, 0, fdtdCellCenteredOnConductor0);
 	auto mPComputedC_16 = mP.getCapacitanceOnBox(0, 16, fdtdCellCenteredOnConductor0);
@@ -882,7 +889,7 @@ TEST_F(DriverTest, realistic_case_with_dielectrics)
 	EXPECT_LE(relError(fdtdCellComputed_L_30, mPComputedL_30), rTol) << "L(0,30) mismatch";
 
 
-	// For debugging
-	saveToJSONFile(mP.toJSON(),
-		"realistic_case_with_dielectrics.inCellPotentials.out.json");
+	// // For debugging
+	// saveToJSONFile(mP.toJSON(),
+	// 	"realistic_case_with_dielectrics.inCellPotentials.out.json");
 }
