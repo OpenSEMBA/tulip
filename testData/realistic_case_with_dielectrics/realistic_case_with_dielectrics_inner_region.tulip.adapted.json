@@ -1,6 +1,7 @@
 {
   "driverOptions": {
-    "exportFolder": "Results/realistic_case_with_dielectrics_inner_region/"
+    "exportFolder": "Results/realistic_case_with_dielectrics_inner_region/",
+    "exportParaViewSolution": false
   },
   "model": {
     "gmshFile": "realistic_case_with_dielectrics_inner_region.msh",

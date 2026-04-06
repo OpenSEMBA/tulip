@@ -1,4 +1,8 @@
 {
+  "driverOptions": {
+    "exportFolder": "Results/realistic_case_with_dielectrics_fdtd_cell/",
+    "exportParaViewSolution": false
+  },
   "materials": [
     {"id": 1, "type": "conductor"},
     {"id": 2, "type": "dielectric", "relativePermittivity": 2.0},

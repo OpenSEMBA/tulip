@@ -548,6 +548,7 @@ void validateLayerNamesMatchStep(const nlohmann::json& inputJson, const EntityLi
 }
 
 nlohmann::json buildAdaptedJson(const std::string& caseName,
+                                const nlohmann::json& inputJson,
                                 const std::map<std::string, std::string>& layerTypeByName,
                                 const std::map<std::string, int>& conductorIdByLayerName,
                                 const std::vector<std::string>& dielectricLayerNamesById,
@@ -632,8 +633,13 @@ nlohmann::json buildAdaptedJson(const std::string& caseName,
                b.value("attribute", std::numeric_limits<int>::max());
     });
 
+    nlohmann::json driverOptions = nlohmann::json::object();
+    if (inputJson.contains("driverOptions") && inputJson["driverOptions"].is_object()) {
+        driverOptions = inputJson["driverOptions"];
+    }
+
     return {
-        {"driverOptions", {{"exportFolder", "Results/" + caseName + "/"}}},
+        {"driverOptions", driverOptions},
         {"model", {
             {"materials", materials},
             {"gmshFile", caseName + ".msh"}
@@ -725,6 +731,7 @@ void Adapter::initialize(const nlohmann::json& inputJson,
 
     adaptedInputJSON_ = buildAdaptedJson(
         caseName_,
+        inputJson,
         layerTypeMapping,
         layerConductorIdMapping,
         dielectricLayerNamesById,
