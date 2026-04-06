@@ -3,6 +3,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <stdexcept>
 
 namespace tulip {
 
@@ -53,6 +54,8 @@ const Conductor* Materials::getConductorWithId(ConductorId cId) const {
 			return c;
 		}
 	}
+
+	throw std::runtime_error("Unable to find conductor with the specified id.");
 }
 
 std::list<const Dielectric*> Materials::getDielectrics() const

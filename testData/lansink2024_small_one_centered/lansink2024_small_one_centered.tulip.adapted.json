@@ -1,7 +1,5 @@
 {
   "DriverOptions": {
-    "order": 3,
-    "exportParaViewSolution": true,
     "exportFolder": "Results/lansink2024_small_one_centered/"
   },
   "model": {
