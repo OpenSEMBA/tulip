@@ -1,4 +1,7 @@
 {
+  "driverOptions": {
+    "exportFolder": "Results/lansink2024_single_wire_multipolar/"
+  },
   "materials": [
     {
       "id": 1,

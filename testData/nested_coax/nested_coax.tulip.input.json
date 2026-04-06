@@ -1,4 +1,7 @@
 {
+  "driverOptions": {
+    "exportFolder": "Results/nested_coax/"
+  },
   "materials": [
     {
       "id": 1,

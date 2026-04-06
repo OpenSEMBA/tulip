@@ -1,4 +1,7 @@
 {
+  "driverOptions": {
+    "exportFolder": "Results/unshielded_multiwire/"
+  },
   "materials": [
     {
       "id": 1,

@@ -1,4 +1,7 @@
 {
+  "driverOptions": {
+    "exportFolder": "Results/unshielded_nested/"
+  },
   "materials": [
     { "id": 1, "type": "conductor" },
     { "id": 2, "type": "shield" }

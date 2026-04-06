@@ -1,4 +1,7 @@
 {
+  "driverOptions": {
+    "exportFolder": "Results/conductor_and_outer_dielectric/"
+  },
   "materials": [
     {
       "id": 1,

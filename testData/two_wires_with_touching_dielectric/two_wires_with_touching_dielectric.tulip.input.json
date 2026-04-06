@@ -1,4 +1,7 @@
 {
+  "driverOptions": {
+    "exportFolder": "Results/two_wires_with_touching_dielectric/"
+  },
   "materials": [
     {
       "id": 1,

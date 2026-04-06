@@ -457,10 +457,19 @@ std::map<ConductorId, FieldReconstruction> Driver::getFieldParameters(
 
 	Solver& s = *sP->solver;
 
+	std::string fieldType;
+	if (ignoreDielectrics) {
+		fieldType = "magnetic";
+	} else {
+		fieldType = "electric";
+	} 
+	std::cout << "- Computing " << fieldType << " field coefficients." << std::endl;
 	const auto conductors = model_.getMaterials().getConductors();
 	for (const auto& cI : conductors) {
 		
 		auto condI = cI->getConductorId();
+
+		std::cout << "- Conductor #" << condI << "..." << std::flush;
 		auto fp = getFloatingPotentials(condI, ignoreDielectrics);
 		
 		loadFloatingPotentials(sP, fp);
@@ -478,6 +487,7 @@ std::map<ConductorId, FieldReconstruction> Driver::getFieldParameters(
 			auto condJ = cJ->getConductorId();
 			res[condI].conductorPotentials[condJ] = fp.at(condJ);
 		}
+		std::cout << "[OK]" << std::endl;
 	}
 
 	return res;

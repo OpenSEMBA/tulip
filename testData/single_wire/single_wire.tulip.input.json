@@ -1,4 +1,7 @@
 {
+  "driverOptions": {
+    "exportFolder": "Results/single_wire/"
+  },
   "materials": [
     {
       "id": 1,

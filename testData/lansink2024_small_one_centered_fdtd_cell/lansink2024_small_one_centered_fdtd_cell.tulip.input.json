@@ -5,7 +5,7 @@
     ]
   },
   "driverOptions": {
-    "exportFolder": "Results/lansink2024_small_one_centered/"
+    "exportFolder": "Results/lansink2024_small_one_centered_fdtd_cell/"
   },
   "materials": [
     { "id": 1, "type": "conductor" },

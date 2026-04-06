@@ -1,4 +1,7 @@
 {
+  "driverOptions": {
+    "exportFolder": "Results/dielectric_unshielded_pair_defined_boundary/"
+  },
   "materials": [
     {
       "id": 1,

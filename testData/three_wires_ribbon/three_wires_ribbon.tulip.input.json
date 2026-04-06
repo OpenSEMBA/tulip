@@ -1,4 +1,7 @@
 {
+  "driverOptions": {
+    "exportFolder": "Results/three_wires_ribbon/"
+  },
   "materials": [
     {
       "id": 1,
