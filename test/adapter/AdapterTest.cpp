@@ -148,6 +148,36 @@ TEST_F(AdapterTest, two_wires_open_fails_if_layer_points_to_unknown_material)
         std::runtime_error);
 }
 
+TEST_F(AdapterTest, dielectric_unshielded_pair_fails_if_input_layer_is_not_present_in_step)
+{
+    const std::string caseName = "dielectric_unshielded_pair";
+    nlohmann::json inputJson = readInputJsonFromCaseName(caseName);
+    ASSERT_TRUE(inputJson.contains("layers"));
+    ASSERT_TRUE(inputJson["layers"].is_array());
+    ASSERT_GE(inputJson["layers"].size(), 3);
+
+    inputJson["layers"][2]["name"] = "MissingDielectric";
+
+    EXPECT_THROW(
+        Adapter adapter(inputJson, caseName, inputFolderFromCaseName(caseName));,
+        std::runtime_error);
+}
+
+TEST_F(AdapterTest, dielectric_unshielded_pair_fails_if_step_layer_is_not_present_in_input)
+{
+    const std::string caseName = "dielectric_unshielded_pair";
+    nlohmann::json inputJson = readInputJsonFromCaseName(caseName);
+    ASSERT_TRUE(inputJson.contains("layers"));
+    ASSERT_TRUE(inputJson["layers"].is_array());
+    ASSERT_GE(inputJson["layers"].size(), 4);
+
+    inputJson["layers"].erase(inputJson["layers"].begin() + 3);
+
+    EXPECT_THROW(
+        Adapter adapter(inputJson, caseName, inputFolderFromCaseName(caseName));,
+        std::runtime_error);
+}
+
 TEST_F(AdapterTest, dielectric_unshielded_pair)
 {
     const std::string caseName = "dielectric_unshielded_pair";
@@ -254,7 +284,7 @@ TEST_F(AdapterTest, lansink2024_small_one_centered_fdtd_cell_parses_adapter_opti
 
     const AdapterOptions& options = adapter.getAdapterOptions();
     ASSERT_TRUE(options.gmshOptions.find("Mesh.MeshSizeMax") != options.gmshOptions.end());
-    EXPECT_DOUBLE_EQ(options.gmshOptions.at("Mesh.MeshSizeMax"), 15.0);
+    EXPECT_DOUBLE_EQ(options.gmshOptions.at("Mesh.MeshSizeMax"), 10.0);
     EXPECT_DOUBLE_EQ(options.gmshOptions.at("Mesh.ElementOrder"), 3.0);
 }
 
@@ -265,7 +295,7 @@ TEST_F(AdapterTest, single_wire)
     assertAdaptedJsonMatchesExpected(caseName, adapter);
 }
 
-TEST_F(AdapterTest, DISABLED_unshielded_nested)
+TEST_F(AdapterTest, unshielded_nested)
 {
     const std::string caseName = "unshielded_nested";
     Adapter adapter(inputFileFromCaseName(caseName));

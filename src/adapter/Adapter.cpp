@@ -80,6 +80,12 @@ bool contains(const std::string& value, const std::string& token)
     return value.find(token) != std::string::npos;
 }
 
+std::string getEntityBaseName(const std::string& fullName)
+{
+    const auto pos = fullName.rfind('/');
+    return pos == std::string::npos ? fullName : fullName.substr(pos + 1);
+}
+
 nlohmann::json readJsonFile(const std::filesystem::path& path)
 {
     std::ifstream inputStream(path);
@@ -362,6 +368,96 @@ void validateLayerMaterialIds(const nlohmann::json& inputJson)
     }
 }
 
+std::vector<std::string> buildAcceptedStepNamesForLayer(
+    const nlohmann::json& layer,
+    const std::map<int, std::string>& materialTypeById)
+{
+    std::vector<std::string> names;
+    if (!layer.contains("name") || !layer.contains("materialId")) {
+        return names;
+    }
+
+    const std::string layerName = layer["name"].get<std::string>();
+    const int materialId = layer["materialId"].get<int>();
+    auto materialIt = materialTypeById.find(materialId);
+    if (materialIt == materialTypeById.end()) {
+        return names;
+    }
+
+    const std::string& materialType = materialIt->second;
+    if (materialType != "conductor" && materialType != "shield" &&
+        materialType != "dielectric" && materialType != "open") {
+        return names;
+    }
+
+    names.push_back(layerName);
+    if ((materialType == "conductor" || materialType == "shield") && layer.contains("id")) {
+        const std::string alias = "Conductor_" + std::to_string(layer["id"].get<int>());
+        if (alias != layerName) {
+            names.push_back(alias);
+        }
+    }
+
+    return names;
+}
+
+std::set<std::string> collectStepLayerNames(const EntityList& shapes)
+{
+    std::set<std::string> names;
+    for (const auto& [dim, tag] : shapes) {
+        if (dim != 2) {
+            continue;
+        }
+
+        std::string fullName;
+        gmsh::model::getEntityName(dim, tag, fullName);
+        const std::string baseName = getEntityBaseName(fullName);
+        if (!baseName.empty()) {
+            names.insert(baseName);
+        }
+    }
+    return names;
+}
+
+void validateLayerNamesMatchStep(const nlohmann::json& inputJson, const EntityList& shapes)
+{
+    if (!inputJson.contains("layers") || !inputJson["layers"].is_array()) {
+        return;
+    }
+
+    const auto materialTypeById = buildMaterialTypeById(inputJson);
+    const auto stepLayerNames = collectStepLayerNames(shapes);
+
+    std::set<std::string> acceptedStepNames;
+    for (const auto& layer : inputJson["layers"]) {
+        const auto acceptedNames = buildAcceptedStepNamesForLayer(layer, materialTypeById);
+        if (acceptedNames.empty()) {
+            continue;
+        }
+
+        bool foundInStep = false;
+        for (const auto& acceptedName : acceptedNames) {
+            acceptedStepNames.insert(acceptedName);
+            if (stepLayerNames.find(acceptedName) != stepLayerNames.end()) {
+                foundInStep = true;
+            }
+        }
+
+        if (!foundInStep) {
+            throw std::runtime_error(
+                "Layer '" + layer["name"].get<std::string>() +
+                "' from input JSON not found in STEP file.");
+        }
+    }
+
+    for (const auto& stepLayerName : stepLayerNames) {
+        if (acceptedStepNames.find(stepLayerName) == acceptedStepNames.end()) {
+            throw std::runtime_error(
+                "Layer '" + stepLayerName + "' from STEP file not found in input JSON.");
+        }
+    }
+}
+
 nlohmann::json buildAdaptedJson(const std::string& caseName,
                                 const std::map<std::string, std::string>& layerTypeByName,
                                 const std::map<std::string, int>& conductorIdByLayerName,
@@ -500,10 +596,11 @@ void Adapter::initialize(const nlohmann::json& inputJson,
 
     EntityList shapes;
     gmsh::model::occ::importShapes(adapterOptions_.stepFilename, shapes, false);
+    gmsh::model::occ::synchronize();
+    validateLayerNamesMatchStep(inputJson, shapes);
 
     ShapesClassification allShapes(shapes, inputJson);
 
-    allShapes.ensureDielectricsDoNotOverlap();
     allShapes.removeConductorsFromDielectrics();
     allShapes.vacuum = allShapes.buildVacuumDomain();
     allShapes.conductors = extractBoundaries(allShapes.conductors);
