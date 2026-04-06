@@ -1,5 +1,5 @@
 {
-  "DriverOptions": {
+  "driverOptions": {
     "exportFolder": "Results/lansink2024_fdtd_cell/"
   },
   "model": {

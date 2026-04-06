@@ -1,0 +1,21 @@
+{
+  "adapterOptions": {
+    "gmshOptions": [
+      {"Mesh.MeshSizeMax": 10.0}
+    ]
+  },
+  "driverOptions": {
+    "exportFolder": "Results/lansink2024_small_one_centered/"
+  },
+  "materials": [
+    { "id": 1, "type": "conductor" },
+    { "id": 2, "type": "dielectric" },
+    { "id": 3, "type": "open" }
+  ],
+  "layers": [ 
+    { "name":"Conductor_0", "id": 0, "materialId": 1 },
+    { "name":"Conductor_1", "id": 1, "materialId": 1 },
+    { "name":"Specified_inner_region", "materialId": 2 },
+    { "name":"OpenBoundary", "materialId": 3 }
+  ]
+}

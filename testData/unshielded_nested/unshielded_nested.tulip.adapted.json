@@ -1,5 +1,5 @@
 {
-  "DriverOptions": {
+  "driverOptions": {
     "exportFolder": "Results/unshielded_nested/"
   },
   "model": {

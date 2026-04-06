@@ -1,5 +1,5 @@
 {
-  "DriverOptions": {
+  "driverOptions": {
     "exportFolder": "Results/conductor_and_outer_dielectric/"
   },
   "model": {

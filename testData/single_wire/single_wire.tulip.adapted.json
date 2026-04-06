@@ -1,5 +1,5 @@
 {
-  "DriverOptions": {
+  "driverOptions": {
     "exportFolder": "Results/single_wire/"
   },
   "model": {

@@ -1,5 +1,5 @@
 {
-  "DriverOptions": {
+  "driverOptions": {
     "exportParaViewSolution": true,
     "exportFolder": "Results/two_wires_shielded/"
   },

@@ -1,5 +1,5 @@
 {
-  "DriverOptions": {
+  "driverOptions": {
     "order": 3,
     "exportParaViewSolution": true,
     "exportFolder": "Results/lansink2024_large_one_centered_fdtd_cell/"

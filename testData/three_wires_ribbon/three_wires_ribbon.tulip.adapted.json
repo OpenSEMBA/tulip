@@ -1,5 +1,5 @@
 {
-  "DriverOptions": {
+  "driverOptions": {
     "exportFolder": "Results/three_wires_ribbon/"
   },
   "model": {

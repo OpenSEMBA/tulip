@@ -1,5 +1,5 @@
 {
-  "DriverOptions": {
+  "driverOptions": {
     "exportFolder": "Results/dielectric_unshielded_pair/"
   },
   "model": {

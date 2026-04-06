@@ -174,6 +174,20 @@ TEST_F(AdapterTest, lansink2024_single_wire_multipolar)
     assertAdaptedJsonMatchesExpected(caseName, adapter);
 }
 
+TEST_F(AdapterTest, lansink2024_small_one_centered)
+{
+    const std::string caseName = "lansink2024_small_one_centered";
+    Adapter adapter(inputFileFromCaseName(caseName));
+    assertAdaptedJsonMatchesExpected(caseName, adapter);
+}
+
+TEST_F(AdapterTest, lansink2024_small_one_centered_fdtd_cell)
+{
+    const std::string caseName = "lansink2024_small_one_centered_fdtd_cell";
+    Adapter adapter(inputFileFromCaseName(caseName));
+    assertAdaptedJsonMatchesExpected(caseName, adapter);
+}
+
 TEST_F(AdapterTest, single_wire)
 {
     const std::string caseName = "single_wire";

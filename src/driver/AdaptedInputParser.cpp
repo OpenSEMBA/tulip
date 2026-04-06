@@ -128,7 +128,7 @@ static void setIfExists(const json& j, T& entry, std::string labelToCheck)
 
 DriverOptions Parser::readDriverOptions() const
 {
-	const auto& j = json_.at("DriverOptions");
+	const auto& j = json_.at("driverOptions");
 	
 	DriverOptions res;
 	setIfExists<int>(j,  res.solverOptions.order, "order");
