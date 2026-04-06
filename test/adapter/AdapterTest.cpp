@@ -10,6 +10,7 @@
 #include <nlohmann/json.hpp>
 
 #include "Mesher.h"
+#include "ShapesClassification.h"
 #include "TestUtils.h"
 
 using namespace tulip;
@@ -33,6 +34,17 @@ nlohmann::json readInputJsonFromCaseName(const std::string& caseName)
     return inputJson;
 }
 
+double getEntityMass(const EntityList& entities)
+{
+    double totalMass = 0.0;
+    for (const auto& [dim, tag] : entities) {
+        double mass = 0.0;
+        gmsh::model::occ::getMass(dim, tag, mass);
+        totalMass += mass;
+    }
+    return totalMass;
+}
+
 } // namespace
 
 class AdapterTest : public ::testing::Test
@@ -43,9 +55,10 @@ protected:
         gmsh::initialize();
         gmsh::option::setNumber("General.Verbosity", 0);
     }
+
     void TearDown() override { gmsh::finalize(); }
 
-    int countEntitiesInPhysicalGroupWithName(const std::string &name)
+    int countEntitiesInPhysicalGroupWithName(const std::string& name)
     {
         auto [dim, tag] = Adapter::getPhysicalGroupWithName(name);
         if (dim < 0) {
@@ -53,18 +66,18 @@ protected:
         }
         std::vector<int> tags;
         gmsh::model::getEntitiesForPhysicalGroup(dim, tag, tags);
-        return (int)tags.size();
+        return static_cast<int>(tags.size());
     }
 
     // expectedCounts[i] corresponds to expectedNames[i]. If empty, entity counts are not checked.
-    void assertPhysicalGroups(const std::vector<std::string> &expectedNames,
-                              const std::vector<int> &expectedCounts = {})
+    void assertPhysicalGroups(const std::vector<std::string>& expectedNames,
+                              const std::vector<int>& expectedCounts = {})
     {
         gmsh::vectorpair pGs;
         gmsh::model::getPhysicalGroups(pGs);
 
         std::vector<std::string> pgNames;
-        for (const auto &[dim, tag] : pGs)
+        for (const auto& [dim, tag] : pGs)
         {
             std::string n;
             gmsh::model::getPhysicalName(dim, tag, n);
@@ -231,7 +244,7 @@ TEST_F(AdapterTest, realistic_case_with_dielectrics_fdtd_cell)
 {
     const std::string caseName = "realistic_case_with_dielectrics_fdtd_cell";
     Adapter adapter(testDataPath() + "realistic_case_with_dielectrics/" + caseName + ".tulip.input.json");
-    
+
     auto adaptedJSON = adapter.getAdaptedInputJSON();
     std::ifstream expectedFile(
         testDataPath() + "realistic_case_with_dielectrics/" + caseName + ".tulip.adapted.json");
@@ -309,3 +322,45 @@ TEST_F(AdapterTest, two_wires_with_touching_dielectric)
     assertAdaptedJsonMatchesExpected(caseName, adapter);
 }
 
+TEST_F(AdapterTest, overlapping_dielectrics_prioritize_higher_relative_permittivity)
+{
+    auto runCase = [&](double leftPermittivity, double rightPermittivity) {
+        gmsh::clear();
+        gmsh::model::add("dielectric_priority");
+
+        const int leftTag = gmsh::model::occ::addRectangle(0.0, 0.0, 0.0, 4.0, 2.0);
+        const int rightTag = gmsh::model::occ::addRectangle(2.0, 0.0, 0.0, 4.0, 2.0);
+        gmsh::model::occ::synchronize();
+        gmsh::model::setEntityName(2, leftTag, "LeftDielectric");
+        gmsh::model::setEntityName(2, rightTag, "RightDielectric");
+
+        const EntityList shapes = {{2, leftTag}, {2, rightTag}};
+        const nlohmann::json inputJson = {
+            {"materials", nlohmann::json::array({
+                {{"id", 1}, {"type", "dielectric"}, {"relativePermittivity", leftPermittivity}},
+                {{"id", 2}, {"type", "dielectric"}, {"relativePermittivity", rightPermittivity}}
+            })},
+            {"layers", nlohmann::json::array({
+                {{"name", "LeftDielectric"}, {"id", 0}, {"materialId", 1}},
+                {{"name", "RightDielectric"}, {"id", 1}, {"materialId", 2}}
+            })}
+        };
+
+        ShapesClassification classification(shapes, inputJson);
+        classification.ensureDielectricsDoNotOverlap();
+        gmsh::model::occ::synchronize();
+
+        return std::pair{
+            getEntityMass(classification.dielectrics.at("LeftDielectric")),
+            getEntityMass(classification.dielectrics.at("RightDielectric"))
+        };
+    };
+
+    const auto [leftHighLeftMass, leftHighRightMass] = runCase(4.0, 2.0);
+    EXPECT_NEAR(leftHighLeftMass, 8.0, 1e-9);
+    EXPECT_NEAR(leftHighRightMass, 4.0, 1e-9);
+
+    const auto [rightHighLeftMass, rightHighRightMass] = runCase(2.0, 4.0);
+    EXPECT_NEAR(rightHighLeftMass, 4.0, 1e-9);
+    EXPECT_NEAR(rightHighRightMass, 8.0, 1e-9);
+}

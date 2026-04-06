@@ -54,6 +54,10 @@ public:
 private:
     nlohmann::json crossSectionData_;
 
+    double getDielectricRelativePermittivity(const std::string& geometryName) const;
+    bool dielectricHasPriorityOver(const std::string& lhs,
+                                   const std::string& rhs) const;
+
     std::vector<std::string> getGeometryNamesByMaterialType(
         const std::string& materialType) const;
 

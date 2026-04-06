@@ -13,6 +13,8 @@ namespace tulip {
 namespace {
 constexpr double innerRegionBoxScalingFactor = 1.15;
 constexpr double farRegionBoxScalingFactor = 4.0;
+constexpr double defaultRelativePermittivity = 1.0;
+constexpr double relativePermittivityTolerance = 1e-12;
 
 std::string toLegacyMaterialType(const std::string& type) {
     if (type == "conductor" || type == "shield") return "PEC";
@@ -28,10 +30,10 @@ nlohmann::json buildCrossSectionFromInputFormat(const nlohmann::json& jsonData) 
         return crossSection;
     }
 
-    std::map<int, std::string> materialTypeById;
+    std::map<int, nlohmann::json> materialById;
     for (const auto& material : jsonData["materials"]) {
         if (material.contains("id") && material.contains("type")) {
-            materialTypeById[material["id"].get<int>()] = material["type"].get<std::string>();
+            materialById[material["id"].get<int>()] = material;
         }
     }
 
@@ -40,15 +42,20 @@ nlohmann::json buildCrossSectionFromInputFormat(const nlohmann::json& jsonData) 
             continue;
         }
         const int materialId = layer["materialId"].get<int>();
-        auto materialIt = materialTypeById.find(materialId);
-        if (materialIt == materialTypeById.end()) {
+        auto materialIt = materialById.find(materialId);
+        if (materialIt == materialById.end()) {
             continue;
         }
-        const std::string mappedType = toLegacyMaterialType(materialIt->second);
+        const auto& material = materialIt->second;
+        const std::string mappedType = toLegacyMaterialType(material["type"].get<std::string>());
         const std::string geometryName = layer["name"].get<std::string>();
+        nlohmann::json materialJson = {{"type", mappedType}};
+        if (mappedType == "Dielectric" && material.contains("relativePermittivity")) {
+            materialJson["relativePermittivity"] = material["relativePermittivity"];
+        }
         crossSection.push_back({
             {"name", geometryName},
-            {"material", {{"type", mappedType}}}
+            {"material", materialJson}
         });
         // Also register the legacy "Conductor_<id>" alias for PEC layers so that
         // STEP files using that naming convention are still matched correctly.
@@ -120,6 +127,39 @@ std::vector<std::string> ShapesClassification::getGeometryNamesByMaterialType(
         }
     }
     return names;
+}
+
+double ShapesClassification::getDielectricRelativePermittivity(
+    const std::string& geometryName) const
+{
+    for (const auto& geometry : crossSectionData_) {
+        if (geometry["name"].get<std::string>() != geometryName) {
+            continue;
+        }
+        const auto& material = geometry["material"];
+        if (!material.contains("type") || material["type"] != "Dielectric") {
+            continue;
+        }
+        if (material.contains("relativePermittivity")) {
+            return material["relativePermittivity"].get<double>();
+        }
+        return defaultRelativePermittivity;
+    }
+    return defaultRelativePermittivity;
+}
+
+bool ShapesClassification::dielectricHasPriorityOver(const std::string& lhs,
+                                                     const std::string& rhs) const
+{
+    const double lhsPermittivity = getDielectricRelativePermittivity(lhs);
+    const double rhsPermittivity = getDielectricRelativePermittivity(rhs);
+    if (lhsPermittivity > rhsPermittivity + relativePermittivityTolerance) {
+        return true;
+    }
+    if (std::abs(lhsPermittivity - rhsPermittivity) <= relativePermittivityTolerance) {
+        return lhs > rhs;
+    }
+    return false;
 }
 
 EntityMap ShapesClassification::getEntitiesByMaterialType(
@@ -230,7 +270,7 @@ void ShapesClassification::ensureDielectricsDoNotOverlap() {
     for (auto& [currentKey, currentSurfs] : dielectrics) {
         EntityList others;
         for (const auto& [key, surf] : dielectrics) {
-            if (key != currentKey) {
+            if (key != currentKey && dielectricHasPriorityOver(key, currentKey)) {
                 others.insert(others.end(), surf.begin(), surf.end());
             }
         }
