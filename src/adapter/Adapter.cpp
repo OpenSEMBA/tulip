@@ -5,6 +5,7 @@
 #include <cassert>
 #include <filesystem>
 #include <fstream>
+#include <set>
 #include <limits>
 #include <map>
 #include <stdexcept>
@@ -284,7 +285,7 @@ std::vector<std::string> buildDielectricLayerNamesById(const nlohmann::json& inp
 }
 
 AdapterOptions parseAdapterOptions(const nlohmann::json& inputJson,
-                                   const std::filesystem::path& inputPath,
+                                   const std::filesystem::path& inputDir,
                                    const std::string& caseName)
 {
     AdapterOptions options;
@@ -301,21 +302,64 @@ AdapterOptions parseAdapterOptions(const nlohmann::json& inputJson,
         if (adapterOptions.contains("stepFilename")) {
             options.stepFilename = adapterOptions["stepFilename"].get<std::string>();
         }
-        if (adapterOptions.contains("gmshOptions") && adapterOptions["gmshOptions"].is_object()) {
-            for (auto it = adapterOptions["gmshOptions"].begin();
-                 it != adapterOptions["gmshOptions"].end(); ++it) {
-                options.gmshOptions[it.key()] = it.value().get<double>();
+        if (adapterOptions.contains("gmshOptions")) {
+            const auto& gmshOptions = adapterOptions["gmshOptions"];
+            if (gmshOptions.is_object()) {
+                for (auto it = gmshOptions.begin(); it != gmshOptions.end(); ++it) {
+                    options.gmshOptions[it.key()] = it.value().get<double>();
+                }
+            } else if (gmshOptions.is_array()) {
+                for (const auto& entry : gmshOptions) {
+                    if (!entry.is_object()) {
+                        continue;
+                    }
+                    for (auto it = entry.begin(); it != entry.end(); ++it) {
+                        options.gmshOptions[it.key()] = it.value().get<double>();
+                    }
+                }
             }
         }
     }
 
     if (options.stepFilename.empty()) {
-        options.stepFilename = (inputPath.parent_path() / (caseName + ".step")).string();
+        options.stepFilename = (inputDir / (caseName + ".step")).string();
     } else {
-        options.stepFilename = (inputPath.parent_path() / options.stepFilename).string();
+        const std::filesystem::path configuredStep(options.stepFilename);
+        if (configuredStep.is_absolute()) {
+            options.stepFilename = configuredStep.string();
+        } else {
+            options.stepFilename = (inputDir / configuredStep).string();
+        }
     }
 
     return options;
+}
+
+void validateLayerMaterialIds(const nlohmann::json& inputJson)
+{
+    if (!inputJson.contains("materials") || !inputJson["materials"].is_array() ||
+        !inputJson.contains("layers") || !inputJson["layers"].is_array()) {
+        return;
+    }
+
+    std::set<int> materialIds;
+    for (const auto& material : inputJson["materials"]) {
+        if (material.contains("id")) {
+            materialIds.insert(material["id"].get<int>());
+        }
+    }
+
+    for (const auto& layer : inputJson["layers"]) {
+        if (!layer.contains("name") || !layer.contains("materialId")) {
+            continue;
+        }
+        const int materialId = layer["materialId"].get<int>();
+        if (materialIds.find(materialId) == materialIds.end()) {
+            throw std::runtime_error(
+                "Layer '" + layer["name"].get<std::string>() +
+                "' references unknown materialId " + std::to_string(materialId));
+        }
+    }
 }
 
 nlohmann::json buildAdaptedJson(const std::string& caseName,
@@ -404,7 +448,7 @@ nlohmann::json buildAdaptedJson(const std::string& caseName,
     });
 
     return {
-        {"DriverOptions", {{"exportFolder", "Results/" + caseName + "/"}}},
+        {"driverOptions", {{"exportFolder", "Results/" + caseName + "/"}}},
         {"model", {
             {"materials", materials},
             {"gmshFile", caseName + ".msh"}
@@ -416,32 +460,48 @@ nlohmann::json buildAdaptedJson(const std::string& caseName,
 
 Adapter::Adapter(const std::string& inputFile)
 {
-    if (!gmsh::isInitialized()) {
-        throw std::runtime_error("gmsh is not initialized.");
-    } 
-
-    gmsh::clear();
-    
     const std::filesystem::path inputPath(inputFile);
     if (!hasSuffix(inputPath.filename().string(), ".tulip.input.json")) {
         throw std::runtime_error("Unsupported input file extension: " + inputPath.string());
     }
 
     const nlohmann::json inputJson = readJsonFile(inputPath);
-    caseName_ = getCaseNameFromInputPath(inputPath);
-    inputDir_ = inputPath.parent_path().string();
+    initialize(inputJson, getCaseNameFromInputPath(inputPath), inputPath.parent_path().string());
+}
 
-    const AdapterOptions adapterOptions = parseAdapterOptions(inputJson, inputPath, caseName_);
-    if (!std::filesystem::exists(adapterOptions.stepFilename)) {
-        throw std::runtime_error("STEP file not found: " + adapterOptions.stepFilename);
+Adapter::Adapter(const nlohmann::json& inputJson,
+                 const std::string& caseName,
+                 const std::string& inputDir)
+{
+    initialize(inputJson, caseName, inputDir);
+}
+
+void Adapter::initialize(const nlohmann::json& inputJson,
+                         const std::string& caseName,
+                         const std::string& inputDir)
+{
+    if (!gmsh::isInitialized()) {
+        throw std::runtime_error("gmsh is not initialized.");
+    }
+
+    gmsh::clear();
+
+    caseName_ = caseName;
+    inputDir_ = inputDir;
+
+    validateLayerMaterialIds(inputJson);
+
+    adapterOptions_ = parseAdapterOptions(inputJson, std::filesystem::path(inputDir_), caseName_);
+    if (!std::filesystem::exists(adapterOptions_.stepFilename)) {
+        throw std::runtime_error("STEP file not found: " + adapterOptions_.stepFilename);
     }
 
     gmsh::model::add(caseName_);
 
     EntityList shapes;
-    gmsh::model::occ::importShapes(adapterOptions.stepFilename, shapes, false);
+    gmsh::model::occ::importShapes(adapterOptions_.stepFilename, shapes, false);
 
-    ShapesClassification allShapes(shapes, inputFile);
+    ShapesClassification allShapes(shapes, inputJson);
 
     allShapes.ensureDielectricsDoNotOverlap();
     allShapes.removeConductorsFromDielectrics();
@@ -456,7 +516,7 @@ Adapter::Adapter(const std::string& inputFile)
     const auto dielectricLayerNamesById = buildDielectricLayerNamesById(inputJson);
     buildPhysicalModel(allShapes, layerNameMapping);
 
-    for (const auto& [opt, val] : adapterOptions.gmshOptions) {
+    for (const auto& [opt, val] : adapterOptions_.gmshOptions) {
         gmsh::option::setNumber(opt, val);
     }
 
@@ -481,6 +541,10 @@ Adapter::Adapter(const std::string& inputFile)
 
 nlohmann::json Adapter::getAdaptedInputJSON() const {
     return adaptedInputJSON_;
+}
+
+const AdapterOptions& Adapter::getAdapterOptions() const {
+    return adapterOptions_;
 }
 
 void Adapter::buildPhysicalModel(

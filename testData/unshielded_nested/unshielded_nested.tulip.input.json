@@ -1,25 +1,11 @@
 {
   "materials": [
-    {
-      "id": 1,
-      "type": "conductor"
-    }
+    { "id": 1, "type": "conductor" },
+    { "id": 2, "type": "shield" }
   ],
   "layers": [
-    {
-      "name": "Conductor_2",
-      "id": 0,
-      "materialId": 1
-    },
-    {
-      "name": "Conductor_1",
-      "id": 1,
-      "materialId": 1
-    },
-    {
-      "name": "ExtraConductor",
-      "id": 2,
-      "materialId": 1
-    }
+    { "name": "Inner_wire", "id": 0, "materialId": 1},
+    { "name": "Shield", "id": 1, "materialId": 2},
+    { "name": "External_wire", "id": 2, "materialId": 1}
   ]
 }

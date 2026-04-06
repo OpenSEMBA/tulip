@@ -21,6 +21,9 @@ public:
     static const MeshingOptions DEFAULT_MESHING_OPTIONS;
 
     Adapter(const std::string& inputFile);
+        Adapter(const nlohmann::json& inputJson,
+            const std::string& caseName,
+            const std::string& inputDir = ".");
     
     void buildPhysicalModel(ShapesClassification& shapes,
                             const std::map<std::string, std::string>& labelMapping);
@@ -30,11 +33,17 @@ public:
     EntityMap extractBoundaries(const EntityMap& shapes);
 
     nlohmann::json getAdaptedInputJSON() const;
+    const AdapterOptions& getAdapterOptions() const;
 
 private:
     std::string caseName_;
     std::string inputDir_;
     nlohmann::json adaptedInputJSON_;
+    AdapterOptions adapterOptions_;
+
+    void initialize(const nlohmann::json& inputJson,
+                    const std::string& caseName,
+                    const std::string& inputDir);
 
     static std::pair<bool,
                      std::map<std::tuple<double, double, double>,

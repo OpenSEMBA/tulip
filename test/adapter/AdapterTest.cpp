@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <fstream>
+#include <stdexcept>
 #include <string>
 #include <vector>
 
@@ -12,6 +13,27 @@
 #include "TestUtils.h"
 
 using namespace tulip;
+
+namespace {
+
+std::string inputFolderFromCaseName(const std::string& caseName)
+{
+    return testDataPath() + caseName;
+}
+
+nlohmann::json readInputJsonFromCaseName(const std::string& caseName)
+{
+    std::ifstream inputStream(inputFileFromCaseName(caseName));
+    if (!inputStream.is_open()) {
+        throw std::runtime_error("Cannot open input JSON for case: " + caseName);
+    }
+
+    nlohmann::json inputJson;
+    inputStream >> inputJson;
+    return inputJson;
+}
+
+} // namespace
 
 class AdapterTest : public ::testing::Test
 {
@@ -111,6 +133,21 @@ TEST_F(AdapterTest, two_wires_open)
     assertAdaptedJsonMatchesExpected(caseName, adapter);
 }
 
+TEST_F(AdapterTest, two_wires_open_fails_if_layer_points_to_unknown_material)
+{
+    const std::string caseName = "two_wires_open";
+    nlohmann::json inputJson = readInputJsonFromCaseName(caseName);
+    ASSERT_TRUE(inputJson.contains("layers"));
+    ASSERT_TRUE(inputJson["layers"].is_array());
+    ASSERT_FALSE(inputJson["layers"].empty());
+
+    inputJson["layers"][0]["materialId"] = 9999;
+
+    EXPECT_THROW(
+        Adapter adapter(inputJson, caseName, inputFolderFromCaseName(caseName));,
+        std::runtime_error);
+}
+
 TEST_F(AdapterTest, dielectric_unshielded_pair)
 {
     const std::string caseName = "dielectric_unshielded_pair";
@@ -163,7 +200,14 @@ TEST_F(AdapterTest, conductor_and_outer_dielectric)
 TEST_F(AdapterTest, realistic_case_with_dielectrics_fdtd_cell)
 {
     const std::string caseName = "realistic_case_with_dielectrics_fdtd_cell";
-    Adapter adapter(inputFileFromCaseName(caseName));
+    Adapter adapter(testDataPath() + "realistic_case_with_dielectrics/" + caseName + ".tulip.input.json");
+    assertAdaptedJsonMatchesExpected(caseName, adapter);
+}
+
+TEST_F(AdapterTest, realistic_case_with_dielectrics_inner_region)
+{
+    const std::string caseName = "realistic_case_with_dielectrics_inner_region";
+    Adapter adapter(testDataPath() + "realistic_case_with_dielectrics/" + caseName + ".tulip.input.json");
     assertAdaptedJsonMatchesExpected(caseName, adapter);
 }
 
@@ -186,6 +230,18 @@ TEST_F(AdapterTest, lansink2024_small_one_centered_fdtd_cell)
     const std::string caseName = "lansink2024_small_one_centered_fdtd_cell";
     Adapter adapter(inputFileFromCaseName(caseName));
     assertAdaptedJsonMatchesExpected(caseName, adapter);
+}
+
+TEST_F(AdapterTest, lansink2024_small_one_centered_fdtd_cell_parses_adapter_options)
+{
+    const std::string caseName = "lansink2024_small_one_centered_fdtd_cell";
+    const nlohmann::json inputJson = readInputJsonFromCaseName(caseName);
+    Adapter adapter(inputJson, caseName, inputFolderFromCaseName(caseName));
+
+    const AdapterOptions& options = adapter.getAdapterOptions();
+    ASSERT_TRUE(options.gmshOptions.find("Mesh.MeshSizeMax") != options.gmshOptions.end());
+    EXPECT_DOUBLE_EQ(options.gmshOptions.at("Mesh.MeshSizeMax"), 15.0);
+    EXPECT_DOUBLE_EQ(options.gmshOptions.at("Mesh.ElementOrder"), 3.0);
 }
 
 TEST_F(AdapterTest, single_wire)

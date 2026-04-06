@@ -69,17 +69,24 @@ nlohmann::json buildCrossSectionFromInputFormat(const nlohmann::json& jsonData) 
 
 ShapesClassification::ShapesClassification(const EntityList& shapes,
                                            const std::string& jsonFile)
+    : ShapesClassification(shapes, [&jsonFile]() {
+        std::ifstream f(jsonFile);
+        if (!f.is_open()) {
+            throw std::runtime_error("Cannot open JSON file: " + jsonFile);
+        }
+        nlohmann::json jsonData;
+        f >> jsonData;
+        return jsonData;
+    }())
+{}
+
+ShapesClassification::ShapesClassification(const EntityList& shapes,
+                                           const nlohmann::json& jsonData)
 {
     gmsh::model::occ::synchronize();
 
     allShapes = shapes;
 
-    std::ifstream f(jsonFile);
-    if (!f.is_open()) {
-        throw std::runtime_error("Cannot open JSON file: " + jsonFile);
-    }
-    nlohmann::json jsonData;
-    f >> jsonData;
     if (jsonData.contains("CrossSection") && jsonData["CrossSection"].is_array()) {
         crossSectionData_ = jsonData["CrossSection"];
     } else {

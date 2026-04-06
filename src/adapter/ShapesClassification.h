@@ -28,6 +28,7 @@ public:
     Graph nestedGraph;
 
     ShapesClassification(const EntityList& shapes, const std::string& jsonFile);
+    ShapesClassification(const EntityList& shapes, const nlohmann::json& jsonData);
 
     static int getNumberFromName(const std::string& entityName,
                                  const std::string& label);

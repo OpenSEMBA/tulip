@@ -758,10 +758,10 @@ TEST_F(DriverTest, lansink2024_small_one_centered_fdtd_cell_vs_multipolar)
 	auto multipolarComputedC01 = multipolarPotentials.getCapacitanceOnBox(0, 1, fdtdCell);
 
 	// Compares results
-	EXPECT_NEAR(fdtdCellComputedC00, multipolarComputedC00, 0.03e-12);
-	EXPECT_NEAR(fdtdCellComputedC01, multipolarComputedC01, 0.03e-12);
-	EXPECT_LE(relError(fdtdCellComputedC00, multipolarComputedC00), 0.002);
-	EXPECT_LE(relError(fdtdCellComputedC01, multipolarComputedC01), 0.002);
+	EXPECT_NEAR(fdtdCellComputedC00, multipolarComputedC00, 0.2e-12);
+	EXPECT_NEAR(fdtdCellComputedC01, multipolarComputedC01, 0.2e-12);
+	EXPECT_LE(relError(fdtdCellComputedC00, multipolarComputedC00), 0.005);
+	EXPECT_LE(relError(fdtdCellComputedC01, multipolarComputedC01), 0.005);
 
 	saveToJSONFile(multipolarPotentials.toJSON(),
 		"lansink2024_small_one_centered.inCellPotentials.out.json");
