@@ -111,7 +111,7 @@ SolvedProblem Driver::solveForAllConductors(bool ignoreDielectrics)
 
 	auto conductors = model_.getMaterials().getConductors();
 	for (const auto c : conductors) {
-		std::cout << "- Solving conductor #" 
+		std::cout << "- Conductor #" 
 			<< c->getConductorId() << "... " << std::flush;
 
 		auto dbcs = baseParameters.dirichletBoundaries;
@@ -469,7 +469,7 @@ std::map<ConductorId, FieldReconstruction> Driver::getFieldParameters(
 		
 		auto condI = cI->getConductorId();
 
-		std::cout << "- Conductor #" << condI << "..." << std::flush;
+		std::cout << "- Conductor #" << condI << "... " << std::flush;
 		auto fp = getFloatingPotentials(condI, ignoreDielectrics);
 		
 		loadFloatingPotentials(sP, fp);

@@ -50,3 +50,22 @@ TEST_F(ModelTest, lansink2024_fdtd_cell_material_areas)
 	EXPECT_NEAR(0.0, relError(0.0396826990779316, model.getAreaOfMaterial(&dielectric5)), rTol);
 }
 
+TEST_F(ModelTest, bounding_box_realistic_case_with_dielectrics_fdtd_cell)
+{
+	const std::string CASE{ "realistic_case_with_dielectrics_fdtd_cell" };
+	auto fn =  casesFolder() + "realistic_case_with_dielectrics/" + CASE + ".tulip.adapted.json";
+	auto model{ Parser{ fn }.readModel() };
+	
+	auto bb = model.getInnerRegionBoundingBox();
+	EXPECT_NEAR(30e-3*30e-3, bb.area(), 1e-12);
+}
+
+TEST_F(ModelTest, bounding_box_realistic_case_with_dielectrics_inner_region)
+{
+	const std::string CASE{ "realistic_case_with_dielectrics_inner_region" };
+	auto fn =  casesFolder() + "realistic_case_with_dielectrics/" + CASE + ".tulip.adapted.json";
+	auto model{ Parser{ fn }.readModel() };
+	
+	auto bb = model.getInnerRegionBoundingBox();
+	EXPECT_NEAR(16.5e-3*16.5e-3, bb.area(), 1e-12);
+}

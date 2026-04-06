@@ -1,7 +1,7 @@
 {
   "driverOptions": {
     "exportFolder": "Results/realistic_case_with_dielectrics_fdtd_cell/",
-    "exportParaViewSolution": false
+    "exportParaViewSolution": true
   },
   "model": {
     "gmshFile": "realistic_case_with_dielectrics_fdtd_cell.msh",
