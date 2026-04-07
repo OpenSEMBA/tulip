@@ -801,7 +801,7 @@ TEST_F(DriverTest, lansink2024_small_one_centered_different_integration_centers)
 
 }
 
-TEST_F(DriverTest, DISABLED_realistic_case_with_dielectrics_fdtd_cell)
+TEST_F(DriverTest, realistic_case_with_dielectrics_fdtd_cell)
 {
 	const std::string CASE{ "realistic_case_with_dielectrics_fdtd_cell" };
 	auto dr = Driver::loadFromAdaptedFile(
@@ -828,7 +828,7 @@ TEST_F(DriverTest, DISABLED_realistic_case_with_dielectrics_fdtd_cell)
 	EXPECT_LE(relError(fdtdCellComputed_L_30, 5.9647510363871327e-08), rTol);
 }
 
-TEST_F(DriverTest, DISABLED_realistic_case_with_dielectrics_multipolar)
+TEST_F(DriverTest, realistic_case_with_dielectrics_multipolar)
 {
 	
 	const std::string CASE{ "realistic_case_with_dielectrics_inner_region" };
