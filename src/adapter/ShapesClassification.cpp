@@ -239,12 +239,21 @@ bool ShapesClassification::isOpenProblem() const {
 }
 
 void ShapesClassification::removeConductorsFromDielectrics() {
-    auto connections = nestedGraph.getConnections();
-    
-    auto removeConductors = [this, &connections](auto& container) {
+    std::string closedCaseRootConductor;
+    if (!isOpenCase) {
+        const auto roots = nestedGraph.roots();
+        if (!roots.empty() && conductors.count(roots.front())) {
+            closedCaseRootConductor = roots.front();
+        }
+    }
+
+    auto removeConductors = [this, &closedCaseRootConductor](auto& container) {
         for (auto& [name, surfs] : container) {
             EntityList pecSurfs;
             for (const auto& [condName, condSurfs] : conductors) {
+                if (!isOpenCase && condName == closedCaseRootConductor) {
+                    continue;
+                }
                 pecSurfs.insert(pecSurfs.end(), condSurfs.begin(), condSurfs.end());
             }
         
@@ -256,7 +265,7 @@ void ShapesClassification::removeConductorsFromDielectrics() {
             }
         }
     };
-    
+
     removeConductors(dielectrics);
     removeConductors(vacuum);
 

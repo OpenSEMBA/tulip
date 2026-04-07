@@ -115,3 +115,13 @@ TEST_F(ModelTest, domains_for_five_wires)
 
 	EXPECT_EQ(1, domains.size());
 }
+
+TEST_F(ModelTest, domains_for_realistic_case_with_dielectrics_fdtd_cell)
+{
+	const std::string CASE{ "realistic_case_with_dielectrics_fdtd_cell" };
+	auto fn =  casesFolder() + "realistic_case_with_dielectrics/" + CASE + ".tulip.adapted.json";
+	auto model{ Parser{ fn }.readModel() };
+
+	auto domains = model.getDomains();
+	EXPECT_EQ(1, domains.size());
+}
