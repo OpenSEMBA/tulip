@@ -75,12 +75,17 @@ TEST_F(ModelTest, domains_for_empty_coax)
 	auto model{ Parser{inputCase("empty_coax") }.readModel() };
 	
 	auto domains{ model.getDomains() };
-
+	
 	ASSERT_EQ(1, domains.size());
 	EXPECT_EQ(1, domains.count(0));
-
+	
 	EXPECT_EQ(Domain::UNDEFINED_GROUND,  domains.at(0).ground);
 	EXPECT_EQ(IdSet({0,1}),              domains.at(0).conductorIds);
+	
+	DomainTree dT(domains);
+	EXPECT_EQ(IdSet({0,1}), dT.getConductorsInDomain(0));
+	EXPECT_EQ(IdSet({0}), dT.getConductorsInsideConductor(0));
+	EXPECT_EQ(IdSet({1}), dT.getConductorsInsideConductor(1));
 }
 
 TEST_F(ModelTest, domains_for_nested_coax)
@@ -98,6 +103,12 @@ TEST_F(ModelTest, domains_for_nested_coax)
 
 	EXPECT_EQ(1,                         domains.at(1).ground);
 	EXPECT_EQ(IdSet({1,2}),              domains.at(1).conductorIds);
+
+	DomainTree dT(domains);
+	EXPECT_EQ(IdSet({0,1}), dT.getConductorsInDomain(0));
+	EXPECT_EQ(IdSet({0,1,2}), dT.getConductorsInsideConductor(0));
+	EXPECT_EQ(IdSet({1,2}), dT.getConductorsInsideConductor(1));
+	EXPECT_EQ(IdSet({2}), dT.getConductorsInsideConductor(2));
 }
 
 TEST_F(ModelTest, domains_for_realistic_case_with_dielectrics_fdtd_cell)

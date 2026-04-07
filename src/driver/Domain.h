@@ -27,9 +27,13 @@ public:
     DomainTree(const Domain::IdToDomain&);
 
     std::set<ConductorId> getConductorsInsideConductor(ConductorId) const;
+    std::set<ConductorId> getConductorsInDomain(Domain::Id) const;
 
     using DirectedGraph::getEdgesAsPairs; 
     using DirectedGraph::verticesSize;
+
+private:
+    Domain::IdToDomain idToDomain;
 };
 
 }
