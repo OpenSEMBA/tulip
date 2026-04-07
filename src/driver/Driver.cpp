@@ -50,7 +50,7 @@ Driver::Driver(Model&& model, const DriverOptions& opts) :
 	electric_ = solveForAllConductors(false);
 
 	if (model_.getMaterials().hasDielectrics()) {
-		std::cout << "Solving magnetostatic problems." << std::endl;
+		std::cout << "Solving magnetostatic problems:" << std::endl;
 		magnetic_ = solveForAllConductors(true);
 	}
 	else {

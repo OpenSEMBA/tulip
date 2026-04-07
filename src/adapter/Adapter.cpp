@@ -723,8 +723,9 @@ void Adapter::initialize(const nlohmann::json& inputJson,
         throw std::runtime_error("Duplicate mesh nodes found after meshing.");
     }
     
-    gmsh::write("./debug_state.geo_unrolled");
-    gmsh::write("./debug_state.vtk");
+    // For debugging.
+    // gmsh::write("./debug_state.geo_unrolled");
+    // gmsh::write("./debug_state.vtk");
     
     const std::filesystem::path mshPath = std::filesystem::path(inputDir_) / (caseName_ + ".msh");
     gmsh::write(mshPath.string());

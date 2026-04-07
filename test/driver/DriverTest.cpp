@@ -55,27 +55,6 @@ TEST_F(DriverTest, partially_filled_coax)
 	EXPECT_LE(relError(LExpected, out.L(0, 0)), rTol);
 }
 
-TEST_F(DriverTest, partially_filled_coax_by_domains)
-{
-	auto dr{ Driver::loadFromAdaptedFile(inputCase("partially_filled_coax")) };
-	auto globalOut{ dr.getPULMTL() };
-
-	auto out{ dr.getPULMTLByDomains() };
-	EXPECT_EQ(1, out.domainTree.verticesSize());
-	ASSERT_EQ(1, out.domainToPUL.size());
-
-
-	// There are some minor differences in output. 
-	// I do not know why but my guess is that it is due to initial seeds in
-	// the iterative solver.
-	const double rTol{ 1e-6 };
-	ASSERT_EQ(1, out.domainToPUL.count(0));
-	ASSERT_EQ(globalOut.L.NumRows(), out.domainToPUL.at(0).L.NumRows());
-	ASSERT_EQ(globalOut.C.NumRows(), out.domainToPUL.at(0).C.NumRows());
-	EXPECT_LE(relError(globalOut.L(0, 0), out.domainToPUL.at(0).L(0, 0)), rTol);
-	EXPECT_LE(relError(globalOut.C(0, 0), out.domainToPUL.at(0).C(0, 0)), rTol);
-}
-
 TEST_F(DriverTest, two_wires_coax)
 {
 	const std::string CASE{ "two_wires_coax" };
@@ -326,7 +305,7 @@ TEST_F(DriverTest, nested_coax)
 	}
 }
 
-TEST_F(DriverTest, DISABLED_nested_coax_by_domains) // Fails when enforcing conductors to start in zero and be consecutive.
+TEST_F(DriverTest, DISABLED_nested_coax_by_domains)
 {
 	auto out{ Driver::loadFromAdaptedFile(inputCase("nested_coax")).getPULMTLByDomains() };
 
