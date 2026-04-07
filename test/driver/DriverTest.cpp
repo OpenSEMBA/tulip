@@ -305,7 +305,7 @@ TEST_F(DriverTest, nested_coax)
 	}
 }
 
-TEST_F(DriverTest, DISABLED_nested_coax_by_domains)
+TEST_F(DriverTest, nested_coax_by_domains)
 {
 	auto out{ Driver::loadFromAdaptedFile(inputCase("nested_coax")).getPULMTLByDomains() };
 
@@ -326,6 +326,21 @@ TEST_F(DriverTest, DISABLED_nested_coax_by_domains)
 	ASSERT_EQ(1, out.domainToPUL.at(1).C.NumRows());
 	EXPECT_LE(relError(C12, out.domainToPUL.at(1).C(0, 0)), rTol);
 }
+
+TEST_F(DriverTest, DISABLED_coax_and_bare_wire)
+{
+	
+	const std::string CASE{ "coax_and_bare_wire" };
+	auto fn{ casesFolder() + CASE + "/" + CASE + ".tulip.adapted.json" };
+
+	auto dr = Driver::loadFromAdaptedFile(fn);
+	
+	dr.getPULMTLByDomains();
+
+	EXPECT_TRUE(false);
+
+}
+
 
 TEST_F(DriverTest, agrawal1981)
 {

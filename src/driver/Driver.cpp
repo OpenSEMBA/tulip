@@ -288,14 +288,83 @@ PULParametersByDomain Driver::getPULMTLByDomains()
 	PULParametersByDomain res;
 
 	auto idToDomain{ model_.getDomains() };
-
-	// TODO. This can be done loading already calculated solutions.
-	// 1. Set the potential to 1.0 in active and interior conductors of 
-	// a shield.
-	// 2. Sum all the cahrgers of interior and active conductor to get
-	// charge on surface of active.
-
 	res.domainTree = DomainTree{ idToDomain };
+
+	// Build mapping from conductor ID to global matrix index.
+	auto conductors = model_.getMaterials().getConductors();
+	std::map<ConductorId, int> condIdToIndex;
+	int idx = 0;
+	for (const auto& c : conductors) {
+		condIdToIndex[c->getConductorId()] = idx++;
+	}
+
+	// Get global generalized C matrices.
+	auto globalGC = getGeneralizedCMatrix(false);
+	auto globalGC0 = getGeneralizedCMatrix(true);
+
+	for (const auto& [domId, domain] : idToDomain) {
+		// Order conductors: ground first, then rest sorted.
+		std::vector<ConductorId> orderedConds;
+		ConductorId groundCond = (domain.ground != Domain::UNDEFINED_GROUND)
+			? domain.ground
+			: *domain.conductorIds.begin();
+		orderedConds.push_back(groundCond);
+		for (auto cId : domain.conductorIds) {
+			if (cId != groundCond) {
+				orderedConds.push_back(cId);
+			}
+		}
+
+		int n = (int)orderedConds.size();
+
+		// Build domain-local generalized C by aggregating interior conductors.
+		// When exciting conductor i, set V=1 on i and all conductors inside it.
+		// The effective charge on conductor j is the sum of charges on j and
+		// all conductors inside it.
+		auto buildDomainGC = [&](const mfem::DenseMatrix& gC) {
+			mfem::DenseMatrix domGC(n);
+			for (int i = 0; i < n; i++) {
+				auto insideI = res.domainTree.getConductorsInsideConductor(orderedConds[i]);
+				for (int j = 0; j < n; j++) {
+					auto insideJ = res.domainTree.getConductorsInsideConductor(orderedConds[j]);
+					double val = 0.0;
+					for (auto m : insideI) {
+						auto mIt = condIdToIndex.find(m);
+						if (mIt == condIdToIndex.end()) continue;
+						for (auto k : insideJ) {
+							auto kIt = condIdToIndex.find(k);
+							if (kIt == condIdToIndex.end()) continue;
+							val += gC(mIt->second, kIt->second);
+						}
+					}
+					domGC(i, j) = val;
+				}
+			}
+			return domGC;
+		};
+
+		// Extract standard C (remove ground row/col).
+		auto extractStdC = [&](const mfem::DenseMatrix& domGC) {
+			mfem::DenseMatrix C(n - 1, n - 1);
+			for (int i = 1; i < n; i++) {
+				for (int j = 1; j < n; j++) {
+					C(i - 1, j - 1) = domGC(i, j);
+				}
+			}
+			return C;
+		};
+
+		PULParameters pul;
+
+		pul.C = extractStdC(buildDomainGC(globalGC));
+		pul.C *= EPSILON0_SI;
+
+		pul.L = extractStdC(buildDomainGC(globalGC0));
+		pul.L.Invert();
+		pul.L *= MU0_SI;
+
+		res.domainToPUL[domId] = pul;
+	}
 
 	return res;
 }
