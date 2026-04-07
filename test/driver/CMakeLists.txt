@@ -9,7 +9,6 @@ add_executable(driver_tests
     "mfemTest.cpp"
     "ResultsTest.cpp"
     "DirectedGraphTest.cpp"
-    "DomainTest.cpp"
     "multipolarExpansionTest.cpp"
     "ModelTest.cpp"
     "ParserTest.cpp"

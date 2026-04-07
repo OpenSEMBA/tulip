@@ -69,3 +69,40 @@ TEST_F(ModelTest, bounding_box_realistic_case_with_dielectrics_inner_region)
 	auto bb = model.getInnerRegionBoundingBox();
 	EXPECT_NEAR(16.5e-3*16.5e-3, bb.area(), 1e-12);
 }
+
+TEST_F(ModelTest, build_domains_for_empty_coax)
+{
+	auto model{ Parser{inputCase("empty_coax") }.readModel() };
+	
+	auto domains{ model.getDomains() };
+
+	ASSERT_EQ(1, domains.size());
+	EXPECT_EQ(1, domains.count(0));
+
+	EXPECT_EQ(0,                         domains.at(0).ground);
+	EXPECT_EQ(IdSet({0,1}),              domains.at(0).conductorIds);
+	EXPECT_EQ(model.getMesh()->GetNE(),  domains.at(0).elems.size());
+	EXPECT_EQ(model.getMesh()->GetNBE(), domains.at(0).bdrElems.size());
+}
+
+TEST_F(ModelTest, nested_coax_domains)
+{
+	auto model{ Parser{ inputCase("nested_coax")}.readModel() };
+
+	auto domains{ model.getDomains() };
+
+	ASSERT_EQ(2, domains.size());
+	ASSERT_EQ(1, domains.count(0));
+	ASSERT_EQ(1, domains.count(1));
+
+	EXPECT_EQ(0,                         domains.at(0).ground);
+	EXPECT_EQ(IdSet({0,1}),              domains.at(0).conductorIds);
+	EXPECT_GT(model.getMesh()->GetNE(),  domains.at(0).elems.size());
+	EXPECT_GT(model.getMesh()->GetNBE(), domains.at(0).bdrElems.size());
+
+	EXPECT_EQ(1,                         domains.at(1).ground);
+	EXPECT_EQ(IdSet({1,2}),              domains.at(1).conductorIds);
+	EXPECT_GT(model.getMesh()->GetNE(),  domains.at(1).elems.size());
+	EXPECT_GT(model.getMesh()->GetNBE(), domains.at(1).bdrElems.size());
+}
+

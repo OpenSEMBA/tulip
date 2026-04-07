@@ -3,7 +3,7 @@
 #include <nlohmann/json.hpp>
 
 #include "FES.h"
-#include "Domain.h"
+#include "Model.h"
 #include "multipolarExpansion.h"
 
 namespace tulip {

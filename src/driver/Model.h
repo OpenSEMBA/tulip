@@ -2,7 +2,7 @@
 
 #include "AttrToValueMap.h"
 #include "Materials.h"
-
+#include "Domain.h"
 #include "mfem.hpp"
 
 #include <array>
@@ -59,6 +59,8 @@ public:
 	void setGroundConductorId(ConductorId id) { groundConductorId_ = id; }
 	ConductorId getGroundConductorId() const { return groundConductorId_; }
 
+	Domain::IdToDomain getDomains() const;
+
 	Openness determineOpenness() const;
 	
 	double getAreaOfMaterial(const Material* m) const;
@@ -70,6 +72,8 @@ private:
 	Materials materials_;
 	std::unique_ptr<mfem::Mesh> mesh_;
 	ConductorId groundConductorId_{ 0 };
+	
+	DirectedGraph buildMeshGraph() const;
 };
 
 }

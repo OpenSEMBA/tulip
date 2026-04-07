@@ -1,7 +1,7 @@
 #pragma once
 
 #include "DirectedGraph.h"
-#include "Model.h"
+#include "Materials.h"
 
 namespace tulip {
 
@@ -14,12 +14,6 @@ struct Domain {
     std::set<ConductorId> conductorIds;
     ElementIds elems;   
     ElementIds bdrElems;
-
-    static IdToDomain buildDomains(const Model&);
-    static Model buildModelForDomain(
-        mfem::Mesh& globalMesh,
-        const Materials& materials,
-        const Domain& domain);
 };
 
 

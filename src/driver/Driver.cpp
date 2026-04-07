@@ -287,14 +287,13 @@ PULParametersByDomain Driver::getPULMTLByDomains()
 {
 	PULParametersByDomain res;
 
-	auto idToDomain{ Domain::buildDomains(model_) };
+	auto idToDomain{ model_.getDomains() };
 
-	for (const auto& [id, domain] : idToDomain) {
-		auto globalMesh{ *model_.getMesh() };
-		auto domainModel = Domain::buildModelForDomain(globalMesh, model_.getMaterials(), domain);
-		Driver subDomainDriver(std::move(domainModel),opts_);
-		res.domainToPUL[id] = subDomainDriver.getPULMTL();
-	}
+	// TODO. This can be done loading already calculated solutions.
+	// 1. Set the potential to 1.0 in active and interior conductors of 
+	// a shield.
+	// 2. Sum all the cahrgers of interior and active conductor to get
+	// charge on surface of active.
 
 	res.domainTree = DomainTree{ idToDomain };
 

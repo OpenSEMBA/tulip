@@ -64,6 +64,111 @@ Model::Openness Model::determineOpenness() const
 	}
 }
 
+DirectedGraph Model::buildMeshGraph() const
+{
+	DirectedGraph meshGraph;
+	for (auto e{ 0 }; e < mesh_->GetNE(); ++e) {
+		const mfem::Element* elem{ mesh_->GetElement(e) };
+		DirectedGraph::Path vs(elem->GetNVertices());
+		for (auto i{ 0 }; i < vs.size(); ++i) {
+			vs[i] = elem->GetVertices()[i];
+		}
+		meshGraph.addClosedPath(vs);
+	}
+
+	return meshGraph;
+}
+
+Domain::ElementIds getBdrElemsInDomain(
+	const Material* mat, 
+	const IdSet& verticesInDomain, 
+	const mfem::Mesh& mesh)
+{
+	Domain::ElementIds res;
+	
+	for (auto e{ 0 }; e < mesh.GetNBE(); ++e) {
+		const mfem::Element* elem{ mesh.GetBdrElement(e) };
+		if (elem->GetAttribute() != mat->getAttribute()) {
+			continue;
+		}
+		IdSet verticesWithAttribute;
+		verticesWithAttribute.insert(
+			elem->GetVertices(),
+			elem->GetVertices() + elem->GetNVertices());
+		
+		IdSet common;
+		std::set_intersection(
+			verticesInDomain.begin(), verticesInDomain.end(),
+			verticesWithAttribute.begin(), verticesWithAttribute.end(),
+			std::inserter(common, common.begin()) );
+
+		if (common.size() < 2) {
+			continue;
+		}
+
+		res.insert(e);
+	}
+
+	return res;
+}
+
+Domain::IdToDomain Model::getDomains() const
+{
+	
+	Domain::IdToDomain res;
+	Domain::Id id{ 0 };
+	for (const auto& domainMeshGraph : buildMeshGraph().split()) {
+
+		const auto vsInDomain{ domainMeshGraph.getVertices() };
+
+		Domain domain;
+		// Determine which elements belong to domain.
+		for (auto e{ 0 }; e < mesh_->GetNE(); ++e) {
+			const auto& elem{ mesh_->GetElement(e) };
+			if (std::all_of(
+				elem->GetVertices(), 
+				elem->GetVertices() + elem->GetNVertices(),
+				[&vsInDomain](int i) { return vsInDomain.count(i) == 1; }
+			)) {
+				domain.elems.insert(e);
+			}
+		}
+
+		// Determine conductors in domain.
+		for (const auto* pec : getMaterials().getConductors()) {
+			auto bdrElems = getBdrElemsInDomain(pec, vsInDomain, *mesh_);
+			if (!bdrElems.empty()) {
+				domain.conductorIds.insert(pec->getConductorId());
+				domain.bdrElems.insert(bdrElems.begin(), bdrElems.end());
+			}
+		}
+
+		//
+		res[id++] = domain;
+	}
+
+	// Sets grounds.
+	for (auto& [domId, dom] : res) {
+		if (dom.conductorIds.count(0) == 1) {
+			dom.ground = 0;
+		}
+	}
+	for (const auto& edge : DomainTree{ res }.getEdgesAsPairs()) {
+		const auto& c1{ res[edge.first].conductorIds };
+		const auto& c2{ res[edge.second].conductorIds };
+		std::set<ConductorId> common;
+		std::set_intersection(
+			c1.begin(), c1.end(),
+			c2.begin(), c2.end(),
+			std::inserter(common, common.begin())
+		);
+		assert(common.size() == 1);
+		res[edge.second].ground = *common.begin();
+	}
+
+	return res;
+}
+
 double getBoundaryElementMeasure(const Mesh& mesh, int bdrElemId)
 {
 	const auto* elem = mesh.GetBdrElement(bdrElemId);
