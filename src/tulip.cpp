@@ -1,17 +1,15 @@
 
-#include "Driver.h"
-#include "Adapter.h"
+#include "Tulip.h"
 
-#include <filesystem>
 #include <boost/program_options.hpp>
+#include <iostream>
 
 namespace po = boost::program_options;
 
-// TODO change this to be a minimal launcher which creates an object called Tulip. Include a test with empty_coax.
 int main(int argc, char* argv[])
 {
-	// Parses arguments.
 	std::string inputFilename;
+	std::string exportFolder;
 	
 	po::options_description optionsDescription(
 		"-- tulip --\n"
@@ -21,7 +19,8 @@ int main(int argc, char* argv[])
 	);
 	optionsDescription.add_options()
 		("help,h", "this help message")
-		("input,i", po::value(&inputFilename), "input JSON file to use a .step file.")
+		("input,i", po::value(&inputFilename), "adapted JSON file (.tulip.adapted.json)")
+		("output,o", po::value(&exportFolder), "optional output folder for results")
 	;
 
 	po::variables_map vm;
@@ -32,24 +31,14 @@ int main(int argc, char* argv[])
 		std::cout << optionsDescription << std::endl;
 		return 0;
 	}
-	
-	std::cout << optionsDescription << std::endl;
-	std::cout << "Using input file: " << inputFilename << std::endl;
 
-	// Launcher.
-	std::filesystem::path folder{ 
-		"./" + std::filesystem::path{inputFilename}.parent_path() + "/"
-	};
+	try {
+		tulip::Tulip tulip(inputFilename, exportFolder);
+		tulip.run();
+	} catch (const std::exception& e) {
+		std::cerr << "Error: " << e.what() << std::endl;
+		return 1;
+	}
 
-	auto adapter{ Adapter::loadFromFile(inputFilename) };
-	adapter.run();
-	
-	Driver driver{ 
-		adapter.getModel(),
-		adapter.getDriverOptions()
-	};
-	driver.setExportFolder(folder);
-	driver.run();
-
-	std::cout << "-- tulip finished successfully --" << std::endl;
+	return 0;
 }

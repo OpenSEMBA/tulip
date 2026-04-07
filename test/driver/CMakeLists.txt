@@ -13,10 +13,13 @@ add_executable(driver_tests
     "ModelTest.cpp"
     "ParserTest.cpp"
     "SolverTest.cpp"
+    "LauncherTest.cpp"
+    "../../src/Tulip.cpp"
 )
 
 target_include_directories(driver_tests PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}
+    ${CMAKE_SOURCE_DIR}/src
 )
 
 target_link_libraries(driver_tests
