@@ -1,6 +1,6 @@
 {
   "driverOptions": {
-    "exportFolder": "Results/unshielded_nested/"
+    "exportFolder": "Results/coax_and_bare_wire/"
   },
   "materials": [
     { "id": 1, "type": "conductor" },

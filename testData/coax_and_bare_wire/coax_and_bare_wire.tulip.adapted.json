@@ -1,9 +1,9 @@
 {
   "driverOptions": {
-    "exportFolder": "Results/unshielded_nested/"
+    "exportFolder": "Results/coax_and_bare_wire/"
   },
   "model": {
-    "gmshFile": "unshielded_nested.msh",
+    "gmshFile": "coax_and_bare_wire.msh",
     "materials": [
       { "attribute": 3, "conductorId": 0, "type": "conductor" },
       { "attribute": 6, "conductorId": 1, "type": "conductor" },

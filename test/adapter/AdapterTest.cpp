@@ -308,9 +308,9 @@ TEST_F(AdapterTest, single_wire)
     assertAdaptedJsonMatchesExpected(caseName, adapter);
 }
 
-TEST_F(AdapterTest, unshielded_nested)
+TEST_F(AdapterTest, coax_and_bare_wire)
 {
-    const std::string caseName = "unshielded_nested";
+    const std::string caseName = "coax_and_bare_wire";
     Adapter adapter(inputFileFromCaseName(caseName));
     assertAdaptedJsonMatchesExpected(caseName, adapter);
 }
