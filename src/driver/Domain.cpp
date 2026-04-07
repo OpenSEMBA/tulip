@@ -6,22 +6,6 @@ DomainTree::DomainTree(const Domain::IdToDomain& domains)
 {
 	idToDomain = domains;
 
-	bool foundOnce{ false };
-	for (const auto& [id, dom] : domains) {
-		if (dom.conductorIds.count(Domain::UNDEFINED_GROUND) && !foundOnce) {
-			foundOnce = true;
-			continue;
-		}
-		if (dom.conductorIds.count(Domain::UNDEFINED_GROUND) && foundOnce) {
-			throw std::runtime_error(
-				"Only one domain can have undefined ground."
-			);
-		}
-	}
-	if (!foundOnce) {
-		throw std::runtime_error("Root domain not found.");
-	}
-	
 	std::multimap<ConductorId, Domain::Id> condIdToDomId;
 	for (const auto& [domId, dom] : domains) {
 		addVertex(domId);
