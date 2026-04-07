@@ -10,7 +10,9 @@ struct Domain {
     using ElementIds = std::set<int>;
     using IdToDomain = std::map<Id, Domain>;
 
-    ConductorId ground{ -1 };
+    static constexpr int UNDEFINED_GROUND = -1;
+
+    ConductorId ground{ UNDEFINED_GROUND };
     std::set<ConductorId> conductorIds;
     ElementIds elems;   
     ElementIds bdrElems;
@@ -19,11 +21,12 @@ struct Domain {
 
 // DomainTree is a tree graph with a single root having
 // a vertex for each domain.
-// The root contains Materialid 0.
 class DomainTree : private DirectedGraph {
 public:
     DomainTree() = default;
     DomainTree(const Domain::IdToDomain&);
+
+    std::set<ConductorId> getConductorsInsideConductor(ConductorId) const;
 
     using DirectedGraph::getEdgesAsPairs; 
     using DirectedGraph::verticesSize;

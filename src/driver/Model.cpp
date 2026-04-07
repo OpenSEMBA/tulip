@@ -114,45 +114,23 @@ Domain::ElementIds getBdrElemsInDomain(
 
 Domain::IdToDomain Model::getDomains() const
 {
-	
 	Domain::IdToDomain res;
 	Domain::Id id{ 0 };
+
+	// Determine conductors in domain.
 	for (const auto& domainMeshGraph : buildMeshGraph().split()) {
-
 		const auto vsInDomain{ domainMeshGraph.getVertices() };
-
 		Domain domain;
-		// Determine which elements belong to domain.
-		for (auto e{ 0 }; e < mesh_->GetNE(); ++e) {
-			const auto& elem{ mesh_->GetElement(e) };
-			if (std::all_of(
-				elem->GetVertices(), 
-				elem->GetVertices() + elem->GetNVertices(),
-				[&vsInDomain](int i) { return vsInDomain.count(i) == 1; }
-			)) {
-				domain.elems.insert(e);
-			}
-		}
-
-		// Determine conductors in domain.
 		for (const auto* pec : getMaterials().getConductors()) {
 			auto bdrElems = getBdrElemsInDomain(pec, vsInDomain, *mesh_);
 			if (!bdrElems.empty()) {
 				domain.conductorIds.insert(pec->getConductorId());
-				domain.bdrElems.insert(bdrElems.begin(), bdrElems.end());
 			}
 		}
-
-		//
 		res[id++] = domain;
 	}
 
-	// Sets grounds.
-	for (auto& [domId, dom] : res) {
-		if (dom.conductorIds.count(0) == 1) {
-			dom.ground = 0;
-		}
-	}
+	// Sets grounds. root domain is left with the default value.
 	for (const auto& edge : DomainTree{ res }.getEdgesAsPairs()) {
 		const auto& c1{ res[edge.first].conductorIds };
 		const auto& c2{ res[edge.second].conductorIds };
@@ -162,7 +140,6 @@ Domain::IdToDomain Model::getDomains() const
 			c2.begin(), c2.end(),
 			std::inserter(common, common.begin())
 		);
-		assert(common.size() == 1);
 		res[edge.second].ground = *common.begin();
 	}
 
