@@ -67,6 +67,9 @@ private:
         bool includeConductors);
     std::map<ConductorId, FieldReconstruction> getFieldParameters(
         bool ignoreDielectrics);
+    std::map<ConductorId, double> computeFloatingPotentialsFromC(
+        ConductorId prescribedId,
+        const mfem::DenseMatrix& C) const;
 
 };
 

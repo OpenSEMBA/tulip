@@ -308,8 +308,6 @@ std::map<ConductorId, double> Driver::getFloatingPotentials(
 	// i.e. with zero charge.
 	// For open problems returns a map with N entries.
 
-	std::map<ConductorId, double> res;
-
 	auto conductors = model_.getMaterials().getConductors();
 
 	bool prescribedIdExists = false;
@@ -330,6 +328,7 @@ std::map<ConductorId, double> Driver::getFloatingPotentials(
 
 	// Special case for one conductor.
 	if (conductors.size() == 1) {
+		std::map<ConductorId, double> res;
 		auto cId = conductors.front()->getConductorId();
 		res[cId] = 1.0;
 		return res;
@@ -350,6 +349,16 @@ std::map<ConductorId, double> Driver::getFloatingPotentials(
 		throw std::runtime_error(
 			"Floating potentials not implemented for this kind of openness.");
 	}
+
+	return computeFloatingPotentialsFromC(prescribedId, C);
+}
+
+std::map<ConductorId, double> Driver::computeFloatingPotentialsFromC(
+	ConductorId prescribedId,
+	const mfem::DenseMatrix& C) const
+{
+	std::map<ConductorId, double> res;
+	auto conductors = model_.getMaterials().getConductors();
 	
 	// Forms system of equations to determine floating potentials. 
 	// Q1 = C11*V1 + C21*V2 + ....
@@ -464,12 +473,17 @@ std::map<ConductorId, FieldReconstruction> Driver::getFieldParameters(
 	} 
 	std::cout << "- Computing " << fieldType << " field coefficients." << std::endl;
 	const auto conductors = model_.getMaterials().getConductors();
+
+	// Compute the C matrix once for all conductors to avoid
+	// reassembling operators N times (was O(N^2), now O(N)).
+	mfem::DenseMatrix C = getGeneralizedCMatrix(ignoreDielectrics);
+
 	for (const auto& cI : conductors) {
 		
 		auto condI = cI->getConductorId();
 
 		std::cout << "- Conductor #" << condI << "... " << std::flush;
-		auto fp = getFloatingPotentials(condI, ignoreDielectrics);
+		auto fp = computeFloatingPotentialsFromC(condI, C);
 		
 		loadFloatingPotentials(sP, fp);
 
