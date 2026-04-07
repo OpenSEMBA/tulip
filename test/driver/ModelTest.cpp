@@ -70,7 +70,7 @@ TEST_F(ModelTest, bounding_box_realistic_case_with_dielectrics_inner_region)
 	EXPECT_NEAR(16.5e-3*16.5e-3, bb.area(), 1e-12);
 }
 
-TEST_F(ModelTest, build_domains_for_empty_coax)
+TEST_F(ModelTest, domains_for_empty_coax)
 {
 	auto model{ Parser{inputCase("empty_coax") }.readModel() };
 	
@@ -85,7 +85,7 @@ TEST_F(ModelTest, build_domains_for_empty_coax)
 	EXPECT_EQ(model.getMesh()->GetNBE(), domains.at(0).bdrElems.size());
 }
 
-TEST_F(ModelTest, nested_coax_domains)
+TEST_F(ModelTest, domains_for_nested_coax)
 {
 	auto model{ Parser{ inputCase("nested_coax")}.readModel() };
 
@@ -106,3 +106,12 @@ TEST_F(ModelTest, nested_coax_domains)
 	EXPECT_GT(model.getMesh()->GetNBE(), domains.at(1).bdrElems.size());
 }
 
+
+TEST_F(ModelTest, domains_for_five_wires)
+{
+	auto model{ Parser{inputCase("five_wires") }.readModel() };
+	
+	auto domains{ model.getDomains() };
+
+	EXPECT_EQ(1, domains.size());
+}

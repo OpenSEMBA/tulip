@@ -697,12 +697,12 @@ void Adapter::initialize(const nlohmann::json& inputJson,
     ShapesClassification allShapes(shapes, inputJson);
 
     allShapes.ensureDielectricsDoNotOverlap();
-    allShapes.removeConductorsFromDielectrics();
     allShapes.vacuum = allShapes.buildVacuumDomain();
     enforceDielectricVacuumContinuity(allShapes.dielectrics, allShapes.vacuum);
+
+    allShapes.removeConductorsFromDielectrics();
     allShapes.conductors = extractBoundaries(allShapes.conductors);
     
-
     const auto layerNameMapping = buildLayerNameMapping(inputJson);
     const auto layerTypeMapping = buildLayerTypeMapping(inputJson);
     const auto layerDielectricPropertiesMapping =

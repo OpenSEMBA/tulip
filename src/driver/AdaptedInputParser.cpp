@@ -37,6 +37,11 @@ Parser::Parser(const std::string& filename) :
 	json_(std::move(readJSON(filename)))
 {}
 
+Parser::Parser(const std::string& filename, const nlohmann::json& j) :
+	filename_{filename},
+	json_(j)
+{}
+
 Materials readMaterials(const json& j)
 {
 	Materials res;

@@ -10,6 +10,7 @@ namespace tulip {
 class Parser {
 public:
 	Parser(const std::string& filename);
+	Parser(const std::string& filename, const nlohmann::json&);
 
 	Model readModel() const;
 	DriverOptions readDriverOptions() const;

@@ -94,11 +94,8 @@ ShapesClassification::ShapesClassification(const EntityList& shapes,
 
     allShapes = shapes;
 
-    if (jsonData.contains("CrossSection") && jsonData["CrossSection"].is_array()) {
-        crossSectionData_ = jsonData["CrossSection"];
-    } else {
-        crossSectionData_ = buildCrossSectionFromInputFormat(jsonData);
-    }
+
+    crossSectionData_ = buildCrossSectionFromInputFormat(jsonData);
 
     conductors  = getPECs(shapes);
     dielectrics = getDielectrics(shapes);
@@ -243,25 +240,25 @@ bool ShapesClassification::isOpenProblem() const {
 
 void ShapesClassification::removeConductorsFromDielectrics() {
     auto connections = nestedGraph.getConnections();
-
-    for (auto& [dielName, dielSurfs] : dielectrics) {
-        EntityList pecSurfs;
-        auto it = connections.find(dielName);
-        if (it != connections.end()) {
-            for (const auto& childName : it->second) {
-                if (conductors.count(childName)) {
-                    const auto& surf = conductors.at(childName);
-                    pecSurfs.insert(pecSurfs.end(), surf.begin(), surf.end());
-                }
+    
+    auto removeConductors = [this, &connections](auto& container) {
+        for (auto& [name, surfs] : container) {
+            EntityList pecSurfs;
+            for (const auto& [condName, condSurfs] : conductors) {
+                pecSurfs.insert(pecSurfs.end(), condSurfs.begin(), condSurfs.end());
+            }
+        
+            if (!pecSurfs.empty()) {
+                gmsh::vectorpair outDimTags;
+                std::vector<gmsh::vectorpair> outMap;
+                gmsh::model::occ::cut(surfs, pecSurfs, outDimTags, outMap, -1, true, false);
+                surfs = outDimTags;
             }
         }
-        if (pecSurfs.empty()) continue;
-
-        gmsh::vectorpair outDimTags;
-        std::vector<gmsh::vectorpair> outMap;
-        gmsh::model::occ::cut(dielSurfs, pecSurfs, outDimTags, outMap, -1, true, false);
-        dielSurfs = outDimTags;
-    }
+    };
+    
+    removeConductors(dielectrics);
+    removeConductors(vacuum);
 
     gmsh::model::occ::synchronize();
 }
