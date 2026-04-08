@@ -19,7 +19,7 @@ int main(int argc, char* argv[])
 	);
 	optionsDescription.add_options()
 		("help,h", "this help message")
-		("input,i", po::value(&inputFilename), "adapted JSON file (.tulip.adapted.json)")
+		("input,i", po::value(&inputFilename), "input JSON file (.tulip.input.json or .tulip.adapted.json)")
 		("output,o", po::value(&exportFolder), "optional output folder for results")
 	;
 

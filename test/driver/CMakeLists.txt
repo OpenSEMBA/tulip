@@ -23,6 +23,7 @@ target_include_directories(driver_tests PRIVATE
 )
 
 target_link_libraries(driver_tests
+    tulip-adapter
     tulip-driver
     GTest::gtest
     GTest::gtest_main

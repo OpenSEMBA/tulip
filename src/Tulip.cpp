@@ -1,30 +1,84 @@
 #include "Tulip.h"
+
+#include "Adapter.h"
+#include "AdaptedInputParser.h"
 #include "Driver.h"
 
 #include <filesystem>
+#include <gmsh.h>
 #include <iostream>
+#include <stdexcept>
 
 namespace tulip {
 
-Tulip::Tulip(const std::string& adaptedJsonFile, const std::string& exportFolder)
-    : adaptedJsonFile_(adaptedJsonFile),
+namespace {
+
+bool hasSuffix(const std::string& value, const std::string& suffix)
+{
+    return value.size() >= suffix.size() &&
+           value.compare(value.size() - suffix.size(), suffix.size(), suffix) == 0;
+}
+
+bool isInputJson(const std::string& filename)
+{
+    return hasSuffix(filename, ".tulip.input.json");
+}
+
+bool isAdaptedJson(const std::string& filename)
+{
+    return hasSuffix(filename, ".tulip.adapted.json");
+}
+
+} // namespace
+
+Tulip::Tulip(const std::string& inputFile, const std::string& exportFolder)
+    : inputFile_(inputFile),
       exportFolder_(exportFolder)
 {
     if (exportFolder_.empty()) {
-        exportFolder_ = "./" + std::filesystem::path(adaptedJsonFile).parent_path().string() + "/";
+        exportFolder_ = "./" + std::filesystem::path(inputFile).parent_path().string() + "/";
     }
 }
 
 void Tulip::run()
 {
-    std::cout << "Loading adapted file: " << adaptedJsonFile_ << std::endl;
-    auto driver = Driver::loadFromAdaptedFile(adaptedJsonFile_);
-    
-    std::cout << "Setting export folder: " << exportFolder_ << std::endl;
-    driver.setExportFolder(exportFolder_);
-    
-    std::cout << "Running Tulip analysis..." << std::endl;
-    driver.run();
+    std::cout << "Loading input file: " << inputFile_ << std::endl;
+
+    if (isAdaptedJson(inputFile_)) {
+        auto driver = Driver::loadFromAdaptedFile(inputFile_);
+        driver.setExportFolder(exportFolder_);
+        std::cout << "Running Tulip analysis..." << std::endl;
+        driver.run();
+    }
+    else if (isInputJson(inputFile_)) {
+        const bool initializedHere = !gmsh::isInitialized();
+        if (initializedHere) {
+            gmsh::initialize();
+        }
+
+        try {
+            Adapter adapter(inputFile_);
+            AdaptedInputParser parser(inputFile_, adapter.getAdaptedInputJSON());
+            Driver driver(parser.readModel(), parser.readDriverOptions());
+            driver.setExportFolder(exportFolder_);
+            std::cout << "Running Tulip analysis..." << std::endl;
+            driver.run();
+        }
+        catch (...) {
+            if (initializedHere) {
+                gmsh::finalize();
+            }
+            throw;
+        }
+
+        if (initializedHere) {
+            gmsh::finalize();
+        }
+    }
+    else {
+        throw std::runtime_error(
+            "Unsupported input file extension: expected .tulip.input.json or .tulip.adapted.json");
+    }
     
     std::cout << "-- tulip finished successfully --" << std::endl;
 }
