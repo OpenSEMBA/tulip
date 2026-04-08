@@ -53,6 +53,7 @@ Model::Model(
 	mesh_{ std::make_unique<mfem::Mesh>(std::move(mesh)) }
 {
 	materials_ = filterOutMaterialsNotPresentInMesh(materials, *mesh_);
+	domains_ = buildDomains();
 }
 
 Model::Openness Model::determineOpenness() const
@@ -112,7 +113,7 @@ std::set<int> getBdrElemsInDomain(
 	return res;
 }
 
-Domain::IdToDomain Model::getDomains() const
+Domain::IdToDomain Model::buildDomains() const
 {
 	Domain::IdToDomain res;
 	Domain::Id id{ 0 };

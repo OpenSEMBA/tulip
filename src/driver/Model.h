@@ -59,7 +59,7 @@ public:
 	void setGroundConductorId(ConductorId id) { groundConductorId_ = id; }
 	ConductorId getGroundConductorId() const { return groundConductorId_; }
 
-	Domain::IdToDomain getDomains() const;
+	const Domain::IdToDomain& getDomains() const { return domains_; }
 
 	Openness determineOpenness() const;
 	
@@ -71,8 +71,10 @@ public:
 private:
 	Materials materials_;
 	std::unique_ptr<mfem::Mesh> mesh_;
+	Domain::IdToDomain domains_;
 	ConductorId groundConductorId_{ 0 };
 	
+	Domain::IdToDomain buildDomains() const;
 	DirectedGraph buildMeshGraph() const;
 };
 

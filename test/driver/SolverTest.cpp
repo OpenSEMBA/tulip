@@ -649,7 +649,8 @@ TEST_F(SolverTest, lansink2024_fdtd_in_cell_C00_with_floating)
 	const std::string fn{ casesFolder() + CASE + "/" + CASE + ".tulip.adapted.json" };
 	auto model{ Parser{fn}.readModel() };
 
-	auto fp = Driver::loadFromAdaptedFile(fn).getFloatingPotentials(0,false);
+	auto fp = Driver::loadFromAdaptedFile(fn).getFloatingPotentials(
+		0, Driver::FieldType::electric);
 
 	SolverInputs p;
 	p.dirichletBoundaries = AttrToValueMap{
@@ -706,7 +707,8 @@ TEST_F(SolverTest, lansink2024_fdtd_in_cell_C01_with_floating)
 	const std::string fn{ casesFolder() + CASE + "/" + CASE + ".tulip.adapted.json" };
 	auto model{ Parser{fn}.readModel() };
 
-	auto fp = Driver::loadFromAdaptedFile(fn).getFloatingPotentials(1, false);
+	auto fp = Driver::loadFromAdaptedFile(fn).getFloatingPotentials(
+		1, Driver::FieldType::electric);
 
 	SolverInputs p;
 	p.dirichletBoundaries = AttrToValueMap{
@@ -818,7 +820,8 @@ TEST_F(SolverTest, lansink2024_small_one_centered_bem_comparison)
 	auto model{ Parser{fn}.readModel() };
 	const auto& materials = model.getMaterials();
 
-	auto fp = Driver::loadFromAdaptedFile(fn).getFloatingPotentials(0, false);
+	auto fp = Driver::loadFromAdaptedFile(fn).getFloatingPotentials(
+		0, Driver::FieldType::electric);
 
 	
 	SolverInputs p;

@@ -98,7 +98,7 @@ TEST_F(DriverTest, two_wires_shielded_floating_potentials)
 
 	auto driver = Driver::loadFromAdaptedFile(fn); 
 
-	ASSERT_ANY_THROW(driver.getFloatingPotentials(1,false));
+	ASSERT_ANY_THROW(driver.getFloatingPotentials(1, Driver::FieldType::electric));
 }
 
 TEST_F(DriverTest, two_wires_open_floating_potentials)
@@ -107,7 +107,7 @@ TEST_F(DriverTest, two_wires_open_floating_potentials)
 	auto fn{ casesFolder() + CASE + "/" + CASE + ".tulip.adapted.json" };
 
 	auto driver{ Driver::loadFromAdaptedFile(fn) };
-	auto fp{ driver.getFloatingPotentials(0, false) };
+	auto fp{ driver.getFloatingPotentials(0, Driver::FieldType::electric) };
 
 	ASSERT_EQ(2, fp.size());
 
@@ -254,7 +254,7 @@ TEST_F(DriverTest, three_wires_ribbon_floating_potentials)
 	auto fn{ casesFolder() + CASE + "/" + CASE + ".tulip.adapted.json" };
 
 	auto dr = Driver::loadFromAdaptedFile(fn);
-	auto fp = dr.getFloatingPotentials(1, false);
+	auto fp = dr.getFloatingPotentials(1, Driver::FieldType::electric);
 
 	// Solves problem and checks that charge is zero in the floating conductor.
 	auto sP = dr.getElectrostaticSolvedProblem();
@@ -274,33 +274,6 @@ TEST_F(DriverTest, three_wires_ribbon_floating_potentials)
 	EXPECT_NEAR(0.0, Q2, aTol);
 	EXPECT_NEAR(0.0, Q0 + Q1 + Q2 + Qb, aTol);
 
-}
-
-TEST_F(DriverTest, nested_coax)
-{
-	auto out{ Driver::loadFromAdaptedFile(inputCase("nested_coax")).getPULMTL() };
-
-
-	auto C01{ EPSILON0_SI * 2.0 * M_PI / log(8.0 / 5.6) };
-	auto C12{ EPSILON0_SI * 2.0 * M_PI / log(4.8 / 2.0) };
-
-	double CExpectedData[4] = {
-		  C01 + C12, -C12,
-		 -C12,      C12
-	};
-	mfem::DenseMatrix CExpected(2, 2);
-	CExpected.UseExternalData(CExpectedData, 2, 2);
-
-	const double rTol{ 0.10 };
-
-	ASSERT_EQ(CExpected.NumRows(), out.C.NumRows());
-	ASSERT_EQ(CExpected.NumCols(), out.C.NumCols());
-	for (int i{ 0 }; i < CExpected.NumRows(); i++) {
-		for (int j{ 0 }; j < CExpected.NumCols(); j++) {
-			EXPECT_LE(relError(CExpected(i, j), out.C(i, j)), rTol) <<
-				"In C(" << i << ", " << j << ")";
-		}
-	}
 }
 
 TEST_F(DriverTest, nested_coax_by_domains)
@@ -373,7 +346,7 @@ TEST_F(DriverTest, coax_and_bare_wire_floating_potentials)
 
 	auto dr = Driver::loadFromAdaptedFile(fn);
 	
-	auto fp = dr.getFloatingPotentials(1, false);
+	auto fp = dr.getFloatingPotentials(1, Driver::FieldType::electric);
 
 	EXPECT_NEAR(1.0, fp.at(0), 1e-4);
 	EXPECT_NEAR(1.0, fp.at(1), 1e-4);
@@ -438,7 +411,7 @@ TEST_F(DriverTest, lansink2024_floating_potentials)
 
 	auto dr{ Driver::loadFromAdaptedFile(casesFolder() + CASE + "/" + CASE + ".tulip.adapted.json") };
 
-	auto fp = dr.getFloatingPotentials(0, false);
+	auto fp = dr.getFloatingPotentials(0, Driver::FieldType::electric);
 	auto inCell{ dr.getInCellPotentials() };
 
 	auto m{ Mesh::LoadFromFile(casesFolder() + CASE + "/" + CASE + ".msh") };
