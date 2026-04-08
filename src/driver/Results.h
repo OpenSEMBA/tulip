@@ -8,10 +8,21 @@
 
 namespace tulip {
 
-
 void saveToJSONFile(const nlohmann::json&, const std::string& filename);
 
-struct PULParameters {
+class MultiwireParameters {
+public:
+    virtual ~MultiwireParameters() = default;
+    virtual nlohmann::json toJSON() const = 0;
+
+    const Domain& getDomain() const { return domain; }
+    void setDomain(const Domain& value) { domain = value; }
+private:
+    Domain domain;
+};
+
+class PULParameters : public MultiwireParameters {
+public:
     PULParameters() = default;
     PULParameters(const nlohmann::json&);
 
@@ -24,12 +35,8 @@ struct PULParameters {
     mfem::DenseMatrix L, C; // Stored in SI units.
 };
 
-struct PULParametersByDomain {
-    DomainTree domainTree;
-    std::map<Domain::Id, PULParameters> domainToPUL;
-};
-
-struct FieldReconstruction {
+class FieldReconstruction {
+public:
     double innerRegionAveragePotential;
     std::array<double,2> expansionCenter;
     multipolarCoefficients ab; // Stored in natural units.
@@ -39,7 +46,8 @@ struct FieldReconstruction {
 	bool operator==(const FieldReconstruction& rhs) const;
 };
 
-struct InCellPotentials {
+class InCellPotentials : public MultiwireParameters {
+public:
 	InCellPotentials() = default;
     InCellPotentials(const nlohmann::json&);
 
@@ -54,6 +62,17 @@ struct InCellPotentials {
     double getInductanceOnBox(int i, int j, const Box& box) const;
 
     nlohmann::json toJSON() const;
+};
+
+class MultiwireParametersByDomain {
+public:
+    const InCellPotentials* getInCellPotentials() const;
+    std::map<Domain::Id, const PULParameters*> getPULParameters() const;
+    void setDomainTree(const DomainTree& value) { domainTree = value; }
+    void add(Domain::Id id, std::unique_ptr<MultiwireParameters> value);
+private:
+    DomainTree domainTree;
+    std::map<Domain::Id, std::unique_ptr<MultiwireParameters>> domainToPUL;
 };
 
 }

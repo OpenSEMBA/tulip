@@ -279,16 +279,27 @@ void Driver::run()
 }
 
 PULParameters Driver::getPULMTL()
-{
-	return buildPULParametersForModel();
+{	
+	if (model_.determineOpenness() == Model::Openness::closed 
+		&& model_.getDomains().size() == 1) {
+			return buildPULParametersForModel();
+	} else {
+		throw std::runtime_error("getPULMTL can only be called for single domain closed problems.");
+	}
 }
 
-PULParametersByDomain Driver::getPULMTLByDomains()
+MultiwireParametersByDomain Driver::getMultiwireParametersByDomains()
 {
-	PULParametersByDomain res;
+	MultiwireParametersByDomain res;
 
 	auto idToDomain{ model_.getDomains() };
-	res.domainTree = DomainTree{ idToDomain };
+	DomainTree domainTree{ idToDomain };
+	res.setDomainTree(domainTree);
+	const auto openness = model_.determineOpenness();
+	std::unique_ptr<InCellPotentials> openDomainPotentials;
+	if (openness == Model::Openness::open) {
+		openDomainPotentials = std::make_unique<InCellPotentials>(getInCellPotentials());
+	}
 
 	// Build mapping from conductor ID to global matrix index.
 	auto conductors = model_.getMaterials().getConductors();
@@ -303,6 +314,38 @@ PULParametersByDomain Driver::getPULMTLByDomains()
 	auto globalGC0 = getGeneralizedCMatrix(true);
 
 	for (const auto& [domId, domain] : idToDomain) {
+		if (openness == Model::Openness::open &&
+			domain.ground == Domain::UNDEFINED_GROUND) {
+			auto inCell = std::make_unique<InCellPotentials>(*openDomainPotentials);
+
+			auto restrictToDomain = [&](std::map<ConductorId, FieldReconstruction>& fields) {
+				for (auto it = fields.begin(); it != fields.end();) {
+					if (!domain.conductorIds.count(it->first)) {
+						it = fields.erase(it);
+						continue;
+					}
+
+					auto& potentials = it->second.conductorPotentials;
+					for (auto pIt = potentials.begin(); pIt != potentials.end();) {
+						if (!domain.conductorIds.count(pIt->first)) {
+							pIt = potentials.erase(pIt);
+						}
+						else {
+							++pIt;
+						}
+					}
+
+					++it;
+				}
+			};
+
+			restrictToDomain(inCell->electric);
+			restrictToDomain(inCell->magnetic);
+			inCell->setDomain(domain);
+			res.add(domId, std::move(inCell));
+			continue;
+		}
+
 		// Order conductors: ground first, then rest sorted.
 		std::vector<ConductorId> orderedConds;
 		ConductorId groundCond = (domain.ground != Domain::UNDEFINED_GROUND)
@@ -324,9 +367,9 @@ PULParametersByDomain Driver::getPULMTLByDomains()
 		auto buildDomainGC = [&](const mfem::DenseMatrix& gC) {
 			mfem::DenseMatrix domGC(n);
 			for (int i = 0; i < n; i++) {
-				auto insideI = res.domainTree.getConductorsInsideConductor(orderedConds[i]);
+				auto insideI = domainTree.getConductorsInsideConductor(orderedConds[i]);
 				for (int j = 0; j < n; j++) {
-					auto insideJ = res.domainTree.getConductorsInsideConductor(orderedConds[j]);
+					auto insideJ = domainTree.getConductorsInsideConductor(orderedConds[j]);
 					double val = 0.0;
 					for (auto m : insideI) {
 						auto mIt = condIdToIndex.find(m);
@@ -354,16 +397,17 @@ PULParametersByDomain Driver::getPULMTLByDomains()
 			return C;
 		};
 
-		PULParameters pul;
+		auto pul = std::make_unique<PULParameters>();
+		pul->setDomain(domain);
 
-		pul.C = extractStdC(buildDomainGC(globalGC));
-		pul.C *= EPSILON0_SI;
+		pul->C = extractStdC(buildDomainGC(globalGC));
+		pul->C *= EPSILON0_SI;
 
-		pul.L = extractStdC(buildDomainGC(globalGC0));
-		pul.L.Invert();
-		pul.L *= MU0_SI;
+		pul->L = extractStdC(buildDomainGC(globalGC0));
+		pul->L.Invert();
+		pul->L *= MU0_SI;
 
-		res.domainToPUL[domId] = pul;
+		res.add(domId, std::move(pul));
 	}
 
 	return res;
@@ -577,12 +621,11 @@ std::map<ConductorId, FieldReconstruction> Driver::getFieldParameters(
 
 InCellPotentials Driver::getInCellPotentials()
 {
-	InCellPotentials res;
-
 	if (model_.determineOpenness() != Model::Openness::open) {
-		throw std::runtime_error("In cell parameters can only be computed for open problems.");
+		throw std::runtime_error("In cell potentials can only be determined for open problems.");
 	}
 
+	InCellPotentials res;
 	res.innerRegionBox = model_.getInnerRegionBoundingBox();
 
 	res.electric = getFieldParameters(false);
