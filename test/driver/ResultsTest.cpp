@@ -14,6 +14,10 @@ class ResultsTest : public ::testing::Test {
 TEST_F(ResultsTest, PULParameters_serialization_to_JSON)
 {
 	PULParameters p;
+	p.R = mfem::DenseMatrix(2, 2);
+	p.R(0, 0) = 5.0; p.R(0, 1) = 0.0;
+	p.R(1, 0) = 0.0; p.R(1, 1) = 7.0;
+
 	p.C = mfem::DenseMatrix(2, 2);
 	p.C(0, 0) = 1.0; p.C(0, 1) = 2.0;
 	p.C(1, 0) = 3.0; p.C(1, 1) = 4.0;
@@ -27,6 +31,21 @@ TEST_F(ResultsTest, PULParameters_serialization_to_JSON)
 	PULParameters r(j);
 
 	EXPECT_EQ(p, r);
+}
+
+TEST_F(ResultsTest, PULParameters_deserialization_defaults_missing_R_to_zero)
+{
+	json j = {
+		{"C", {{1.0, 0.0}, {0.0, 2.0}}},
+		{"L", {{3.0, 0.0}, {0.0, 4.0}}}
+	};
+
+	PULParameters p(j);
+
+	ASSERT_EQ(2, p.R.NumRows());
+	ASSERT_EQ(2, p.R.NumCols());
+	EXPECT_DOUBLE_EQ(0.0, p.R(0, 0));
+	EXPECT_DOUBLE_EQ(0.0, p.R(1, 1));
 }
 
 TEST_F(ResultsTest, InCellPotentials_serialization_to_JSON)

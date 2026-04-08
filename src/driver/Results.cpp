@@ -61,6 +61,17 @@ DenseMatrix toMFEMDenseMatrix(const std::vector<std::vector<double>>& v)
     return r;
 }
 
+DenseMatrix zeroMatrixLike(const DenseMatrix& matrix)
+{
+    DenseMatrix result(matrix.NumRows(), matrix.NumCols());
+    for (auto i{ 0 }; i < result.NumRows(); ++i) {
+        for (auto j{ 0 }; j < result.NumCols(); ++j) {
+            result(i, j) = 0.0;
+        }
+    }
+    return result;
+}
+
 PULParameters::PULParameters(const json& j)
 {
     if (!j.contains("C") || !j.contains("L")) {
@@ -68,11 +79,13 @@ PULParameters::PULParameters(const json& j)
     }
     C = toMFEMDenseMatrix(j["C"]);
     L = toMFEMDenseMatrix(j["L"]);
+    R = j.contains("R") ? toMFEMDenseMatrix(j["R"]) : zeroMatrixLike(C);
 }
 
 bool PULParameters::operator==(const PULParameters& rhs) const
 { 
     return
+		toVecVec(R) == toVecVec(rhs.R) &&
         toVecVec(C) == toVecVec(rhs.C) &&
         toVecVec(L) == toVecVec(rhs.L);
 }
@@ -92,6 +105,7 @@ DenseMatrix PULParameters::getCapacitiveCouplingCoefficients() const
 json PULParameters::toJSON() const
 {
     json res;
+    res["R"] = toVecVec(R);
     res["C"] = toVecVec(C);
     res["L"] = toVecVec(L);
     return res;

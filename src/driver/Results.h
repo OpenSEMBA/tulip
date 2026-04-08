@@ -21,7 +21,7 @@ struct PULParameters {
 
     nlohmann::json toJSON() const;
 
-    mfem::DenseMatrix L, C; // Stored in SI units.
+    mfem::DenseMatrix R, L, C; // Stored in SI units.
 };
 
 struct PULParametersByDomain {

@@ -36,16 +36,23 @@ private:
 
 class Conductor : public Material {
 public:
-	explicit Conductor(Attribute attr, ConductorId id, bool isGround = false)
-		: Material(attr), conductorId(id)
+	explicit Conductor(Attribute attr,
+	                   ConductorId id,
+	                   double resistancePerMeter = 0.0,
+	                   bool isGround = false)
+		: Material(attr), conductorId(id), resistancePerMeter(resistancePerMeter)
 	{}
 
 	ConductorId getConductorId() const {
 		return conductorId;
 	}
+	double getResistancePerMeter() const {
+		return resistancePerMeter;
+	}
 	bool isDomainMaterial() const { return false; }
 private:	
 	ConductorId conductorId = -1;
+	double resistancePerMeter = 0.0;
 };
 
 class Dielectric : public Material {
@@ -71,7 +78,10 @@ class Open : public Material {
 
 class Materials {
 public: 
-	void addConductor(Attribute attribute, ConductorId id, bool isGround = false);
+	void addConductor(Attribute attribute,
+	                  ConductorId id,
+	                  double resistancePerMeter = 0.0,
+	                  bool isGround = false);
 	void addDielectric(Attribute attribute, double relativePermittivity);
 	void addOpenBoundary(Attribute attribute);
 

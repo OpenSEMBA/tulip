@@ -3,6 +3,7 @@
 #include "TestUtils.h"
 
 #include "constants.h"
+#include "AdaptedInputParser.h"
 #include "Driver.h"
 #include "Solver.h"
 
@@ -26,6 +27,27 @@ TEST_F(DriverTest, empty_coax)
 	auto LExpected{ EPSILON0_SI * MU0_SI / CExpected };
 	ASSERT_EQ(1, out.L.NumCols() * out.L.NumRows());
 	EXPECT_LE(relError(LExpected, out.L(0, 0)), rTol);
+	ASSERT_EQ(1, out.R.NumCols() * out.R.NumRows());
+	EXPECT_DOUBLE_EQ(0.0, out.R(0, 0));
+}
+
+TEST_F(DriverTest, empty_coax_includes_conductor_resistance_in_pul_results)
+{
+	auto adaptedJson = readJSON(inputCase("empty_coax"));
+	for (auto& material : adaptedJson["model"]["materials"]) {
+		if (material.value("type", "") == "conductor" &&
+			material.value("conductorId", -1) == 1) {
+			material["resistancePerMeter"] = 3.25;
+		}
+	}
+
+	AdaptedInputParser parser(inputCase("empty_coax"), adaptedJson);
+	Driver driver(parser.readModel(), parser.readDriverOptions());
+	auto out = driver.getPULMTL();
+
+	ASSERT_EQ(1, out.R.NumRows());
+	ASSERT_EQ(1, out.R.NumCols());
+	EXPECT_DOUBLE_EQ(3.25, out.R(0, 0));
 }
 
 TEST_F(DriverTest, partially_filled_coax)

@@ -140,6 +140,7 @@ This object can contain the following entries:
     - `type`: `"conductor"`
     - `conductorId`: (integer) Unique identifier for the conductor/shield.
     - `attribute`: (integer) GMSH physical group tag for this region.
+    - `resistancePerMeter`: (float, optional) Per-unit-length resistance propagated from the input material definition. If `conductivity` is provided in the input, the adapter computes this as $R' = \frac{1}{\sigma A}$ using the conductor cross-sectional area in SI units.
 
   - For dielectrics:
     - `type`: `"dielectric"`
@@ -165,4 +166,9 @@ This object can contain the following entries:
   This format allows the solver to map mesh regions to their physical properties and boundary conditions, as defined in the original input and processed by the adapter.
 
   # .tulip.out.json file format
-  TODO
+
+  For shielded-domain outputs, `.tulip.out.json` stores the per-unit-length matrices:
+
+  - `R`: conductor resistance matrix in `Ohm/m`
+  - `L`: inductance matrix in `H/m`
+  - `C`: capacitance matrix in `F/m`
