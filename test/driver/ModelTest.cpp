@@ -50,9 +50,24 @@ TEST_F(ModelTest, areas_for_lansink2024_fdtd_cell)
 	EXPECT_NEAR(0.0, relError(0.0396826990779316, model.getAreaOfMaterial(&dielectric5)), rTol);
 }
 
-TEST_F(ModelTest, DISABLED_areas_for_coax_and_bare_wire)
+TEST_F(ModelTest, areas_for_coax_and_bare_wire)
 {
-	GTEST_SKIP() << "Test scaffold is incomplete and intentionally disabled.";
+	const std::string CASE{ "coax_and_bare_wire" };
+	auto model{ Parser{ inputCase(CASE) }.readModel() };
+	
+	const double rTol{ 1e-4 };
+
+	auto c0 = model.getMaterials().getConductorWithId(0);
+	EXPECT_NEAR(0.0, relError(3.14159253264265e-6, model.getAreaOfMaterial(c0)), rTol);
+	
+	auto c1 = model.getMaterials().getConductorWithId(1);
+	double expected_c1_area = 24.630e-6 - 18.096e-6;
+	double computed_c1_area = model.getAreaOfMaterial(c1);
+	EXPECT_NEAR(0.0, relError(expected_c1_area, computed_c1_area), rTol);
+
+	auto c2 = model.getMaterials().getConductorWithId(2);
+	EXPECT_NEAR(0.0, relError(3.14159253264265e-6, model.getAreaOfMaterial(c2)), rTol);
+
 }
 
 TEST_F(ModelTest, bounding_box_realistic_case_with_dielectrics_fdtd_cell)
@@ -128,4 +143,23 @@ TEST_F(ModelTest, domains_for_realistic_case_with_dielectrics_fdtd_cell)
 
 	EXPECT_EQ(Domain::UNDEFINED_GROUND, domains.at(0).ground);
 	EXPECT_EQ(31,                       domains.at(0).conductorIds.size());
+}
+
+TEST_F(ModelTest, domains_for_coax_and_bare_wire)
+{
+	auto model{ Parser{ inputCase("coax_and_bare_wire")}.readModel() };
+
+	auto domains{ model.getDomains() };
+
+	ASSERT_EQ(2, domains.size());
+	ASSERT_EQ(1, domains.count(0));
+	ASSERT_EQ(1, domains.count(1));
+
+	DomainTree dT(domains);
+	EXPECT_EQ(IdSet({1, 2}), dT.getConductorsInDomain(0));
+	EXPECT_EQ(IdSet({0, 1}), dT.getConductorsInDomain(1));
+	
+	EXPECT_EQ(IdSet({0}), dT.getConductorsInsideConductor(0));
+	EXPECT_EQ(IdSet({0,1}), dT.getConductorsInsideConductor(1));
+	EXPECT_EQ(IdSet({2}), dT.getConductorsInsideConductor(2));
 }

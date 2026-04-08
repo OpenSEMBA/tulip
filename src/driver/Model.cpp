@@ -56,6 +56,7 @@ Model::Model(
 	mesh_{ std::make_unique<mfem::Mesh>(std::move(mesh)) }
 {
 	materials_ = filterOutMaterialsNotPresentInMesh(materials, *mesh_);
+	domains_ = buildDomains();
 }
 
 Model::Openness Model::determineOpenness() const
@@ -82,12 +83,12 @@ DirectedGraph Model::buildMeshGraph() const
 	return meshGraph;
 }
 
-Domain::ElementIds getBdrElemsInDomain(
+std::set<int> getBdrElemsInDomain(
 	const Material* mat, 
 	const IdSet& verticesInDomain, 
 	const mfem::Mesh& mesh)
 {
-	Domain::ElementIds res;
+	std::set<int> res;
 	
 	for (auto e{ 0 }; e < mesh.GetNBE(); ++e) {
 		const mfem::Element* elem{ mesh.GetBdrElement(e) };
@@ -115,7 +116,7 @@ Domain::ElementIds getBdrElemsInDomain(
 	return res;
 }
 
-Domain::IdToDomain Model::getDomains() const
+Domain::IdToDomain Model::buildDomains() const
 {
 	Domain::IdToDomain res;
 	Domain::Id id{ 0 };

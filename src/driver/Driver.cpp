@@ -10,6 +10,39 @@ namespace tulip {
 
 namespace {
 
+bool ignoresDielectrics(Driver::FieldType fieldType)
+{
+	return fieldType == Driver::FieldType::magnetic;
+}
+
+const char* getFieldTypeName(Driver::FieldType fieldType)
+{
+	switch (fieldType) {
+	case Driver::FieldType::electric:
+		return "electric";
+	case Driver::FieldType::magnetic:
+		return "magnetic";
+	}
+
+	throw std::runtime_error("Unsupported field type.");
+}
+
+std::string getFieldTypeSuffix(Driver::FieldType fieldType)
+{
+	switch (fieldType) {
+	case Driver::FieldType::electric:
+		return "_electrostatic";
+	case Driver::FieldType::magnetic:
+		return "_magnetostatic";
+	}
+
+	throw std::runtime_error("Unsupported field type.");
+}
+
+}
+
+namespace {
+
 mfem::DenseMatrix buildGeneralizedResistanceMatrix(const Model& model)
 {
 	auto conductors = model.getMaterials().getConductors();
@@ -62,10 +95,10 @@ void exportFieldSolutions(
 	const DriverOptions& opts,
 	Solver& s,
 	int conductorId,
-	bool ignoreDielectrics,
+	Driver::FieldType fieldType,
 	std::string extraName = "")
 {
-	const std::string suffix{ ignoreDielectrics ? "_magnetostatic" : "_electrostatic" };
+	const std::string suffix{ getFieldTypeSuffix(fieldType) };
 
 	std::stringstream ss;
 	ss << "Conductor_" << conductorId;
@@ -97,11 +130,11 @@ Driver::Driver(Model&& model, const DriverOptions& opts) :
 
 	// Solve for all conductors.
 	std::cout << "Solving electrostatic problems:" << std::endl;
-	electric_ = solveForAllConductors(false);
+	electric_ = solveForAllConductors(FieldType::electric);
 
 	if (model_.getMaterials().hasDielectrics()) {
 		std::cout << "Solving magnetostatic problems:" << std::endl;
-		magnetic_ = solveForAllConductors(true);
+		magnetic_ = solveForAllConductors(FieldType::magnetic);
 	}
 	else {
 		std::cout << "No dielectrics found. Reusing electrostatic solution for magnetostatic." << std::endl;
@@ -150,11 +183,11 @@ mfem::DenseMatrix Driver::getCFromGeneralizedC(
 	return C;
 }
 
-SolvedProblem Driver::solveForAllConductors(bool ignoreDielectrics)
+SolvedProblem Driver::solveForAllConductors(FieldType fieldType)
 {
 	SolvedProblem res;
 	const auto baseParameters{ 
-		buildSolverInputsFromModel(model_, ignoreDielectrics) };
+		buildSolverInputsFromModel(model_, fieldType) };
 	res.solver = std::make_unique<Solver>(
 		*model_.getMesh(), baseParameters, opts_.solverOptions);
 	Solver& s = *res.solver.get();
@@ -169,7 +202,7 @@ SolvedProblem Driver::solveForAllConductors(bool ignoreDielectrics)
 		s.setDirichletConditions(dbcs);
 		s.Solve();
 
-		exportFieldSolutions(opts_, s, c->getConductorId(), ignoreDielectrics);
+		exportFieldSolutions(opts_, s, c->getConductorId(), fieldType);
 		res.solutions[c->getConductorId()] = std::move(s.getSolution());
 
 		std::cout << "[OK]" << std::endl;
@@ -180,12 +213,12 @@ SolvedProblem Driver::solveForAllConductors(bool ignoreDielectrics)
 
 SolverInputs Driver::buildSolverInputsFromModel(
 	const Model& model,
-	bool ignoreDielectrics)
+	FieldType fieldType)
 {
 	SolverInputs res;
 	auto dielectrics = model.getMaterials().getDielectrics();
 	for (const auto& d : dielectrics) {
-		if (ignoreDielectrics) {
+		if (ignoresDielectrics(fieldType)) {
 			res.domainPermittivities[d->getAttribute()] = 1.0;
 		} else {
 			res.domainPermittivities[d->getAttribute()] = d->getRelativePermittivity();
@@ -203,7 +236,16 @@ SolverInputs Driver::buildSolverInputsFromModel(
 	return res;
 }
 
-DenseMatrix Driver::getGeneralizedCMatrix(bool ignoreDielectrics)
+SolvedProblem* Driver::getSolvedProblem(FieldType fieldType)
+{
+	if (fieldType == FieldType::magnetic && model_.getMaterials().hasDielectrics()) {
+		return &magnetic_;
+	}
+
+	return &electric_;
+}
+
+DenseMatrix Driver::getGeneralizedCMatrix(FieldType fieldType)
 {
 	// PUL generalized capacitance matrix for a N conductors system as defined in:
 	// "Clayton Paul's book: Analysis of Multiconductor Transmission Lines"
@@ -220,13 +262,7 @@ DenseMatrix Driver::getGeneralizedCMatrix(bool ignoreDielectrics)
 	int CSize = (int)conductors.size();
 	mfem::DenseMatrix C(CSize);
 
-	SolvedProblem* sP;
-	if (ignoreDielectrics) {
-		sP = model_.getMaterials().hasDielectrics() ? &magnetic_ : &electric_;
-	}
-	else {
-		sP = &electric_;
-	}
+	SolvedProblem* sP = getSolvedProblem(fieldType);
 
 	int condI = 0;
 	for (const auto& c : conductors) {
@@ -242,7 +278,7 @@ DenseMatrix Driver::getGeneralizedCMatrix(bool ignoreDielectrics)
 		}
 
 		exportFieldSolutions(
-			opts_, *sP->solver, c->getConductorId(), ignoreDielectrics);
+			opts_, *sP->solver, c->getConductorId(), fieldType);
 		
 			condI++;
 	}
@@ -258,7 +294,7 @@ DenseMatrix Driver::getCMatrix()
 	// "Clayton Paul's book: Analysis of Multiconductor Transmission Lines"
 	// - Standard C contains N-1 x N-1 entries
 	
-	auto gC = getGeneralizedCMatrix(false);
+	auto gC = getGeneralizedCMatrix(FieldType::electric);
 	auto res{ getCFromGeneralizedC(gC, model_.determineOpenness()) };
 	return res;
 }
@@ -271,7 +307,7 @@ DenseMatrix Driver::getLMatrix()
 	// Inductance matrix can be computed from the 
 	// capacitance obtained ignoring dielectrics as
 	//          L = mu0 * eps0 * C^{-1}
-	auto gC = getGeneralizedCMatrix(true);
+	auto gC = getGeneralizedCMatrix(FieldType::magnetic);
 	auto res{ getCFromGeneralizedC(gC, model_.determineOpenness()) };
 	res.Invert();
 	return res;
@@ -297,10 +333,10 @@ PULParameters Driver::buildGeneralizedLCMatrices()
 	PULParameters res;
 	res.R = buildGeneralizedResistanceMatrix(model_);
 
-	res.C = getGeneralizedCMatrix(false);
+	res.C = getGeneralizedCMatrix(FieldType::electric);
 	res.C *= EPSILON0_SI;
 
-	res.L = getGeneralizedCMatrix(true);
+	res.L = getGeneralizedCMatrix(FieldType::magnetic);
 	res.L *= MU0_SI;
 
 	return res;
@@ -332,29 +368,141 @@ void Driver::run()
 }
 
 PULParameters Driver::getPULMTL()
-{
-	return buildPULParametersForModel();
+{	
+	if (model_.getDomains().size() == 1) {
+			return buildPULParametersForModel();
+	} else {
+		throw std::runtime_error("getPULMTL can only be called for single domain problems.");
+	}
 }
 
-PULParametersByDomain Driver::getPULMTLByDomains()
+MultiwireParametersByDomain Driver::getMultiwireParametersByDomains()
 {
-	PULParametersByDomain res;
+	MultiwireParametersByDomain res;
 
 	auto idToDomain{ model_.getDomains() };
+	DomainTree domainTree{ idToDomain };
+	res.setDomainTree(domainTree);
+	const auto openness = model_.determineOpenness();
+	std::unique_ptr<InCellPotentials> openDomainPotentials;
+	if (openness == Model::Openness::open) {
+		openDomainPotentials = std::make_unique<InCellPotentials>(getInCellPotentials());
+	}
 
-	// TODO. This can be done loading already calculated solutions.
-	// 1. Set the potential to 1.0 in active and interior conductors of 
-	// a shield.
-	// 2. Sum all the cahrgers of interior and active conductor to get
-	// charge on surface of active.
+	// Build mapping from conductor ID to global matrix index.
+	auto conductors = model_.getMaterials().getConductors();
+	std::map<ConductorId, int> condIdToIndex;
+	int idx = 0;
+	for (const auto& c : conductors) {
+		condIdToIndex[c->getConductorId()] = idx++;
+	}
 
-	res.domainTree = DomainTree{ idToDomain };
+	// Get global generalized C matrices.
+	auto globalGC = getGeneralizedCMatrix(FieldType::electric);
+	auto globalGC0 = getGeneralizedCMatrix(FieldType::magnetic);
+
+	for (const auto& [domId, domain] : idToDomain) {
+		if (openness == Model::Openness::open &&
+			domain.ground == Domain::UNDEFINED_GROUND) {
+			auto inCell = std::make_unique<InCellPotentials>(*openDomainPotentials);
+
+			auto restrictToDomain = [&](std::map<ConductorId, FieldReconstruction>& fields) {
+				for (auto it = fields.begin(); it != fields.end();) {
+					if (!domain.conductorIds.count(it->first)) {
+						it = fields.erase(it);
+						continue;
+					}
+
+					auto& potentials = it->second.conductorPotentials;
+					for (auto pIt = potentials.begin(); pIt != potentials.end();) {
+						if (!domain.conductorIds.count(pIt->first)) {
+							pIt = potentials.erase(pIt);
+						}
+						else {
+							++pIt;
+						}
+					}
+
+					++it;
+				}
+			};
+
+			restrictToDomain(inCell->electric);
+			restrictToDomain(inCell->magnetic);
+			inCell->setDomain(domain);
+			res.add(domId, std::move(inCell));
+			continue;
+		}
+
+		// Order conductors: ground first, then rest sorted.
+		std::vector<ConductorId> orderedConds;
+		ConductorId groundCond = (domain.ground != Domain::UNDEFINED_GROUND)
+			? domain.ground
+			: *domain.conductorIds.begin();
+		orderedConds.push_back(groundCond);
+		for (auto cId : domain.conductorIds) {
+			if (cId != groundCond) {
+				orderedConds.push_back(cId);
+			}
+		}
+
+		int n = (int)orderedConds.size();
+
+		// Build domain-local generalized C by aggregating interior conductors.
+		// When exciting conductor i, set V=1 on i and all conductors inside it.
+		// The effective charge on conductor j is the sum of charges on j and
+		// all conductors inside it.
+		auto buildDomainGC = [&](const mfem::DenseMatrix& gC) {
+			mfem::DenseMatrix domGC(n);
+			for (int i = 0; i < n; i++) {
+				auto insideI = domainTree.getConductorsInsideConductor(orderedConds[i]);
+				for (int j = 0; j < n; j++) {
+					auto insideJ = domainTree.getConductorsInsideConductor(orderedConds[j]);
+					double val = 0.0;
+					for (auto m : insideI) {
+						auto mIt = condIdToIndex.find(m);
+						if (mIt == condIdToIndex.end()) continue;
+						for (auto k : insideJ) {
+							auto kIt = condIdToIndex.find(k);
+							if (kIt == condIdToIndex.end()) continue;
+							val += gC(mIt->second, kIt->second);
+						}
+					}
+					domGC(i, j) = val;
+				}
+			}
+			return domGC;
+		};
+
+		// Extract standard C (remove ground row/col).
+		auto extractStdC = [&](const mfem::DenseMatrix& domGC) {
+			mfem::DenseMatrix C(n - 1, n - 1);
+			for (int i = 1; i < n; i++) {
+				for (int j = 1; j < n; j++) {
+					C(i - 1, j - 1) = domGC(i, j);
+				}
+			}
+			return C;
+		};
+
+		auto pul = std::make_unique<PULParameters>();
+		pul->setDomain(domain);
+
+		pul->C = extractStdC(buildDomainGC(globalGC));
+		pul->C *= EPSILON0_SI;
+
+		pul->L = extractStdC(buildDomainGC(globalGC0));
+		pul->L.Invert();
+		pul->L *= MU0_SI;
+
+		res.add(domId, std::move(pul));
+	}
 
 	return res;
 }
 
 std::map<ConductorId, double> Driver::getFloatingPotentials(
-	ConductorId prescribedId, bool ignoreDielectrics)
+	ConductorId prescribedId, FieldType fieldType)
 {
 	// Returns a map from conductorId to value, with the potentials
 	// which other conductors must have in order to be "floating",
@@ -393,10 +541,10 @@ std::map<ConductorId, double> Driver::getFloatingPotentials(
 	switch (openness) {
 	case Model::Openness::closed:
 		C = getCFromGeneralizedC(
-				getGeneralizedCMatrix(ignoreDielectrics), openness);
+				getGeneralizedCMatrix(fieldType), openness);
 		break;
 	case Model::Openness::open:
-		C = getGeneralizedCMatrix(ignoreDielectrics);
+		C = getGeneralizedCMatrix(fieldType);
 		break;
 	default:
 		throw std::runtime_error(
@@ -504,32 +652,21 @@ void Driver::loadFloatingPotentials(
 }
 
 std::map<ConductorId, FieldReconstruction> Driver::getFieldParameters(
-	bool ignoreDielectrics)
+	FieldType fieldType)
 {
 	std::map<ConductorId, FieldReconstruction> res;
 
-	SolvedProblem* sP;
-	if (ignoreDielectrics) {
-		sP = model_.getMaterials().hasDielectrics() ? &magnetic_ : &electric_;
-	}
-	else {
-		sP = &electric_;
-	}
+	SolvedProblem* sP = getSolvedProblem(fieldType);
 
 	Solver& s = *sP->solver;
 
-	std::string fieldType;
-	if (ignoreDielectrics) {
-		fieldType = "magnetic";
-	} else {
-		fieldType = "electric";
-	} 
-	std::cout << "- Computing " << fieldType << " field coefficients." << std::endl;
+	std::cout << "- Computing " << getFieldTypeName(fieldType)
+		<< " field coefficients." << std::endl;
 	const auto conductors = model_.getMaterials().getConductors();
 
 	// Compute the C matrix once for all conductors to avoid
 	// reassembling operators N times (was O(N^2), now O(N)).
-	mfem::DenseMatrix C = getGeneralizedCMatrix(ignoreDielectrics);
+	mfem::DenseMatrix C = getGeneralizedCMatrix(fieldType);
 
 	for (const auto& cI : conductors) {
 		
@@ -540,7 +677,7 @@ std::map<ConductorId, FieldReconstruction> Driver::getFieldParameters(
 		
 		loadFloatingPotentials(sP, fp);
 
-		exportFieldSolutions(opts_, s, condI, ignoreDielectrics, "_floating");
+		exportFieldSolutions(opts_, s, condI, fieldType, "_floating");
 
 		res[condI].innerRegionAveragePotential = 
 			getInnerRegionAveragePotential(s, true);
@@ -561,16 +698,15 @@ std::map<ConductorId, FieldReconstruction> Driver::getFieldParameters(
 
 InCellPotentials Driver::getInCellPotentials()
 {
-	InCellPotentials res;
-
 	if (model_.determineOpenness() != Model::Openness::open) {
-		throw std::runtime_error("In cell parameters can only be computed for open problems.");
+		throw std::runtime_error("In cell potentials can only be determined for open problems.");
 	}
 
+	InCellPotentials res;
 	res.innerRegionBox = model_.getInnerRegionBoundingBox();
 
-	res.electric = getFieldParameters(false);
-	res.magnetic = getFieldParameters(true);
+	res.electric = getFieldParameters(FieldType::electric);
+	res.magnetic = getFieldParameters(FieldType::magnetic);
 
 	return res;
 }

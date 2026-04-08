@@ -16,27 +16,33 @@ struct SolvedProblem {
 
 class Driver {
 public:
+    enum class FieldType {
+        electric,
+        magnetic
+    };
+
     Driver(Model&& model, const DriverOptions& opts);
 
     PULParameters getPULMTL();
-    PULParametersByDomain getPULMTLByDomains();
     InCellPotentials getInCellPotentials();
+    
+    MultiwireParametersByDomain getMultiwireParametersByDomains();
     std::map<ConductorId, double> getFloatingPotentials(
 	    ConductorId prescribedId, 
-        bool ignoreDielectrics);
+        FieldType fieldType = FieldType::electric);
 
     void setExportFolder(const std::string folder) { opts_.exportFolder = folder; }
 
     static SolverInputs buildSolverInputsFromModel(
         const Model& model,
-        bool ignoreDielectrics);
+        FieldType fieldType);
     DenseMatrix getCFromGeneralizedC(
         const mfem::DenseMatrix& gC,
         const Model::Openness&);
 
     void run();
 
-    DenseMatrix getGeneralizedCMatrix(bool ignoreDielectrics = false);
+    DenseMatrix getGeneralizedCMatrix(FieldType fieldType = FieldType::electric);
     DenseMatrix getCMatrix();
     DenseMatrix getLMatrix();
 
@@ -59,17 +65,18 @@ private:
     SolvedProblem electric_, magnetic_;
 
     SolvedProblem solveForAllConductors(
-        bool ignoreDielectrics);
+        FieldType fieldType);
     PULParameters buildPULParametersForModel();
     PULParameters buildGeneralizedLCMatrices();
     double getInnerRegionAveragePotential(
         const Solver& s,
         bool includeConductors);
     std::map<ConductorId, FieldReconstruction> getFieldParameters(
-        bool ignoreDielectrics);
+        FieldType fieldType);
     std::map<ConductorId, double> computeFloatingPotentialsFromC(
         ConductorId prescribedId,
         const mfem::DenseMatrix& C) const;
+    SolvedProblem* getSolvedProblem(FieldType fieldType);
 
 };
 

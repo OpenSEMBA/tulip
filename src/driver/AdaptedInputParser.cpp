@@ -112,12 +112,9 @@ Model Parser::readModel() const
 {
 	const auto& j = json_.at("model");
 
-	auto directory = 
-		"./" + std::filesystem::path{filename_}.parent_path().string() + "/";
-
-	std::string gmshFilename{ 
-		directory + j.at("gmshFile").get<std::string>() 
-	} ;
+	auto gmshFilename =
+		(std::filesystem::path{filename_}.parent_path() /
+		 j.at("gmshFile").get<std::string>()).generic_string();
 
 	return Model{
 		mfem::Mesh::LoadFromFile(gmshFilename),
