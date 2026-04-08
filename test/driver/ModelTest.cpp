@@ -31,7 +31,7 @@ TEST_F(ModelTest, agrawal1981_conductors_in_mesh)
 	ASSERT_EQ(4, m.getMaterials().getConductors().size());
 }
 
-TEST_F(ModelTest, lansink2024_fdtd_cell_material_areas)
+TEST_F(ModelTest, areas_for_lansink2024_fdtd_cell)
 {
 	const std::string CASE{ "lansink2024_fdtd_cell" };
 	auto model{ Parser{ inputCase(CASE) }.readModel() };
@@ -48,6 +48,26 @@ TEST_F(ModelTest, lansink2024_fdtd_cell_material_areas)
 	Dielectric dielectric5{ 5 };
 	EXPECT_NEAR(0.0, relError(0.0617876225248815, model.getAreaOfMaterial(&dielectric4)), rTol);
 	EXPECT_NEAR(0.0, relError(0.0396826990779316, model.getAreaOfMaterial(&dielectric5)), rTol);
+}
+
+TEST_F(ModelTest, areas_for_coax_and_bare_wire)
+{
+	const std::string CASE{ "coax_and_bare_wire" };
+	auto model{ Parser{ inputCase(CASE) }.readModel() };
+	
+	const double rTol{ 1e-4 };
+
+	auto c0 = model.getMaterials().getConductorWithId(0);
+	EXPECT_NEAR(0.0, relError(3.14159253264265e-6, model.getAreaOfMaterial(c0)), rTol);
+	
+	auto c1 = model.getMaterials().getConductorWithId(1);
+	double expected_c1_area = 24.630e-6 - 18.096e-6;
+	double computed_c1_area = model.getAreaOfMaterial(c1);
+	EXPECT_NEAR(0.0, relError(expected_c1_area, computed_c1_area), rTol);
+
+	auto c2 = model.getMaterials().getConductorWithId(2);
+	EXPECT_NEAR(0.0, relError(3.14159253264265e-6, model.getAreaOfMaterial(c2)), rTol);
+
 }
 
 TEST_F(ModelTest, bounding_box_realistic_case_with_dielectrics_fdtd_cell)
