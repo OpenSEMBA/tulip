@@ -29,6 +29,8 @@ endif()
 add_subdirectory(src/adapter)
 add_subdirectory(src/driver)
 
+add_subdirectory(src)
+
 enable_testing()
 add_subdirectory(test/adapter)
 add_subdirectory(test/driver)
