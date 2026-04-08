@@ -124,3 +124,22 @@ TEST_F(ModelTest, domains_for_realistic_case_with_dielectrics_fdtd_cell)
 	EXPECT_EQ(Domain::UNDEFINED_GROUND, domains.at(0).ground);
 	EXPECT_EQ(31,                       domains.at(0).conductorIds.size());
 }
+
+TEST_F(ModelTest, domains_for_coax_and_bare_wire)
+{
+	auto model{ Parser{ inputCase("coax_and_bare_wire")}.readModel() };
+
+	auto domains{ model.getDomains() };
+
+	ASSERT_EQ(2, domains.size());
+	ASSERT_EQ(1, domains.count(0));
+	ASSERT_EQ(1, domains.count(1));
+
+	DomainTree dT(domains);
+	EXPECT_EQ(IdSet({1, 2}), dT.getConductorsInDomain(0));
+	EXPECT_EQ(IdSet({0, 1}), dT.getConductorsInDomain(1));
+	
+	EXPECT_EQ(IdSet({0}), dT.getConductorsInsideConductor(0));
+	EXPECT_EQ(IdSet({0,1}), dT.getConductorsInsideConductor(1));
+	EXPECT_EQ(IdSet({2}), dT.getConductorsInsideConductor(2));
+}

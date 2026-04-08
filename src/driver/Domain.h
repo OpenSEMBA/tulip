@@ -7,15 +7,12 @@ namespace tulip {
 
 struct Domain {
     using Id = int;
-    using ElementIds = std::set<int>;
     using IdToDomain = std::map<Id, Domain>;
 
     static constexpr int UNDEFINED_GROUND = -1;
 
     ConductorId ground{ UNDEFINED_GROUND };
     std::set<ConductorId> conductorIds;
-    ElementIds elems;   
-    ElementIds bdrElems;
 };
 
 

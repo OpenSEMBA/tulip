@@ -19,8 +19,9 @@ public:
     Driver(Model&& model, const DriverOptions& opts);
 
     PULParameters getPULMTL();
-    PULParametersByDomain getPULMTLByDomains();
     InCellPotentials getInCellPotentials();
+    
+    MultiwireParametersByDomain getMultiwireParametersByDomains();
     std::map<ConductorId, double> getFloatingPotentials(
 	    ConductorId prescribedId, 
         bool ignoreDielectrics);

@@ -340,4 +340,33 @@ bool FieldReconstruction::operator==(const FieldReconstruction& rhs) const
 	return res;
 }
 
+const InCellPotentials* MultiwireParametersByDomain::getInCellPotentials() const
+{
+    for (const auto& [domainId, params] : domainToPUL) {
+        (void)domainId;
+        if (auto* inCell = dynamic_cast<InCellPotentials*>(params.get())) {
+            return inCell;
+        }
+    }
+    return nullptr;
+}
+
+std::map<Domain::Id, const PULParameters*> MultiwireParametersByDomain::getPULParameters() const
+{
+    std::map<Domain::Id, const PULParameters*> res;
+    for (const auto& [domainId, params] : domainToPUL) {
+        if (auto* pul = dynamic_cast<PULParameters*>(params.get())) {
+            res[domainId] = pul;
+        }
+    }
+    return res;
+}
+
+void MultiwireParametersByDomain::add(
+    Domain::Id id,
+    std::unique_ptr<MultiwireParameters> value)
+{
+    domainToPUL[id] = std::move(value);
+}
+
 }

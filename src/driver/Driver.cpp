@@ -279,23 +279,136 @@ void Driver::run()
 }
 
 PULParameters Driver::getPULMTL()
-{
-	return buildPULParametersForModel();
+{	
+	if (model_.determineOpenness() == Model::Openness::closed 
+		&& model_.getDomains().size() == 1) {
+			return buildPULParametersForModel();
+	} else {
+		throw std::runtime_error("getPULMTL can only be called for single domain closed problems.");
+	}
 }
 
-PULParametersByDomain Driver::getPULMTLByDomains()
+MultiwireParametersByDomain Driver::getMultiwireParametersByDomains()
 {
-	PULParametersByDomain res;
+	MultiwireParametersByDomain res;
 
 	auto idToDomain{ model_.getDomains() };
+	DomainTree domainTree{ idToDomain };
+	res.setDomainTree(domainTree);
+	const auto openness = model_.determineOpenness();
+	std::unique_ptr<InCellPotentials> openDomainPotentials;
+	if (openness == Model::Openness::open) {
+		openDomainPotentials = std::make_unique<InCellPotentials>(getInCellPotentials());
+	}
 
-	// TODO. This can be done loading already calculated solutions.
-	// 1. Set the potential to 1.0 in active and interior conductors of 
-	// a shield.
-	// 2. Sum all the cahrgers of interior and active conductor to get
-	// charge on surface of active.
+	// Build mapping from conductor ID to global matrix index.
+	auto conductors = model_.getMaterials().getConductors();
+	std::map<ConductorId, int> condIdToIndex;
+	int idx = 0;
+	for (const auto& c : conductors) {
+		condIdToIndex[c->getConductorId()] = idx++;
+	}
 
-	res.domainTree = DomainTree{ idToDomain };
+	// Get global generalized C matrices.
+	auto globalGC = getGeneralizedCMatrix(false);
+	auto globalGC0 = getGeneralizedCMatrix(true);
+
+	for (const auto& [domId, domain] : idToDomain) {
+		if (openness == Model::Openness::open &&
+			domain.ground == Domain::UNDEFINED_GROUND) {
+			auto inCell = std::make_unique<InCellPotentials>(*openDomainPotentials);
+
+			auto restrictToDomain = [&](std::map<ConductorId, FieldReconstruction>& fields) {
+				for (auto it = fields.begin(); it != fields.end();) {
+					if (!domain.conductorIds.count(it->first)) {
+						it = fields.erase(it);
+						continue;
+					}
+
+					auto& potentials = it->second.conductorPotentials;
+					for (auto pIt = potentials.begin(); pIt != potentials.end();) {
+						if (!domain.conductorIds.count(pIt->first)) {
+							pIt = potentials.erase(pIt);
+						}
+						else {
+							++pIt;
+						}
+					}
+
+					++it;
+				}
+			};
+
+			restrictToDomain(inCell->electric);
+			restrictToDomain(inCell->magnetic);
+			inCell->setDomain(domain);
+			res.add(domId, std::move(inCell));
+			continue;
+		}
+
+		// Order conductors: ground first, then rest sorted.
+		std::vector<ConductorId> orderedConds;
+		ConductorId groundCond = (domain.ground != Domain::UNDEFINED_GROUND)
+			? domain.ground
+			: *domain.conductorIds.begin();
+		orderedConds.push_back(groundCond);
+		for (auto cId : domain.conductorIds) {
+			if (cId != groundCond) {
+				orderedConds.push_back(cId);
+			}
+		}
+
+		int n = (int)orderedConds.size();
+
+		// Build domain-local generalized C by aggregating interior conductors.
+		// When exciting conductor i, set V=1 on i and all conductors inside it.
+		// The effective charge on conductor j is the sum of charges on j and
+		// all conductors inside it.
+		auto buildDomainGC = [&](const mfem::DenseMatrix& gC) {
+			mfem::DenseMatrix domGC(n);
+			for (int i = 0; i < n; i++) {
+				auto insideI = domainTree.getConductorsInsideConductor(orderedConds[i]);
+				for (int j = 0; j < n; j++) {
+					auto insideJ = domainTree.getConductorsInsideConductor(orderedConds[j]);
+					double val = 0.0;
+					for (auto m : insideI) {
+						auto mIt = condIdToIndex.find(m);
+						if (mIt == condIdToIndex.end()) continue;
+						for (auto k : insideJ) {
+							auto kIt = condIdToIndex.find(k);
+							if (kIt == condIdToIndex.end()) continue;
+							val += gC(mIt->second, kIt->second);
+						}
+					}
+					domGC(i, j) = val;
+				}
+			}
+			return domGC;
+		};
+
+		// Extract standard C (remove ground row/col).
+		auto extractStdC = [&](const mfem::DenseMatrix& domGC) {
+			mfem::DenseMatrix C(n - 1, n - 1);
+			for (int i = 1; i < n; i++) {
+				for (int j = 1; j < n; j++) {
+					C(i - 1, j - 1) = domGC(i, j);
+				}
+			}
+			return C;
+		};
+
+		auto pul = std::make_unique<PULParameters>();
+		pul->setDomain(domain);
+
+		pul->C = extractStdC(buildDomainGC(globalGC));
+		pul->C *= EPSILON0_SI;
+
+		pul->L = extractStdC(buildDomainGC(globalGC0));
+		pul->L.Invert();
+		pul->L *= MU0_SI;
+
+		res.add(domId, std::move(pul));
+	}
 
 	return res;
 }
@@ -508,12 +621,11 @@ std::map<ConductorId, FieldReconstruction> Driver::getFieldParameters(
 
 InCellPotentials Driver::getInCellPotentials()
 {
-	InCellPotentials res;
-
 	if (model_.determineOpenness() != Model::Openness::open) {
-		throw std::runtime_error("In cell parameters can only be computed for open problems.");
+		throw std::runtime_error("In cell potentials can only be determined for open problems.");
 	}
 
+	InCellPotentials res;
 	res.innerRegionBox = model_.getInnerRegionBoundingBox();
 
 	res.electric = getFieldParameters(false);

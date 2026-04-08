@@ -91,6 +91,9 @@ std::set<ConductorId> DomainTree::getConductorsInsideConductor(ConductorId condu
 		if (!dom.conductorIds.count(conductorId)) {
 			continue;
 		}
+		if (!dom.conductorIds.empty() && conductorId != *dom.conductorIds.begin()) {
+			continue;
+		}
 		auto aIt = adjacency.find(domId);
 		if (aIt == adjacency.end() || aIt->second.empty()) {
 			continue;

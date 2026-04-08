@@ -79,12 +79,12 @@ DirectedGraph Model::buildMeshGraph() const
 	return meshGraph;
 }
 
-Domain::ElementIds getBdrElemsInDomain(
+std::set<int> getBdrElemsInDomain(
 	const Material* mat, 
 	const IdSet& verticesInDomain, 
 	const mfem::Mesh& mesh)
 {
-	Domain::ElementIds res;
+	std::set<int> res;
 	
 	for (auto e{ 0 }; e < mesh.GetNBE(); ++e) {
 		const mfem::Element* elem{ mesh.GetBdrElement(e) };

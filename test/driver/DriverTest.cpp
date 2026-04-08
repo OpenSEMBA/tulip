@@ -260,9 +260,7 @@ TEST_F(DriverTest, three_wires_ribbon_floating_potentials)
 	auto sP = dr.getElectrostaticSolvedProblem();
 	dr.loadFloatingPotentials(sP, fp);
 	auto& s = sP->solver;
-	// For debugging.
-	// ParaViewDataCollection pd(outFolder() + CASE + "_floating", s.getMesh());
-	// s.writeParaViewFields(pd);
+
 	auto materials = &dr.getModel().getMaterials();
 	auto Q0 = s->getChargeInBoundary(materials->getConductorWithId(0)->getAttribute());
 	auto Q1 = s->getChargeInBoundary(materials->getConductorWithId(1)->getAttribute());
@@ -305,27 +303,94 @@ TEST_F(DriverTest, nested_coax)
 	}
 }
 
-TEST_F(DriverTest, DISABLED_nested_coax_by_domains)
+TEST_F(DriverTest, nested_coax_by_domains)
 {
-	auto out{ Driver::loadFromAdaptedFile(inputCase("nested_coax")).getPULMTLByDomains() };
+	auto dr = Driver::loadFromAdaptedFile(inputCase("nested_coax"));
+	auto out = dr.getMultiwireParametersByDomains();
 
-	auto C01{ EPSILON0_SI * 2.0 * M_PI / log(8.0 / 5.6) };
-	auto C12{ EPSILON0_SI * 2.0 * M_PI / log(4.8 / 2.0) };
-
+	ASSERT_EQ(2, out.getPULParameters().size());
+	
 	const double rTol{ 0.10 };
 
-	EXPECT_EQ(2, out.domainTree.verticesSize());
-	std::vector<std::pair<int, int>> domainConnections{ std::make_pair(0,1) };
-	EXPECT_EQ(domainConnections, out.domainTree.getEdgesAsPairs());
+	auto expected_external_C{ EPSILON0_SI * 2.0 * M_PI / log(8.0 / 5.6) };	
+	auto externalPUL = out.getPULParameters().at(0);
+	ASSERT_EQ(1, externalPUL->C.NumRows());
+	EXPECT_LE(relError(expected_external_C, externalPUL->C(0, 0)), rTol);
+	EXPECT_EQ(IdSet({0,1}), externalPUL->getDomain().conductorIds);
 
-	ASSERT_EQ(2, out.domainToPUL.size());
-
-	ASSERT_EQ(1, out.domainToPUL.at(0).C.NumRows());
-	EXPECT_LE(relError(C01, out.domainToPUL.at(0).C(0, 0)), rTol);
-
-	ASSERT_EQ(1, out.domainToPUL.at(1).C.NumRows());
-	EXPECT_LE(relError(C12, out.domainToPUL.at(1).C(0, 0)), rTol);
+	auto expected_internal_C{ EPSILON0_SI * 2.0 * M_PI / log(4.8 / 2.0) };
+	auto internalPUL = out.getPULParameters().at(1);
+	ASSERT_EQ(1, internalPUL->C.NumRows());
+	EXPECT_LE(relError(expected_internal_C, internalPUL->C(0, 0)), rTol);
+	EXPECT_EQ(IdSet({1,2}), internalPUL->getDomain().conductorIds);
 }
+
+TEST_F(DriverTest, coax_and_bare_wire_by_domains)
+{
+	
+	const std::string CASE{ "coax_and_bare_wire" };
+	auto fn{ casesFolder() + CASE + "/" + CASE + ".tulip.adapted.json" };
+
+	auto dr = Driver::loadFromAdaptedFile(fn);
+	auto out = dr.getMultiwireParametersByDomains();
+
+	// External domain.
+	auto external = out.getInCellPotentials();
+	ASSERT_NE(nullptr, external);
+	EXPECT_EQ(IdSet({1,2}), external->getDomain().conductorIds);
+	EXPECT_EQ(2, external->electric.size());
+	
+	EXPECT_EQ(0, external->electric.count(0));
+	
+	ASSERT_EQ(1, external->electric.count(1));
+	ASSERT_EQ(2, external->electric.at(1).conductorPotentials.size());
+	ASSERT_EQ(1, external->electric.at(1).conductorPotentials.count(1));
+	ASSERT_EQ(1, external->electric.at(1).conductorPotentials.count(2));
+	
+	EXPECT_EQ(1, external->electric.count(2));
+	ASSERT_EQ(2, external->electric.at(2).conductorPotentials.size());
+	ASSERT_EQ(1, external->electric.at(2).conductorPotentials.count(1));
+	ASSERT_EQ(1, external->electric.at(2).conductorPotentials.count(2));
+
+	EXPECT_EQ(external->electric, external->magnetic);
+
+	// Interior domain within the shield.
+	EXPECT_EQ(1, out.getPULParameters().size());
+	const double rTol{ 0.10 };
+
+	auto expected_C = EPSILON0_SI * 2.0 * M_PI / log(2.4 / 1);
+	auto internalPUL = out.getPULParameters().at(1);
+	ASSERT_EQ(1, internalPUL->C.NumRows());
+	EXPECT_LE(relError(expected_C, internalPUL->C(0, 0)), rTol);
+	EXPECT_EQ(IdSet({0,1}), internalPUL->getDomain().conductorIds);
+}
+
+TEST_F(DriverTest, coax_and_bare_wire_floating_potentials)
+{
+	
+	const std::string CASE{ "coax_and_bare_wire" };
+	auto fn{ casesFolder() + CASE + "/" + CASE + ".tulip.adapted.json" };
+
+	auto dr = Driver::loadFromAdaptedFile(fn);
+	
+	auto fp = dr.getFloatingPotentials(1, false);
+
+	EXPECT_NEAR(1.0, fp.at(0), 1e-4);
+	EXPECT_NEAR(1.0, fp.at(1), 1e-4);
+
+	auto sP = dr.getElectrostaticSolvedProblem();
+	dr.loadFloatingPotentials(sP, fp);
+	auto& s = sP->solver;
+
+	auto materials = &dr.getModel().getMaterials();
+	auto Q0 = s->getChargeInBoundary(materials->getConductorWithId(0)->getAttribute());
+	auto Q1 = s->getChargeInBoundary(materials->getConductorWithId(1)->getAttribute());
+	auto Q2 = s->getChargeInBoundary(materials->getConductorWithId(2)->getAttribute());
+
+	EXPECT_NEAR(0.0, Q0, 1e-3);
+	EXPECT_NEAR(0.0, Q2, 1e-3);
+}
+
 
 TEST_F(DriverTest, agrawal1981)
 {
