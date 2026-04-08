@@ -70,6 +70,7 @@ public:
     std::map<Domain::Id, const PULParameters*> getPULParameters() const;
     void setDomainTree(const DomainTree& value) { domainTree = value; }
     void add(Domain::Id id, std::unique_ptr<MultiwireParameters> value);
+    nlohmann::json toFDTDJSON() const;
 private:
     DomainTree domainTree;
     std::map<Domain::Id, std::unique_ptr<MultiwireParameters>> domainToPUL;

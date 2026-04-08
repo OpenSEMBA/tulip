@@ -369,4 +369,45 @@ void MultiwireParametersByDomain::add(
     domainToPUL[id] = std::move(value);
 }
 
+nlohmann::json MultiwireParametersByDomain::toFDTDJSON() const
+{
+    json result;
+    json materials = json::array();
+    json materialAssociations = json::array();
+
+    int materialId = 1;
+    for (const auto& [domainId, params] : domainToPUL) {
+        json mat;
+        mat["id"] = materialId;
+
+        if (auto* pul = dynamic_cast<PULParameters*>(params.get())) {
+            auto pulJSON = pul->toJSON();
+            mat["type"] = "shieldedMultiwire";
+            mat["capacitancePerMeter"] = pulJSON["C"];
+            mat["inductancePerMeter"] = pulJSON["L"];
+        }
+        else if (auto* inCell = dynamic_cast<InCellPotentials*>(params.get())) {
+            mat["type"] = "unshieldedMultiwire";
+            mat["inCellParameters"]["multipolarExpansion"] = inCell->toJSON();
+        }
+
+        materials.push_back(mat);
+
+        json assoc;
+        assoc["materialId"] = materialId;
+        json elementIds = json::array();
+        for (auto condId : params->getDomain().conductorIds) {
+            elementIds.push_back(condId);
+        }
+        assoc["elementIds"] = elementIds;
+        materialAssociations.push_back(assoc);
+
+        materialId++;
+    }
+
+    result["materials"] = materials;
+    result["materialAssociations"] = materialAssociations;
+    return result;
+}
+
 }

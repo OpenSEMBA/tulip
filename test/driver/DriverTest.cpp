@@ -931,3 +931,91 @@ TEST_F(DriverTest, realistic_case_with_dielectrics_multipolar)
 	EXPECT_LE(relError(fdtdCellComputed_L_25, mPComputedL_25), 0.015);
 	EXPECT_LE(relError(fdtdCellComputed_L_30, mPComputedL_30), 0.050);
 }
+
+TEST_F(DriverTest, empty_coax_fdtd_json)
+{
+	auto dr = Driver::loadFromAdaptedFile(inputCase("empty_coax"));
+	auto out = dr.getMultiwireParametersByDomains();
+	auto fdtdJSON = out.toFDTDJSON();
+
+	// Should have 1 material of type shieldedMultiwire.
+	ASSERT_EQ(1, fdtdJSON["materials"].size());
+	EXPECT_EQ("shieldedMultiwire", fdtdJSON["materials"][0]["type"]);
+	ASSERT_TRUE(fdtdJSON["materials"][0].contains("capacitancePerMeter"));
+	ASSERT_TRUE(fdtdJSON["materials"][0].contains("inductancePerMeter"));
+
+	// C and L should be 1x1 matrices.
+	ASSERT_EQ(1, fdtdJSON["materials"][0]["capacitancePerMeter"].size());
+	ASSERT_EQ(1, fdtdJSON["materials"][0]["capacitancePerMeter"][0].size());
+	ASSERT_EQ(1, fdtdJSON["materials"][0]["inductancePerMeter"].size());
+	ASSERT_EQ(1, fdtdJSON["materials"][0]["inductancePerMeter"][0].size());
+
+	// Check material association.
+	ASSERT_EQ(1, fdtdJSON["materialAssociations"].size());
+	EXPECT_EQ(
+		fdtdJSON["materials"][0]["id"], 
+		fdtdJSON["materialAssociations"][0]["materialId"]);
+}
+
+TEST_F(DriverTest, two_wires_open_fdtd_json)
+{
+	auto dr = Driver::loadFromAdaptedFile(inputCase("two_wires_open"));
+	auto out = dr.getMultiwireParametersByDomains();
+	auto fdtdJSON = out.toFDTDJSON();
+
+	// Should have 1 material of type unshieldedMultiwire.
+	ASSERT_EQ(1, fdtdJSON["materials"].size());
+	EXPECT_EQ("unshieldedMultiwire", fdtdJSON["materials"][0]["type"]);
+	ASSERT_TRUE(fdtdJSON["materials"][0].contains("inCellParameters"));
+	ASSERT_TRUE(
+		fdtdJSON["materials"][0]["inCellParameters"].contains("multipolarExpansion"));
+
+	auto& mp = fdtdJSON["materials"][0]["inCellParameters"]["multipolarExpansion"];
+	ASSERT_TRUE(mp.contains("innerRegionBox"));
+	ASSERT_TRUE(mp.contains("electric"));
+	ASSERT_TRUE(mp.contains("magnetic"));
+
+	EXPECT_EQ(2, mp["electric"].size());
+	EXPECT_EQ(2, mp["magnetic"].size());
+
+	// Check material association.
+	ASSERT_EQ(1, fdtdJSON["materialAssociations"].size());
+	EXPECT_EQ(
+		fdtdJSON["materials"][0]["id"],
+		fdtdJSON["materialAssociations"][0]["materialId"]);
+}
+
+TEST_F(DriverTest, coax_and_bare_wire_fdtd_json)
+{
+	auto dr = Driver::loadFromAdaptedFile(inputCase("coax_and_bare_wire"));
+	auto out = dr.getMultiwireParametersByDomains();
+	auto fdtdJSON = out.toFDTDJSON();
+
+	// Should have 2 materials: 1 unshieldedMultiwire + 1 shieldedMultiwire.
+	ASSERT_EQ(2, fdtdJSON["materials"].size());
+
+	// Find materials by type.
+	const json* unshielded = nullptr;
+	const json* shielded = nullptr;
+	for (const auto& mat : fdtdJSON["materials"]) {
+		if (mat["type"] == "shieldedMultiwire") shielded = &mat;
+		else if (mat["type"] == "unshieldedMultiwire") unshielded = &mat;
+	}
+
+	ASSERT_NE(nullptr, shielded);
+	ASSERT_NE(nullptr, unshielded);
+
+	// Check shielded multiwire (inner domain).
+	ASSERT_TRUE(shielded->contains("capacitancePerMeter"));
+	ASSERT_TRUE(shielded->contains("inductancePerMeter"));
+	ASSERT_EQ(1, (*shielded)["capacitancePerMeter"].size());
+
+	// Check unshielded multiwire (open domain).
+	ASSERT_TRUE(unshielded->contains("inCellParameters"));
+	auto& mp = (*unshielded)["inCellParameters"]["multipolarExpansion"];
+	EXPECT_EQ(2, mp["electric"].size());
+	EXPECT_EQ(2, mp["magnetic"].size());
+
+	// Check material associations.
+	ASSERT_EQ(2, fdtdJSON["materialAssociations"].size());
+}
