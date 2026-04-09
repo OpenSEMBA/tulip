@@ -424,6 +424,10 @@ nlohmann::json MultiwireParametersByDomain::toFDTDJSON() const
             }
         }
         assoc["elementIds"] = elementIds;
+        if (dynamic_cast<PULParameters*>(params.get()) != nullptr &&
+            domain.ground != Domain::UNDEFINED_GROUND) {
+            assoc["containedWithinElementId"] = domain.ground;
+        }
         materialAssociations.push_back(assoc);
 
         materialId++;

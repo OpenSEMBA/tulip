@@ -968,6 +968,7 @@ TEST_F(DriverTest, empty_coax_fdtd_json)
 	ASSERT_TRUE(association.contains("elementIds"));
 	ASSERT_EQ(1, association["elementIds"].size());
 	EXPECT_EQ(1, association["elementIds"][0]);
+	EXPECT_FALSE(association.contains("containedWithinElementId"));
 }
 
 TEST_F(DriverTest, two_wires_open_fdtd_json)
@@ -1002,6 +1003,7 @@ TEST_F(DriverTest, two_wires_open_fdtd_json)
 	ASSERT_EQ(2, association["elementIds"].size());
 	EXPECT_EQ(0, association["elementIds"][0]);
 	EXPECT_EQ(1, association["elementIds"][1]);
+	EXPECT_FALSE(association.contains("containedWithinElementId"));
 }
 
 TEST_F(DriverTest, coax_and_bare_wire_fdtd_json)
@@ -1045,10 +1047,13 @@ TEST_F(DriverTest, coax_and_bare_wire_fdtd_json)
 	ASSERT_EQ(1, shieldedAssociation["elementIds"].size());
 	EXPECT_EQ(0, shieldedAssociation["elementIds"][0]);
 	EXPECT_NE(1, shieldedAssociation["elementIds"][0]);
+	ASSERT_TRUE(shieldedAssociation.contains("containedWithinElementId"));
+	EXPECT_EQ(1, shieldedAssociation["containedWithinElementId"]);
 
 	const auto& unshieldedAssociation =
 		findAssociationByMaterialId(fdtdJSON, (*unshielded)["id"]);
 	ASSERT_EQ(2, unshieldedAssociation["elementIds"].size());
 	EXPECT_EQ(1, unshieldedAssociation["elementIds"][0]);
 	EXPECT_EQ(2, unshieldedAssociation["elementIds"][1]);
+	EXPECT_FALSE(unshieldedAssociation.contains("containedWithinElementId"));
 }

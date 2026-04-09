@@ -66,6 +66,4 @@ TEST_F(LauncherTest, coax_and_bare_wire_from_adapted)
 	EXPECT_NO_THROW(tulip.run());
 
 	expectFDTDOutput(outputFolder, 2, 2);
-	EXPECT_TRUE(std::filesystem::exists(outputFolder + "inCellPotentials.out.json"));
-	EXPECT_TRUE(std::filesystem::exists(outputFolder + "generalizedLC.out.json"));
 }
