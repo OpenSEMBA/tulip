@@ -824,7 +824,7 @@ TEST_F(DriverTest, lansink2024_large_one_centered_fdtd_cell)
 	EXPECT_NEAR(fdtdCellComputedC10, 43.8646e-12, 1e-12); // Computed with BEM.
 }
 
-TEST_F(DriverTest, DISABLED_lansink2024_small_one_centered_different_integration_centers)
+TEST_F(DriverTest, lansink2024_small_one_centered_different_integration_centers)
 {
 	// In-cell capacitances centered in conductor 0
 	InCellPotentials multipolarPotentials;
@@ -863,7 +863,7 @@ TEST_F(DriverTest, DISABLED_lansink2024_small_one_centered_different_integration
 
 }
 
-TEST_F(DriverTest, DISABLED_realistic_case_with_dielectrics_fdtd_cell)
+TEST_F(DriverTest, realistic_case_with_dielectrics_fdtd_cell)
 {
 	const std::string CASE{ "realistic_case_with_dielectrics_fdtd_cell" };
 	auto dr = Driver::loadFromAdaptedFile(
