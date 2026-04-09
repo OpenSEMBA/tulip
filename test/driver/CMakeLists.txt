@@ -14,7 +14,7 @@ add_executable(driver_tests
     "ParserTest.cpp"
     "SolverTest.cpp"
     "LauncherTest.cpp"
-    "../../src/Tulip.cpp"
+    "../../src/Launcher.cpp"
 )
 
 target_include_directories(driver_tests PRIVATE

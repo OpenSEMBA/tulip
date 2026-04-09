@@ -7,7 +7,7 @@ message(STATUS "Creating build system for ${EXECUTABLE_NAME}")
 
 add_executable(${EXECUTABLE_NAME}
     "tulip.cpp"
-    "Tulip.cpp"
+    "Launcher.cpp"
 )
 
 target_include_directories(${EXECUTABLE_NAME} PRIVATE

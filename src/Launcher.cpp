@@ -1,4 +1,4 @@
-#include "Tulip.h"
+#include "Launcher.h"
 
 #include "Adapter.h"
 #include "AdaptedInputParser.h"
@@ -31,7 +31,7 @@ bool isAdaptedJson(const std::string& filename)
 
 } // namespace
 
-Tulip::Tulip(const std::string& inputFile, const std::string& exportFolder)
+Launcher::Launcher(const std::string& inputFile, const std::string& exportFolder)
     : inputFile_(inputFile),
       exportFolder_(exportFolder)
 {
@@ -40,7 +40,7 @@ Tulip::Tulip(const std::string& inputFile, const std::string& exportFolder)
     }
 }
 
-void Tulip::run()
+void Launcher::run()
 {
     std::cout << "Loading input file: " << inputFile_ << std::endl;
 

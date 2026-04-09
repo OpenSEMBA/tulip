@@ -1,5 +1,5 @@
 
-#include "Tulip.h"
+#include "Launcher.h"
 
 #include <boost/program_options.hpp>
 #include <iostream>
@@ -33,7 +33,7 @@ int main(int argc, char* argv[])
 	}
 
 	try {
-		tulip::Tulip tulip(inputFilename, exportFolder);
+		tulip::Launcher tulip(inputFilename, exportFolder);
 		tulip.run();
 	} catch (const std::exception& e) {
 		std::cerr << "Error: " << e.what() << std::endl;
