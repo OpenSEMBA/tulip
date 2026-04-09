@@ -41,6 +41,38 @@ std::string getFieldTypeSuffix(Driver::FieldType fieldType)
 
 }
 
+namespace {
+
+mfem::Array<double> buildGeneralizedResistanceVector(const Model& model)
+{
+	auto conductors = model.getMaterials().getConductors();
+	mfem::Array<double> resistance(conductors.size());
+	for (int i = 0; i < resistance.Size(); ++i) {
+		resistance[i] = 0.0;
+	}
+
+	int conductorIndex = 0;
+	for (const auto* conductor : conductors) {
+		resistance[conductorIndex] = conductor->getResistancePerMeter();
+		++conductorIndex;
+	}
+
+	return resistance;
+}
+
+mfem::Array<double> reduceResistanceVectorForPUL(
+	const mfem::Array<double>& generalizedResistance,
+	const Model::Openness& openness)
+{
+	mfem::Array<double> result(generalizedResistance.Size() - 1);
+	for (int i = 1; i < generalizedResistance.Size(); ++i) {
+		result[i - 1] = generalizedResistance[i];
+	}
+	return result;
+}
+
+} // namespace
+
 void exportFieldSolutions(
 	const DriverOptions& opts,
 	Solver& s,
@@ -266,6 +298,8 @@ DenseMatrix Driver::getLMatrix()
 PULParameters Driver::buildPULParametersForModel()
 {
 	PULParameters res;
+	auto generalizedResistance = buildGeneralizedResistanceVector(model_);
+	res.R = reduceResistanceVectorForPUL(generalizedResistance, model_.determineOpenness());
 
 	res.C = getCMatrix();
 	res.C *= EPSILON0_SI;
@@ -279,6 +313,7 @@ PULParameters Driver::buildPULParametersForModel()
 PULParameters Driver::buildGeneralizedLCMatrices()
 {
 	PULParameters res;
+	res.R = buildGeneralizedResistanceVector(model_);
 
 	res.C = getGeneralizedCMatrix(FieldType::electric);
 	res.C *= EPSILON0_SI;
@@ -359,8 +394,8 @@ MultiwireParametersByDomain Driver::getMultiwireParametersByDomains()
 				}
 			};
 
-			restrictToDomain(inCell->electric);
-			restrictToDomain(inCell->magnetic);
+			restrictToDomain(inCell->getElectric());
+			restrictToDomain(inCell->getMagnetic());
 			inCell->setDomain(domain);
 			res.add(domId, std::move(inCell));
 			continue;
@@ -635,10 +670,10 @@ InCellPotentials Driver::getInCellPotentials()
 	}
 
 	InCellPotentials res;
-	res.innerRegionBox = model_.getInnerRegionBoundingBox();
+	res.getInnerRegionBox() = model_.getInnerRegionBoundingBox();
 
-	res.electric = getFieldParameters(FieldType::electric);
-	res.magnetic = getFieldParameters(FieldType::magnetic);
+	res.getElectric() = getFieldParameters(FieldType::electric);
+	res.getMagnetic() = getFieldParameters(FieldType::magnetic);
 
 	return res;
 }

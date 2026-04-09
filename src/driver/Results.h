@@ -33,6 +33,7 @@ public:
     nlohmann::json toJSON() const;
 
     mfem::DenseMatrix L, C; // Stored in SI units.
+    mfem::Vector R; // Stored in SI units.
 };
 
 class FieldReconstruction {
@@ -53,15 +54,26 @@ public:
 
 	bool operator==(const InCellPotentials&) const;
 
-    Box innerRegionBox;
-    std::map<ConductorId, FieldReconstruction> electric, magnetic;
+    double getInCellCapacitanceUsingInnerRegion(int i, int j) const;
+    double getInCellInductanceUsingInnerRegion(int i, int j) const;
+    double getInCellCapacitanceOnBox(int i, int j, const Box& box) const;
+    double getInCellInductanceOnBox(int i, int j, const Box& box) const;
 
-    double getCapacitanceUsingInnerRegion(int i, int j) const;
-    double getInductanceUsingInnerRegion(int i, int j) const;
-    double getCapacitanceOnBox(int i, int j, const Box& box) const;
-    double getInductanceOnBox(int i, int j, const Box& box) const;
+    const mfem::Array<double>& getResistancesPerMeter() const { return R; }
+    mfem::Array<double>& getResistancesPerMeter() { return R; }
+    const Box& getInnerRegionBox() const { return innerRegionBox; }
+    Box& getInnerRegionBox() { return innerRegionBox; }
+    const std::map<ConductorId, FieldReconstruction>& getElectric() const { return electric; }
+    std::map<ConductorId, FieldReconstruction>& getElectric() { return electric; }
+    const std::map<ConductorId, FieldReconstruction>& getMagnetic() const { return magnetic; }
+    std::map<ConductorId, FieldReconstruction>& getMagnetic() { return magnetic; }
 
     nlohmann::json toJSON() const;
+
+private:
+    mfem::Array<double> R;
+    Box innerRegionBox;
+    std::map<ConductorId, FieldReconstruction> electric, magnetic;
 };
 
 class MultiwireParametersByDomain {

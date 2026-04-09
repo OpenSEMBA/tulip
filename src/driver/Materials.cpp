@@ -7,9 +7,13 @@
 
 namespace tulip {
 
-void Materials::addConductor(Attribute attribute, ConductorId id, bool isGround)
+void Materials::addConductor(Attribute attribute,
+	                         ConductorId id,
+	                         double resistancePerMeter,
+	                         bool isGround)
 {
-	materials_.push_back(std::make_unique<Conductor>(attribute, id, isGround));
+	materials_.push_back(
+		std::make_unique<Conductor>(attribute, id, resistancePerMeter, isGround));
 }
 
 void Materials::addDielectric(Attribute attribute, double relativePermittivity)

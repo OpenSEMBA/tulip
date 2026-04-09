@@ -318,6 +318,93 @@ std::map<std::string, nlohmann::json> buildLayerDielectricPropertiesMapping(
     return mapping;
 }
 
+double getEntityArea(const EntityList& entities)
+{
+    double area = 0.0;
+    for (const auto& [dim, tag] : entities) {
+        if (dim != 2) {
+            continue;
+        }
+        double mass = 0.0;
+        gmsh::model::occ::getMass(dim, tag, mass);
+        area += mass;
+    }
+    return area;
+}
+
+std::map<std::string, nlohmann::json> buildLayerConductorPropertiesMapping(
+    const nlohmann::json& inputJson,
+    const EntityMap& conductorEntitiesByLayerName,
+    double scalingFactor)
+{
+    std::map<std::string, nlohmann::json> mapping;
+    if (!inputJson.contains("layers") || !inputJson["layers"].is_array()) {
+        return mapping;
+    }
+
+    const auto materialById = buildMaterialById(inputJson);
+    for (const auto& layer : inputJson["layers"]) {
+        if (!layer.contains("name") || !layer.contains("materialId")) {
+            continue;
+        }
+
+        const std::string layerName = layer["name"].get<std::string>();
+        const int materialId = layer["materialId"].get<int>();
+        auto materialIt = materialById.find(materialId);
+        if (materialIt == materialById.end()) {
+            continue;
+        }
+
+        const auto& material = materialIt->second;
+        const std::string materialType = material.value("type", "");
+        if (materialType != "conductor" && materialType != "shield") {
+            continue;
+        }
+
+        const bool hasResistance = material.contains("resistancePerMeter");
+        const bool hasConductivity = material.contains("conductivity");
+        if (hasResistance && hasConductivity) {
+            throw std::runtime_error(
+                "Material '" + layerName +
+                "' cannot define both resistancePerMeter and conductivity.");
+        }
+
+        nlohmann::json properties = nlohmann::json::object();
+        if (hasResistance) {
+            properties["resistancePerMeter"] = material["resistancePerMeter"];
+        }
+        else if (hasConductivity) {
+            const double conductivity = material["conductivity"].get<double>();
+            if (conductivity <= 0.0) {
+                throw std::runtime_error(
+                    "Material '" + layerName + "' conductivity must be positive.");
+            }
+
+            auto conductorIt = conductorEntitiesByLayerName.find(layerName);
+            if (conductorIt == conductorEntitiesByLayerName.end()) {
+                throw std::runtime_error(
+                    "Unable to determine conductor area for layer '" + layerName + "'.");
+            }
+
+            const double areaInSquareMeters =
+                getEntityArea(conductorIt->second) * scalingFactor * scalingFactor;
+            if (areaInSquareMeters <= 0.0) {
+                throw std::runtime_error(
+                    "Conductor layer '" + layerName + "' must have positive area.");
+            }
+
+            properties["resistancePerMeter"] =
+                1.0 / (conductivity * areaInSquareMeters);
+        }
+
+        if (!properties.empty()) {
+            mapping[layerName] = properties;
+        }
+    }
+
+    return mapping;
+}
+
 std::map<std::string, int> buildLayerConductorIdMapping(const nlohmann::json& inputJson)
 {
     std::map<std::string, int> mapping;
@@ -551,6 +638,8 @@ nlohmann::json buildAdaptedJson(const std::string& caseName,
                                 const nlohmann::json& inputJson,
                                 const std::map<std::string, std::string>& layerTypeByName,
                                 const std::map<std::string, int>& conductorIdByLayerName,
+                                const std::map<std::string, nlohmann::json>&
+                                    conductorPropertiesByLayerName,
                                 const std::vector<std::string>& dielectricLayerNamesById,
                                 const std::map<std::string, nlohmann::json>&
                                     dielectricPropertiesByLayerName)
@@ -594,6 +683,12 @@ nlohmann::json buildAdaptedJson(const std::string& caseName,
                 {"conductorId", conductorId},
                 {"attribute", tag}
             });
+            auto propertiesIt = conductorPropertiesByLayerName.find(name);
+            if (propertiesIt != conductorPropertiesByLayerName.end()) {
+                for (const auto& [key, value] : propertiesIt->second.items()) {
+                    materials.back()[key] = value;
+                }
+            }
         } else if (layerType == "open") {
             materials.push_back({
                 {"type", "open"},
@@ -699,6 +794,7 @@ void Adapter::initialize(const nlohmann::json& inputJson,
     allShapes.ensureDielectricsDoNotOverlap();
     allShapes.vacuum = allShapes.buildVacuumDomain();
     enforceDielectricVacuumContinuity(allShapes.dielectrics, allShapes.vacuum);
+	const EntityMap conductorDomains = allShapes.conductors;
 
     allShapes.removeConductorsFromDielectrics();
     allShapes.conductors = extractBoundaries(allShapes.conductors);
@@ -708,6 +804,13 @@ void Adapter::initialize(const nlohmann::json& inputJson,
     const auto layerDielectricPropertiesMapping =
         buildLayerDielectricPropertiesMapping(inputJson);
     const auto layerConductorIdMapping = buildLayerConductorIdMapping(inputJson);
+    const double meshScalingFactor =
+        adapterOptions_.gmshOptions.count("Mesh.ScalingFactor") == 0
+            ? 1.0
+            : adapterOptions_.gmshOptions.at("Mesh.ScalingFactor");
+    const auto layerConductorPropertiesMapping =
+        buildLayerConductorPropertiesMapping(
+            inputJson, conductorDomains, meshScalingFactor);
     const auto dielectricLayerNamesById = buildDielectricLayerNamesById(inputJson);
     buildPhysicalModel(allShapes, layerNameMapping);
 
@@ -735,6 +838,7 @@ void Adapter::initialize(const nlohmann::json& inputJson,
         inputJson,
         layerTypeMapping,
         layerConductorIdMapping,
+        layerConductorPropertiesMapping,
         dielectricLayerNamesById,
         layerDielectricPropertiesMapping);
 }

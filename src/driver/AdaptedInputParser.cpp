@@ -71,7 +71,11 @@ Materials readMaterials(const json& j)
 		case MaterialType::Conductor:
 		{
 			auto conductorId = mat.at("conductorId").get<int>();
-			res.addConductor(attribute, conductorId);
+			double resistancePerMeter = 0.0;
+			if (mat.contains("resistancePerMeter")) {
+				resistancePerMeter = mat.at("resistancePerMeter").get<double>();
+			}
+			res.addConductor(attribute, conductorId, resistancePerMeter);
 			break;
 		}
 		case MaterialType::OpenBoundary:
