@@ -7,11 +7,46 @@
 #include "Driver.h"
 #include "Solver.h"
 
+#include <algorithm>
+#include <string_view>
+
 using namespace tulip;
 
 using json = nlohmann::json;
 
 class DriverTest : public ::testing::Test {};
+
+namespace {
+
+const json& findMaterialByType(const json& fdtdJSON, std::string_view type)
+{
+	auto it = std::find_if(
+		fdtdJSON["materials"].begin(),
+		fdtdJSON["materials"].end(),
+		[type](const auto& material) {
+			return material["type"] == type;
+		});
+	if (it == fdtdJSON["materials"].end()) {
+		throw std::runtime_error("Material type not found in FDTD JSON.");
+	}
+	return *it;
+}
+
+const json& findAssociationByMaterialId(const json& fdtdJSON, int materialId)
+{
+	auto it = std::find_if(
+		fdtdJSON["materialAssociations"].begin(),
+		fdtdJSON["materialAssociations"].end(),
+		[materialId](const auto& association) {
+			return association["materialId"] == materialId;
+		});
+	if (it == fdtdJSON["materialAssociations"].end()) {
+		throw std::runtime_error("Material association not found in FDTD JSON.");
+	}
+	return *it;
+}
+
+} // namespace
 
 TEST_F(DriverTest, empty_coax)
 {
@@ -927,4 +962,122 @@ TEST_F(DriverTest, realistic_case_with_dielectrics_multipolar)
 	EXPECT_LE(relError(fdtdCellComputed_L_16, mPComputedL_16), 0.030);
 	EXPECT_LE(relError(fdtdCellComputed_L_25, mPComputedL_25), 0.015);
 	EXPECT_LE(relError(fdtdCellComputed_L_30, mPComputedL_30), 0.050);
+}
+
+TEST_F(DriverTest, empty_coax_fdtd_json)
+{
+	auto dr = Driver::loadFromAdaptedFile(inputCase("empty_coax"));
+	auto out = dr.getMultiwireParametersByDomains();
+	auto fdtdJSON = out.toFDTDJSON();
+
+	// For debugging:
+	std::cout << fdtdJSON.dump(4) << std::endl;
+
+	// Should have 1 material of type shieldedMultiwire.
+	ASSERT_EQ(1, fdtdJSON["materials"].size());
+	EXPECT_EQ("shieldedMultiwire", fdtdJSON["materials"][0]["type"]);
+	ASSERT_TRUE(fdtdJSON["materials"][0].contains("capacitancePerMeter"));
+	ASSERT_TRUE(fdtdJSON["materials"][0].contains("inductancePerMeter"));
+
+	// C and L should be 1x1 matrices.
+	ASSERT_EQ(1, fdtdJSON["materials"][0]["capacitancePerMeter"].size());
+	ASSERT_EQ(1, fdtdJSON["materials"][0]["capacitancePerMeter"][0].size());
+	ASSERT_EQ(1, fdtdJSON["materials"][0]["inductancePerMeter"].size());
+	ASSERT_EQ(1, fdtdJSON["materials"][0]["inductancePerMeter"][0].size());
+
+	// Check material association.
+	ASSERT_EQ(1, fdtdJSON["materialAssociations"].size());
+	const auto& association = fdtdJSON["materialAssociations"][0];
+	EXPECT_EQ(fdtdJSON["materials"][0]["id"], association["materialId"]);
+	ASSERT_TRUE(association.contains("elementIds"));
+	ASSERT_EQ(1, association["elementIds"].size());
+	EXPECT_EQ(1, association["elementIds"][0]);
+	EXPECT_FALSE(association.contains("containedWithinElementId"));
+}
+
+TEST_F(DriverTest, two_wires_open_fdtd_json)
+{
+	auto dr = Driver::loadFromAdaptedFile(inputCase("two_wires_open"));
+	auto out = dr.getMultiwireParametersByDomains();
+	auto fdtdJSON = out.toFDTDJSON();
+
+	// For debugging:
+	std::cout << fdtdJSON.dump(4) << std::endl;
+
+	// Should have 1 material of type unshieldedMultiwire.
+	ASSERT_EQ(1, fdtdJSON["materials"].size());
+	EXPECT_EQ("unshieldedMultiwire", fdtdJSON["materials"][0]["type"]);
+	ASSERT_TRUE(fdtdJSON["materials"][0].contains("inCellParameters"));
+	ASSERT_TRUE(
+		fdtdJSON["materials"][0]["inCellParameters"].contains("multipolarExpansion"));
+
+	auto& mp = fdtdJSON["materials"][0]["inCellParameters"]["multipolarExpansion"];
+	ASSERT_TRUE(mp.contains("innerRegionBox"));
+	ASSERT_TRUE(mp.contains("electric"));
+	ASSERT_TRUE(mp.contains("magnetic"));
+
+	EXPECT_EQ(2, mp["electric"].size());
+	EXPECT_EQ(2, mp["magnetic"].size());
+
+	// Check material association.
+	ASSERT_EQ(1, fdtdJSON["materialAssociations"].size());
+	const auto& association = fdtdJSON["materialAssociations"][0];
+	EXPECT_EQ(fdtdJSON["materials"][0]["id"], association["materialId"]);
+	ASSERT_TRUE(association.contains("elementIds"));
+	ASSERT_EQ(2, association["elementIds"].size());
+	EXPECT_EQ(0, association["elementIds"][0]);
+	EXPECT_EQ(1, association["elementIds"][1]);
+	EXPECT_FALSE(association.contains("containedWithinElementId"));
+}
+
+TEST_F(DriverTest, coax_and_bare_wire_fdtd_json)
+{
+	auto dr = Driver::loadFromAdaptedFile(inputCase("coax_and_bare_wire"));
+	auto out = dr.getMultiwireParametersByDomains();
+	auto fdtdJSON = out.toFDTDJSON();
+
+	// For debugging:
+	std::cout << fdtdJSON.dump(4) << std::endl;
+
+	// Should have 2 materials: 1 unshieldedMultiwire + 1 shieldedMultiwire.
+	ASSERT_EQ(2, fdtdJSON["materials"].size());
+
+	// Find materials by type.
+	const json* unshielded = nullptr;
+	const json* shielded = nullptr;
+	for (const auto& mat : fdtdJSON["materials"]) {
+		if (mat["type"] == "shieldedMultiwire") shielded = &mat;
+		else if (mat["type"] == "unshieldedMultiwire") unshielded = &mat;
+	}
+
+	ASSERT_NE(nullptr, shielded);
+	ASSERT_NE(nullptr, unshielded);
+
+	// Check shielded multiwire (inner domain).
+	ASSERT_TRUE(shielded->contains("capacitancePerMeter"));
+	ASSERT_TRUE(shielded->contains("inductancePerMeter"));
+	ASSERT_EQ(1, (*shielded)["capacitancePerMeter"].size());
+
+	// Check unshielded multiwire (open domain).
+	ASSERT_TRUE(unshielded->contains("inCellParameters"));
+	auto& mp = (*unshielded)["inCellParameters"]["multipolarExpansion"];
+	EXPECT_EQ(2, mp["electric"].size());
+	EXPECT_EQ(2, mp["magnetic"].size());
+
+	// Check material associations.
+	ASSERT_EQ(2, fdtdJSON["materialAssociations"].size());
+	const auto& shieldedAssociation =
+		findAssociationByMaterialId(fdtdJSON, (*shielded)["id"]);
+	ASSERT_EQ(1, shieldedAssociation["elementIds"].size());
+	EXPECT_EQ(0, shieldedAssociation["elementIds"][0]);
+	EXPECT_NE(1, shieldedAssociation["elementIds"][0]);
+	ASSERT_TRUE(shieldedAssociation.contains("containedWithinElementId"));
+	EXPECT_EQ(1, shieldedAssociation["containedWithinElementId"]);
+
+	const auto& unshieldedAssociation =
+		findAssociationByMaterialId(fdtdJSON, (*unshielded)["id"]);
+	ASSERT_EQ(2, unshieldedAssociation["elementIds"].size());
+	EXPECT_EQ(1, unshieldedAssociation["elementIds"][0]);
+	EXPECT_EQ(2, unshieldedAssociation["elementIds"][1]);
+	EXPECT_FALSE(unshieldedAssociation.contains("containedWithinElementId"));
 }

@@ -2,6 +2,9 @@
 
 #include "constants.h"
 
+#include <filesystem>
+#include <fstream>
+
 namespace tulip {
 
 using namespace mfem;
@@ -125,7 +128,15 @@ json PULParameters::toJSON() const
 
 void saveToJSONFile(const json& j, const std::string& filename)
 {
+    const auto outputPath = std::filesystem::path(filename);
+    if (outputPath.has_parent_path()) {
+        std::filesystem::create_directories(outputPath.parent_path());
+    }
+
     std::ofstream ofs(filename);
+    if (!ofs.is_open()) {
+        throw std::runtime_error("Unable to open output file: " + filename);
+    }
     ofs << j;
 }
 
@@ -393,6 +404,64 @@ void MultiwireParametersByDomain::add(
     std::unique_ptr<MultiwireParameters> value)
 {
     domainToPUL[id] = std::move(value);
+}
+
+nlohmann::json MultiwireParametersByDomain::toFDTDJSON() const
+{
+    json result;
+    json materials = json::array();
+    json materialAssociations = json::array();
+
+    int materialId = 1;
+    for (const auto& [domainId, params] : domainToPUL) {
+        json mat;
+        mat["id"] = materialId;
+
+        if (auto* pul = dynamic_cast<PULParameters*>(params.get())) {
+            auto pulJSON = pul->toJSON();
+            mat["type"] = "shieldedMultiwire";
+            mat["capacitancePerMeter"] = pulJSON["C"];
+            mat["inductancePerMeter"] = pulJSON["L"];
+        }
+        else if (auto* inCell = dynamic_cast<InCellPotentials*>(params.get())) {
+            mat["type"] = "unshieldedMultiwire";
+            mat["inCellParameters"]["multipolarExpansion"] = inCell->toJSON();
+        }
+
+        materials.push_back(mat);
+
+        json assoc;
+        assoc["materialId"] = materialId;
+        json elementIds = json::array();
+        const auto& domain = params->getDomain();
+        if (dynamic_cast<PULParameters*>(params.get()) != nullptr) {
+            const auto groundCond = (domain.ground != Domain::UNDEFINED_GROUND)
+                ? domain.ground
+                : *domain.conductorIds.begin();
+            for (auto condId : domain.conductorIds) {
+                if (condId != groundCond) {
+                    elementIds.push_back(condId);
+                }
+            }
+        }
+        else {
+            for (auto condId : domain.conductorIds) {
+                elementIds.push_back(condId);
+            }
+        }
+        assoc["elementIds"] = elementIds;
+        if (dynamic_cast<PULParameters*>(params.get()) != nullptr &&
+            domain.ground != Domain::UNDEFINED_GROUND) {
+            assoc["containedWithinElementId"] = domain.ground;
+        }
+        materialAssociations.push_back(assoc);
+
+        materialId++;
+    }
+
+    result["materials"] = materials;
+    result["materialAssociations"] = materialAssociations;
+    return result;
 }
 
 }

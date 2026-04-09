@@ -381,6 +381,11 @@ std::map<std::string, nlohmann::json> buildLayerConductorPropertiesMapping(
             }
 
             auto conductorIt = conductorEntitiesByLayerName.find(layerName);
+            if (conductorIt == conductorEntitiesByLayerName.end() && layer.contains("id")) {
+                const std::string alias =
+                    "Conductor_" + std::to_string(layer["id"].get<int>());
+                conductorIt = conductorEntitiesByLayerName.find(alias);
+            }
             if (conductorIt == conductorEntitiesByLayerName.end()) {
                 throw std::runtime_error(
                     "Unable to determine conductor area for layer '" + layerName + "'.");
