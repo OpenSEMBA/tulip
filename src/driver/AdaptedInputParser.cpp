@@ -75,7 +75,36 @@ Materials readMaterials(const json& j)
 			if (mat.contains("resistancePerMeter")) {
 				resistancePerMeter = mat.at("resistancePerMeter").get<double>();
 			}
-			res.addConductor(attribute, conductorId, resistancePerMeter);
+
+			bool isShield = mat.value("isShield", false);
+			double shieldResistancePerMeter = 0.0;
+			double shieldInductancePerMeter = 0.0;
+			std::string shieldDirection = "both";
+			if (mat.contains("transferImpedancePerMeter")) {
+				const auto& transferImpedance = mat.at("transferImpedancePerMeter");
+				isShield = true;
+				if (transferImpedance.contains("resistiveTerm")) {
+					shieldResistancePerMeter =
+						transferImpedance.at("resistiveTerm").get<double>();
+				}
+				if (transferImpedance.contains("inductiveTerm")) {
+					shieldInductancePerMeter =
+						transferImpedance.at("inductiveTerm").get<double>();
+				}
+				if (transferImpedance.contains("direction")) {
+					shieldDirection = transferImpedance.at("direction").get<std::string>();
+				}
+			}
+
+			res.addConductor(
+				attribute,
+				conductorId,
+				resistancePerMeter,
+				false,
+				isShield,
+				shieldResistancePerMeter,
+				shieldInductancePerMeter,
+				shieldDirection);
 			break;
 		}
 		case MaterialType::OpenBoundary:

@@ -46,6 +46,20 @@ const json& findAssociationByMaterialId(const json& fdtdJSON, int materialId)
 	return *it;
 }
 
+const json& findMaterialById(const json& fdtdJSON, int materialId)
+{
+	auto it = std::find_if(
+		fdtdJSON["materials"].begin(),
+		fdtdJSON["materials"].end(),
+		[materialId](const auto& material) {
+			return material["id"] == materialId;
+		});
+	if (it == fdtdJSON["materials"].end()) {
+		throw std::runtime_error("Material not found in FDTD JSON.");
+	}
+	return *it;
+}
+
 } // namespace
 
 TEST_F(DriverTest, empty_coax)
@@ -1080,4 +1094,50 @@ TEST_F(DriverTest, coax_and_bare_wire_fdtd_json)
 	EXPECT_EQ(1, unshieldedAssociation["elementIds"][0]);
 	EXPECT_EQ(2, unshieldedAssociation["elementIds"][1]);
 	EXPECT_FALSE(unshieldedAssociation.contains("containedWithinElementId"));
+}
+
+TEST_F(DriverTest, nested_domain_writes_shield_transfer_impedance_to_fdtd_json)
+{
+	auto adaptedJson = readJSON(inputCase("coax_and_bare_wire"));
+	for (auto& material : adaptedJson["model"]["materials"]) {
+		if (material.value("type", "") == "conductor" &&
+			material.value("conductorId", -1) == 1) {
+			material["isShield"] = true;
+			material["transferImpedancePerMeter"] = {
+				{"resistiveTerm", 2.5e-3},
+				{"inductiveTerm", 7.0e-9},
+				{"direction", "inwards"}
+			};
+		}
+	}
+
+	AdaptedInputParser parser(inputCase("coax_and_bare_wire"), adaptedJson);
+	Driver driver(parser.readModel(), parser.readDriverOptions());
+	auto fdtdJSON = driver.getMultiwireParametersByDomains().toFDTDJSON();
+
+	const json* containedAssociation = nullptr;
+	for (const auto& association : fdtdJSON["materialAssociations"]) {
+		if (association.contains("containedWithinElementId")) {
+			containedAssociation = &association;
+			break;
+		}
+	}
+	ASSERT_NE(nullptr, containedAssociation);
+
+	const auto& containedMaterial =
+		findMaterialById(fdtdJSON, (*containedAssociation)["materialId"]);
+	ASSERT_EQ("shieldedMultiwire", containedMaterial["type"]);
+	ASSERT_TRUE(containedMaterial.contains("transferImpedancePerMeter"));
+	const auto& transfer = containedMaterial["transferImpedancePerMeter"];
+	EXPECT_DOUBLE_EQ(2.5e-3, transfer["resistiveTerm"]);
+	EXPECT_DOUBLE_EQ(7.0e-9, transfer["inductiveTerm"]);
+	EXPECT_EQ("inwards", transfer["direction"]);
+
+	for (const auto& association : fdtdJSON["materialAssociations"]) {
+		if (association["materialId"] == (*containedAssociation)["materialId"]) {
+			continue;
+		}
+		const auto& material = findMaterialById(fdtdJSON, association["materialId"]);
+		EXPECT_FALSE(material.contains("transferImpedancePerMeter"));
+	}
 }

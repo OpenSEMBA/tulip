@@ -39,8 +39,18 @@ public:
 	explicit Conductor(Attribute attr,
 	                   ConductorId id,
 	                   double resistancePerMeter = 0.0,
-	                   bool isGround = false)
-		: Material(attr), conductorId(id), resistancePerMeter(resistancePerMeter)
+	                   bool isGround = false,
+	                   bool isShield = false,
+	                   double shieldResistancePerMeter = 0.0,
+	                   double shieldInductancePerMeter = 0.0,
+	                   std::string shieldDirection = "both")
+		: Material(attr),
+		  conductorId(id),
+		  resistancePerMeter(resistancePerMeter),
+		  isShield(isShield),
+		  shieldResistancePerMeter(shieldResistancePerMeter),
+		  shieldInductancePerMeter(shieldInductancePerMeter),
+		  shieldDirection(std::move(shieldDirection))
 	{}
 
 	ConductorId getConductorId() const {
@@ -49,10 +59,18 @@ public:
 	double getResistancePerMeter() const {
 		return resistancePerMeter;
 	}
+	bool getIsShield() const { return isShield; }
+	double getShieldResistancePerMeter() const { return shieldResistancePerMeter; }
+	double getShieldInductancePerMeter() const { return shieldInductancePerMeter; }
+	const std::string& getShieldDirection() const { return shieldDirection; }
 	bool isDomainMaterial() const { return false; }
 private:	
 	ConductorId conductorId = -1;
 	double resistancePerMeter = 0.0;
+	bool isShield = false;
+	double shieldResistancePerMeter = 0.0;
+	double shieldInductancePerMeter = 0.0;
+	std::string shieldDirection = "both";
 };
 
 class Dielectric : public Material {
@@ -81,7 +99,11 @@ public:
 	void addConductor(Attribute attribute,
 	                  ConductorId id,
 	                  double resistancePerMeter = 0.0,
-	                  bool isGround = false);
+	                  bool isGround = false,
+	                  bool isShield = false,
+	                  double shieldResistancePerMeter = 0.0,
+	                  double shieldInductancePerMeter = 0.0,
+	                  const std::string& shieldDirection = "both");
 	void addDielectric(Attribute attribute, double relativePermittivity);
 	void addOpenBoundary(Attribute attribute);
 
