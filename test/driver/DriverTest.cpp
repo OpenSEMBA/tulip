@@ -3,6 +3,7 @@
 #include "TestUtils.h"
 
 #include "constants.h"
+#include "AdaptedInputParser.h"
 #include "Driver.h"
 #include "Solver.h"
 
@@ -15,7 +16,8 @@ class DriverTest : public ::testing::Test {};
 TEST_F(DriverTest, empty_coax)
 {
 	// Empty Coaxial case.
-	auto out{ Driver::loadFromAdaptedFile(inputCase("empty_coax")).getPULMTL() };
+	auto dr = Driver::loadFromAdaptedFile(inputCase("empty_coax"));
+	auto out = dr.getPULMTL();
 
 	auto CExpected{ EPSILON0_SI * 2 * M_PI / log(0.05 / 0.025) };
 
@@ -26,6 +28,26 @@ TEST_F(DriverTest, empty_coax)
 	auto LExpected{ EPSILON0_SI * MU0_SI / CExpected };
 	ASSERT_EQ(1, out.L.NumCols() * out.L.NumRows());
 	EXPECT_LE(relError(LExpected, out.L(0, 0)), rTol);
+	ASSERT_EQ(1, out.R.Size());
+	EXPECT_DOUBLE_EQ(0.0, out.R[0]);
+}
+
+TEST_F(DriverTest, empty_coax_includes_conductor_resistance_in_pul_results)
+{
+	auto adaptedJson = readJSON(inputCase("empty_coax"));
+	for (auto& material : adaptedJson["model"]["materials"]) {
+		if (material.value("type", "") == "conductor" &&
+			material.value("conductorId", -1) == 1) {
+			material["resistancePerMeter"] = 3.25;
+		}
+	}
+
+	AdaptedInputParser parser(inputCase("empty_coax"), adaptedJson);
+	Driver driver(parser.readModel(), parser.readDriverOptions());
+	auto out = driver.getPULMTL();
+
+	ASSERT_EQ(1, out.R.Size());
+	EXPECT_DOUBLE_EQ(3.25, out.R[0]);
 }
 
 TEST_F(DriverTest, partially_filled_coax)
@@ -309,23 +331,25 @@ TEST_F(DriverTest, coax_and_bare_wire_by_domains)
 
 	// External domain.
 	auto external = out.getInCellPotentials();
+	const auto& electric = external->getElectric();
+	const auto& magnetic = external->getMagnetic();
 	ASSERT_NE(nullptr, external);
 	EXPECT_EQ(IdSet({1,2}), external->getDomain().conductorIds);
-	EXPECT_EQ(2, external->electric.size());
+	EXPECT_EQ(2, electric.size());
 	
-	EXPECT_EQ(0, external->electric.count(0));
+	EXPECT_EQ(0, electric.count(0));
 	
-	ASSERT_EQ(1, external->electric.count(1));
-	ASSERT_EQ(2, external->electric.at(1).conductorPotentials.size());
-	ASSERT_EQ(1, external->electric.at(1).conductorPotentials.count(1));
-	ASSERT_EQ(1, external->electric.at(1).conductorPotentials.count(2));
+	ASSERT_EQ(1, electric.count(1));
+	ASSERT_EQ(2, electric.at(1).conductorPotentials.size());
+	ASSERT_EQ(1, electric.at(1).conductorPotentials.count(1));
+	ASSERT_EQ(1, electric.at(1).conductorPotentials.count(2));
 	
-	EXPECT_EQ(1, external->electric.count(2));
-	ASSERT_EQ(2, external->electric.at(2).conductorPotentials.size());
-	ASSERT_EQ(1, external->electric.at(2).conductorPotentials.count(1));
-	ASSERT_EQ(1, external->electric.at(2).conductorPotentials.count(2));
+	EXPECT_EQ(1, electric.count(2));
+	ASSERT_EQ(2, electric.at(2).conductorPotentials.size());
+	ASSERT_EQ(1, electric.at(2).conductorPotentials.count(1));
+	ASSERT_EQ(1, electric.at(2).conductorPotentials.count(2));
 
-	EXPECT_EQ(external->electric, external->magnetic);
+	EXPECT_EQ(electric, magnetic);
 
 	// Interior domain within the shield.
 	EXPECT_EQ(1, out.getPULParameters().size());
@@ -441,7 +465,7 @@ TEST_F(DriverTest, lansink2024_floating_potentials)
 	EXPECT_NEAR(0.0, Q1, aTol);
 	EXPECT_NEAR(0.0, Q0 + Q1 + Qb, aTol);
 
-	const double a0 = inCell.electric.at(0).ab[0].first;
+	const double a0 = inCell.getElectric().at(0).ab[0].first;
 	EXPECT_NEAR(Q0, a0, 1e-4);
 }
 
@@ -466,26 +490,26 @@ TEST_F(DriverTest, lansink2024_fdtd_in_cell_parameters_around_conductor_1)
 	// In this test case inner region coincides with fdtd-cell.
 	// In-cell capacitances.
 	{
-		auto computedC00 = inCell.getCapacitanceUsingInnerRegion(0, 0);
+		auto computedC00 = inCell.getInCellCapacitanceUsingInnerRegion(0, 0);
 		auto expectedC00 = 14.08e-12; // C11 for floating in paper. Table 1.
 		EXPECT_NEAR(0.0, relError(expectedC00, computedC00), rTol);
 	}
 
 	{
-		auto computedC01 = inCell.getCapacitanceUsingInnerRegion(0, 1);
+		auto computedC01 = inCell.getInCellCapacitanceUsingInnerRegion(0, 1);
 		auto expectedC01 = 43.99e-12; // C12 for floating in paper. Table 1.
 		EXPECT_NEAR(0.0, relError(expectedC01, computedC01), rTol);
 	}
 
 	// In-cell inductances
 	{
-		auto computedL00 = inCell.getInductanceUsingInnerRegion(0, 0);
+		auto computedL00 = inCell.getInCellInductanceUsingInnerRegion(0, 0);
 		auto expectedL00 = 791e-9; // L11 for floating in paper. Table 1.
 		EXPECT_NEAR(0.0, relError(expectedL00, computedL00), rTol);
 	}
 
 	{
-		auto computedL01 = inCell.getInductanceUsingInnerRegion(0, 1);
+		auto computedL01 = inCell.getInCellInductanceUsingInnerRegion(0, 1);
 		auto expectedL01 = 253e-9; // L12 for floating in paper. Table 1.
 		EXPECT_NEAR(0.0, relError(expectedL01, computedL01), rTol);
 	}
@@ -512,37 +536,37 @@ TEST_F(DriverTest, lansink2024_two_wires_using_multipolar_expansion)
 
 	Box fdtdCell0{ {-0.110, -0.100}, {0.090, 0.100} };
 
-	auto computedC00 = inCell.getCapacitanceOnBox(0, 0, fdtdCell0);
+	auto computedC00 = inCell.getInCellCapacitanceOnBox(0, 0, fdtdCell0);
 	auto expectedC00 = 14.08e-12; // C11 for floating in paper. Table 1.
 	EXPECT_NEAR(0.0, relError(expectedC00, computedC00), rTol);
 
-	auto computedC01 = inCell.getCapacitanceOnBox(0, 1, fdtdCell0);
+	auto computedC01 = inCell.getInCellCapacitanceOnBox(0, 1, fdtdCell0);
 	auto expectedC01 = 43.99e-12; // C12 for floating in paper. Table 1.
 	EXPECT_NEAR(0.0, relError(expectedC01, computedC01), rTol);
 
-	auto computedL00 = inCell.getInductanceOnBox(0, 0, fdtdCell0);
+	auto computedL00 = inCell.getInCellInductanceOnBox(0, 0, fdtdCell0);
 	auto expectedL00 = 791e-9; // L11 for floating in paper. Table 1.
 	EXPECT_NEAR(0.0, relError(expectedL00, computedL00), rTol);
 
-	auto computedL01 = inCell.getInductanceOnBox(0, 1, fdtdCell0);
+	auto computedL01 = inCell.getInCellInductanceOnBox(0, 1, fdtdCell0);
 	auto expectedL01 = 253e-9; // L12 for floating in paper. Table 1.
 	EXPECT_NEAR(0.0, relError(expectedL01, computedL01), rTol);
 
 	Box fdtdCell1{ {-0.090, -0.100}, {0.110, 0.100} };
 
-	auto computedC10 = inCell.getCapacitanceOnBox(1, 0, fdtdCell1);
+	auto computedC10 = inCell.getInCellCapacitanceOnBox(1, 0, fdtdCell1);
 	auto expectedC10 = 44.31e-12; // C21 for floating in paper. Table 1.
 	EXPECT_NEAR(0.0, relError(expectedC10, computedC10), rTol);
 
-	auto computedC11 = inCell.getCapacitanceOnBox(1, 1, fdtdCell1);
+	auto computedC11 = inCell.getInCellCapacitanceOnBox(1, 1, fdtdCell1);
 	auto expectedC11 = 28.79e-12; // C22 for floating in paper. Table 1.
 	EXPECT_NEAR(0.0, relError(expectedC11, computedC11), rTol);
 
-	auto computedL10 = inCell.getInductanceOnBox(1, 0, fdtdCell1);
+	auto computedL10 = inCell.getInCellInductanceOnBox(1, 0, fdtdCell1);
 	auto expectedL10 = 251e-9; // L21 for floating in paper. Table 1.
 	EXPECT_NEAR(0.0, relError(expectedL10, computedL10), rTol);
 
-	auto computedL11 = inCell.getInductanceOnBox(1, 1, fdtdCell1);
+	auto computedL11 = inCell.getInCellInductanceOnBox(1, 1, fdtdCell1);
 	auto expectedL11 = 387e-9; // L22 for floating in paper. Table 1.
 	EXPECT_NEAR(0.0, relError(expectedL11, computedL11), rTol);
 }
@@ -567,29 +591,29 @@ TEST_F(DriverTest, lansink2024_fdtd_cell_shifted_and_centered)
 
 	{
 		Box fdtdCellShifted{ {-0.110, -0.100}, {0.090, 0.100} };
-		auto computedC_shifted = inCell.getCapacitanceOnBox(0, 0, fdtdCellShifted);
-		auto computedC_centered = inCell.getCapacitanceOnBox(0, 0, fdtdCellCentered);
+		auto computedC_shifted = inCell.getInCellCapacitanceOnBox(0, 0, fdtdCellShifted);
+		auto computedC_centered = inCell.getInCellCapacitanceOnBox(0, 0, fdtdCellCentered);
 		auto err = relError(computedC_shifted, computedC_centered);
 		EXPECT_TRUE(err < 1e-4);
 	}
 	{
 		Box fdtdCellShifted{ {-0.110, -0.100}, {0.090, 0.100} };
-		auto computedC_shifted = inCell.getCapacitanceOnBox(0, 1, fdtdCellShifted);
-		auto computedC_centered = inCell.getCapacitanceOnBox(0, 1, fdtdCellCentered);
+		auto computedC_shifted = inCell.getInCellCapacitanceOnBox(0, 1, fdtdCellShifted);
+		auto computedC_centered = inCell.getInCellCapacitanceOnBox(0, 1, fdtdCellCentered);
 		auto err = relError(computedC_shifted, computedC_centered);
 		EXPECT_TRUE(err < 1e-2);
 	}
 	{
 		Box fdtdCellShifted{ { -0.090, -0.100 }, { 0.110, 0.100 } };
-		auto computedC_shifted = inCell.getCapacitanceOnBox(1, 0, fdtdCellShifted);
-		auto computedC_centered = inCell.getCapacitanceOnBox(1, 0, fdtdCellCentered);
+		auto computedC_shifted = inCell.getInCellCapacitanceOnBox(1, 0, fdtdCellShifted);
+		auto computedC_centered = inCell.getInCellCapacitanceOnBox(1, 0, fdtdCellCentered);
 		auto err = relError(computedC_shifted, computedC_centered);
 		EXPECT_TRUE(err < 1e-2);
 	}
 	{
 		Box fdtdCellShifted{ { -0.090, -0.100 }, { 0.110, 0.100 } };
-		auto computedC_shifted = inCell.getCapacitanceOnBox(1, 1, fdtdCellShifted);
-		auto computedC_centered = inCell.getCapacitanceOnBox(1, 1, fdtdCellCentered);
+		auto computedC_shifted = inCell.getInCellCapacitanceOnBox(1, 1, fdtdCellShifted);
+		auto computedC_centered = inCell.getInCellCapacitanceOnBox(1, 1, fdtdCellCentered);
 		auto err = relError(computedC_shifted, computedC_centered);
 		EXPECT_TRUE(err < 1e-2);
 	}
@@ -617,7 +641,7 @@ TEST_F(DriverTest, lansink2024_single_wire_in_cell_parameters)
 	// In this test case inner region coincides with fdtd-cell.
 	// In-cell capacitances.
 	{
-		auto computedC00 = inCell.getCapacitanceUsingInnerRegion(0, 0);
+		auto computedC00 = inCell.getInCellCapacitanceUsingInnerRegion(0, 0);
 		auto expectedC00 = 49.11e-12; // C11 with insulation. Table 3. 
 		// Paper has a mistake, this is the correct value.
 		EXPECT_NEAR(0.0, relError(expectedC00, computedC00), rTol);
@@ -625,7 +649,7 @@ TEST_F(DriverTest, lansink2024_single_wire_in_cell_parameters)
 
 	// In-cell inductances
 	{
-		auto computedL00 = inCell.getInductanceUsingInnerRegion(0, 0);
+		auto computedL00 = inCell.getInCellInductanceUsingInnerRegion(0, 0);
 		auto expectedL00 = 320e-9; // L11 with insulation. Table 3. 
 		// Paper has a mistake, this is the correct value.
 		EXPECT_NEAR(0.0, relError(expectedL00, computedL00), rTol);
@@ -657,7 +681,7 @@ TEST_F(DriverTest, lansink2024_single_wire_multipolar_in_cell_parameters)
 	// In this test case inner region coincides with fdtd-cell.
 	// In-cell capacitances.
 	{
-		auto computedC00 = inCell.getCapacitanceOnBox(0, 0, fdtdCell);
+		auto computedC00 = inCell.getInCellCapacitanceOnBox(0, 0, fdtdCell);
 		auto expectedC00 = 49.11e-12; // C11 with insulation. Table 3. 
 		// Paper has a mistake, this is the correct value.
 		EXPECT_NEAR(0.0, relError(expectedC00, computedC00), rTol);
@@ -665,14 +689,14 @@ TEST_F(DriverTest, lansink2024_single_wire_multipolar_in_cell_parameters)
 
 	// In-cell inductances
 	{
-		auto computedL00 = inCell.getInductanceOnBox(0, 0, fdtdCell);
+		auto computedL00 = inCell.getInCellInductanceOnBox(0, 0, fdtdCell);
 		auto expectedL00 = 320e-9; // L11 with insulation. Table 3. 
 		// Paper has a mistake, this is the correct value.
 		EXPECT_NEAR(0.0, relError(expectedL00, computedL00), rTol);
 	}
 
 	// Check that multipolar expansion for the bare wire produces a 1 V at the boundary.
-	auto a0 = inCell.magnetic.at(0).ab[0].first;
+	auto a0 = inCell.getMagnetic().at(0).ab[0].first;
 	auto Va = a0 / (2 * M_PI) * log(1.0 / 1e-3);
 	EXPECT_NEAR(1.0, Va, 1e-3);
 
@@ -760,8 +784,8 @@ TEST_F(DriverTest, lansink2024_small_one_centered_fdtd_cell_vs_multipolar)
 		fdtdCellPotentials = Driver::loadFromAdaptedFile(
 			casesFolder() + CASE + "/" + CASE + ".tulip.adapted.json").getInCellPotentials();
 	}
-	auto fdtdCellComputedC00 = fdtdCellPotentials.getCapacitanceUsingInnerRegion(0, 0);
-	auto fdtdCellComputedC01 = fdtdCellPotentials.getCapacitanceUsingInnerRegion(0, 1);
+	auto fdtdCellComputedC00 = fdtdCellPotentials.getInCellCapacitanceUsingInnerRegion(0, 0);
+	auto fdtdCellComputedC01 = fdtdCellPotentials.getInCellCapacitanceUsingInnerRegion(0, 1);
 
 	// Using multipolar expansion.
 	InCellPotentials multipolarPotentials;
@@ -771,8 +795,8 @@ TEST_F(DriverTest, lansink2024_small_one_centered_fdtd_cell_vs_multipolar)
 			casesFolder() + CASE + "/" + CASE + ".tulip.adapted.json").getInCellPotentials();
 	}
 	Box fdtdCell{ {-0.1, -0.1}, {0.1, 0.1} };
-	auto multipolarComputedC00 = multipolarPotentials.getCapacitanceOnBox(0, 0, fdtdCell);
-	auto multipolarComputedC01 = multipolarPotentials.getCapacitanceOnBox(0, 1, fdtdCell);
+	auto multipolarComputedC00 = multipolarPotentials.getInCellCapacitanceOnBox(0, 0, fdtdCell);
+	auto multipolarComputedC01 = multipolarPotentials.getInCellCapacitanceOnBox(0, 1, fdtdCell);
 
 	// Compares results
 	EXPECT_NEAR(fdtdCellComputedC00, multipolarComputedC00, 0.2e-12);
@@ -794,7 +818,7 @@ TEST_F(DriverTest, lansink2024_large_one_centered_fdtd_cell)
 		fdtdCellPotentials = Driver::loadFromAdaptedFile(
 			casesFolder() + CASE + "/" + CASE + ".tulip.adapted.json").getInCellPotentials();
 	}
-	auto fdtdCellComputedC10 = fdtdCellPotentials.getCapacitanceUsingInnerRegion(1, 0);
+	auto fdtdCellComputedC10 = fdtdCellPotentials.getInCellCapacitanceUsingInnerRegion(1, 0);
 
 	// Compares results
 	EXPECT_NEAR(fdtdCellComputedC10, 43.8646e-12, 1e-12); // Computed with BEM.
@@ -812,21 +836,21 @@ TEST_F(DriverTest, lansink2024_small_one_centered_different_integration_centers)
 	mfem::DenseMatrix geometricC(2, 2);
 	Box fdtdCellCenteredOnConductor0{ {-0.1, -0.1}, {0.1, 0.1} };
 	{
-		geometricC(0, 0) = multipolarPotentials.getCapacitanceOnBox(0, 0, fdtdCellCenteredOnConductor0);
-		geometricC(0, 1) = multipolarPotentials.getCapacitanceOnBox(0, 1, fdtdCellCenteredOnConductor0);
+		geometricC(0, 0) = multipolarPotentials.getInCellCapacitanceOnBox(0, 0, fdtdCellCenteredOnConductor0);
+		geometricC(0, 1) = multipolarPotentials.getInCellCapacitanceOnBox(0, 1, fdtdCellCenteredOnConductor0);
 	}
 	{
 		Box fdtdCellCenteredOnConductor1{ {-0.12, -0.1}, {0.08, 0.1} };
-		geometricC(1, 0) = multipolarPotentials.getCapacitanceOnBox(1, 0, fdtdCellCenteredOnConductor1);
-		geometricC(1, 1) = multipolarPotentials.getCapacitanceOnBox(1, 1, fdtdCellCenteredOnConductor1);
+		geometricC(1, 0) = multipolarPotentials.getInCellCapacitanceOnBox(1, 0, fdtdCellCenteredOnConductor1);
+		geometricC(1, 1) = multipolarPotentials.getInCellCapacitanceOnBox(1, 1, fdtdCellCenteredOnConductor1);
 	}
 
 	mfem::DenseMatrix chargeCenteredC(2, 2);
 	for (int i = 0; i < 2; i++) {
 		Box chargeCenteredCell{ fdtdCellCenteredOnConductor0 };
-		chargeCenteredCell.displace(multipolarPotentials.electric.at(i).expansionCenter);
+		chargeCenteredCell.displace(multipolarPotentials.getElectric().at(i).expansionCenter);
 		for (int j = 0; j < 2; j++) {
-			chargeCenteredC(i, j) = multipolarPotentials.getCapacitanceOnBox(i, j, chargeCenteredCell);
+			chargeCenteredC(i, j) = multipolarPotentials.getInCellCapacitanceOnBox(i, j, chargeCenteredCell);
 		}
 	}
 
@@ -845,15 +869,15 @@ TEST_F(DriverTest, realistic_case_with_dielectrics_fdtd_cell)
 	auto dr = Driver::loadFromAdaptedFile(
 		casesFolder() + "realistic_case_with_dielectrics/" + CASE + ".tulip.adapted.json");
 	auto fdtdCellPotentials = dr.getInCellPotentials();
-	auto fdtdCellComputed_C_0 = fdtdCellPotentials.getCapacitanceUsingInnerRegion(0, 0);
-	auto fdtdCellComputed_C_16 = fdtdCellPotentials.getCapacitanceUsingInnerRegion(0, 16);
-	auto fdtdCellComputed_C_25 = fdtdCellPotentials.getCapacitanceUsingInnerRegion(0, 25);
-	auto fdtdCellComputed_C_30 = fdtdCellPotentials.getCapacitanceUsingInnerRegion(0, 30);
+	auto fdtdCellComputed_C_0 = fdtdCellPotentials.getInCellCapacitanceUsingInnerRegion(0, 0);
+	auto fdtdCellComputed_C_16 = fdtdCellPotentials.getInCellCapacitanceUsingInnerRegion(0, 16);
+	auto fdtdCellComputed_C_25 = fdtdCellPotentials.getInCellCapacitanceUsingInnerRegion(0, 25);
+	auto fdtdCellComputed_C_30 = fdtdCellPotentials.getInCellCapacitanceUsingInnerRegion(0, 30);
 
-	auto fdtdCellComputed_L_0 = fdtdCellPotentials.getInductanceUsingInnerRegion(0, 0);
-	auto fdtdCellComputed_L_16 = fdtdCellPotentials.getInductanceUsingInnerRegion(0, 16);
-	auto fdtdCellComputed_L_25 = fdtdCellPotentials.getInductanceUsingInnerRegion(0, 25);
-	auto fdtdCellComputed_L_30 = fdtdCellPotentials.getInductanceUsingInnerRegion(0, 30);
+	auto fdtdCellComputed_L_0 = fdtdCellPotentials.getInCellInductanceUsingInnerRegion(0, 0);
+	auto fdtdCellComputed_L_16 = fdtdCellPotentials.getInCellInductanceUsingInnerRegion(0, 16);
+	auto fdtdCellComputed_L_25 = fdtdCellPotentials.getInCellInductanceUsingInnerRegion(0, 25);
+	auto fdtdCellComputed_L_30 = fdtdCellPotentials.getInCellInductanceUsingInnerRegion(0, 30);
 
 	auto rTol = 0.001;
 	EXPECT_LE(relError(fdtdCellComputed_C_0, 4.0911726228481947e-11), rTol);
@@ -875,15 +899,15 @@ TEST_F(DriverTest, realistic_case_with_dielectrics_multipolar)
 	auto mP = dr.getInCellPotentials();
 	
 	Box fdtdCellCenteredOnConductor0{ {-0.016209, -0.009066}, {0.013791, 0.020934} };
-	auto mPComputedC_0 = mP.getCapacitanceOnBox(0, 0, fdtdCellCenteredOnConductor0);
-	auto mPComputedC_16 = mP.getCapacitanceOnBox(0, 16, fdtdCellCenteredOnConductor0);
-	auto mPComputedC_25 = mP.getCapacitanceOnBox(0, 25, fdtdCellCenteredOnConductor0);
-	auto mPComputedC_30 = mP.getCapacitanceOnBox(0, 30, fdtdCellCenteredOnConductor0);
+	auto mPComputedC_0 = mP.getInCellCapacitanceOnBox(0, 0, fdtdCellCenteredOnConductor0);
+	auto mPComputedC_16 = mP.getInCellCapacitanceOnBox(0, 16, fdtdCellCenteredOnConductor0);
+	auto mPComputedC_25 = mP.getInCellCapacitanceOnBox(0, 25, fdtdCellCenteredOnConductor0);
+	auto mPComputedC_30 = mP.getInCellCapacitanceOnBox(0, 30, fdtdCellCenteredOnConductor0);
 
-	auto mPComputedL_0 = mP.getInductanceOnBox(0, 0, fdtdCellCenteredOnConductor0);
-	auto mPComputedL_16 = mP.getInductanceOnBox(0, 16, fdtdCellCenteredOnConductor0);
-	auto mPComputedL_25 = mP.getInductanceOnBox(0, 25, fdtdCellCenteredOnConductor0);
-	auto mPComputedL_30 = mP.getInductanceOnBox(0, 30, fdtdCellCenteredOnConductor0);
+	auto mPComputedL_0 = mP.getInCellInductanceOnBox(0, 0, fdtdCellCenteredOnConductor0);
+	auto mPComputedL_16 = mP.getInCellInductanceOnBox(0, 16, fdtdCellCenteredOnConductor0);
+	auto mPComputedL_25 = mP.getInCellInductanceOnBox(0, 25, fdtdCellCenteredOnConductor0);
+	auto mPComputedL_30 = mP.getInCellInductanceOnBox(0, 30, fdtdCellCenteredOnConductor0);
 
 	// Compare with C and L computed using the fdtd cell.
 	const double fdtdCellComputed_C_0 = 4.0911726228481947e-11;

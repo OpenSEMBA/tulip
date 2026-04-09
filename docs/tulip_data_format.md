@@ -140,6 +140,7 @@ This object can contain the following entries:
     - `type`: `"conductor"`
     - `conductorId`: (integer) Unique identifier for the conductor/shield.
     - `attribute`: (integer) GMSH physical group tag for this region.
+    - `resistancePerMeter`: (float, optional) Per-unit-length resistance.
 
   - For dielectrics:
     - `type`: `"dielectric"`
@@ -165,4 +166,15 @@ This object can contain the following entries:
   This format allows the solver to map mesh regions to their physical properties and boundary conditions, as defined in the original input and processed by the adapter.
 
   # .tulip.out.json file format
-  TODO
+
+  `.tulip.out.json` is stored in the format specified in the FDTD JSON format from [opensemba/fdtd](https://github.com/opensemba/fdtd).
+
+  For shielded-domain outputs,  stores the per-unit-length parameters:
+
+  - `R`: conductor resistance vector. 
+  - `L`: inductance matrix.
+  - `C`: capacitance matrix.
+
+  For unshielded-domains stores the parameters needed to reconstruct the field using a multipolar expansion.
+
+  It also stores `materialAssociation` information which serves to reconstruct the 

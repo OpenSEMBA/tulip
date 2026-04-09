@@ -11,7 +11,7 @@ std::vector<double> toVec(const Vector& vec)
 {
 	std::vector<double> r(vec.Size());
 	for (auto i{ 0 }; i < vec.Size(); ++i) {
-		r[i] = vec[i];
+        r[i] = vec[i];
 	}
 	return r;
 }
@@ -29,11 +29,11 @@ std::vector<std::vector<double>> toVecVec(const DenseMatrix& m)
     return r;
 }
 
-Vector toMFEMVector(const std::vector<double>& v)
+Array<double> toMFEMVector(const std::vector<double>& v)
 {
-	Vector r(v.size());
+    Array<double> r(v.size());
 	for (auto i{ 0 }; i < v.size(); ++i) {
-		r(i) = v[i];
+        r[i] = v[i];
 	}
 	return r;
 }
@@ -61,6 +61,15 @@ DenseMatrix toMFEMDenseMatrix(const std::vector<std::vector<double>>& v)
     return r;
 }
 
+Array<double> zeroVectorLike(const DenseMatrix& matrix)
+{
+    Array<double> result(matrix.NumRows());
+    for (auto i{ 0 }; i < result.Size(); ++i) {
+        result[i] = 0.0;
+    }
+    return result;
+}
+
 PULParameters::PULParameters(const json& j)
 {
     if (!j.contains("C") || !j.contains("L")) {
@@ -68,11 +77,27 @@ PULParameters::PULParameters(const json& j)
     }
     C = toMFEMDenseMatrix(j["C"]);
     L = toMFEMDenseMatrix(j["L"]);
+    if (j.contains("R")) {
+        if (j["R"].is_array() && !j["R"].empty() && j["R"][0].is_array()) {
+            auto backwardCompatibleR = toMFEMDenseMatrix(j["R"]);
+            R.SetSize(backwardCompatibleR.NumRows());
+            for (int i = 0; i < backwardCompatibleR.NumRows(); ++i) {
+                R[i] = backwardCompatibleR(i, i);
+            }
+        }
+        else {
+            R = toMFEMVector(j["R"]);
+        }
+    }
+    else {
+        R = zeroVectorLike(C);
+    }
 }
 
 bool PULParameters::operator==(const PULParameters& rhs) const
 { 
     return
+		toVec(R) == toVec(rhs.R) &&
         toVecVec(C) == toVecVec(rhs.C) &&
         toVecVec(L) == toVecVec(rhs.L);
 }
@@ -92,6 +117,7 @@ DenseMatrix PULParameters::getCapacitiveCouplingCoefficients() const
 json PULParameters::toJSON() const
 {
     json res;
+    res["R"] = toVec(R);
     res["C"] = toVecVec(C);
     res["L"] = toVecVec(L);
     return res;
@@ -161,7 +187,7 @@ bool InCellPotentials::operator==(const InCellPotentials& rhs) const
     return true;
 }
 
-double InCellPotentials::getCapacitanceUsingInnerRegion(int i, int j) const
+double InCellPotentials::getInCellCapacitanceUsingInnerRegion(int i, int j) const
 {
     double Qj = electric.at(j).ab[0].first;
     double avVj = electric.at(j).innerRegionAveragePotential;
@@ -171,7 +197,7 @@ double InCellPotentials::getCapacitanceUsingInnerRegion(int i, int j) const
     return Qj / avVj * EPSILON0_SI;
 }
 
-double InCellPotentials::getInductanceUsingInnerRegion(int i, int j) const
+double InCellPotentials::getInCellInductanceUsingInnerRegion(int i, int j) const
 {
     double Ij = magnetic.at(j).ab[0].first;
     double avAj = magnetic.at(j).innerRegionAveragePotential;
@@ -255,7 +281,7 @@ double getAveragePotential(
     return avVj;
 }
 
-double InCellPotentials::getCapacitanceOnBox(int i, int j, const Box& cellBox) const
+double InCellPotentials::getInCellCapacitanceOnBox(int i, int j, const Box& cellBox) const
 {
 	double Qj = electric.at(j).ab[0].first;
 
@@ -266,7 +292,7 @@ double InCellPotentials::getCapacitanceOnBox(int i, int j, const Box& cellBox) c
 	return Qj / avVj * EPSILON0_SI ;
 }
 
-double InCellPotentials::getInductanceOnBox(int i, int j, const Box& cellBox) const
+double InCellPotentials::getInCellInductanceOnBox(int i, int j, const Box& cellBox) const
 {
     double Ij = magnetic.at(j).ab[0].first;
 
