@@ -3,7 +3,28 @@
 #include "Launcher.h"
 #include "TestUtils.h"
 
+#include <filesystem>
+
 using namespace tulip;
+
+namespace {
+
+void expectFDTDOutput(
+	const std::string& outputFolder,
+	std::size_t expectedMaterials,
+	std::size_t expectedAssociations)
+{
+	const auto outputFile = outputFolder + "tulip.out.json";
+	ASSERT_TRUE(std::filesystem::exists(outputFile));
+
+	const auto outJSON = readJSON(outputFile);
+	ASSERT_TRUE(outJSON.contains("materials"));
+	ASSERT_TRUE(outJSON.contains("materialAssociations"));
+	EXPECT_EQ(expectedMaterials, outJSON["materials"].size());
+	EXPECT_EQ(expectedAssociations, outJSON["materialAssociations"].size());
+}
+
+} // namespace
 
 class LauncherTest : public ::testing::Test {};
 
@@ -19,6 +40,7 @@ TEST_F(LauncherTest, empty_coax_from_adapted)
 	
 	// This should complete without throwing an exception
 	EXPECT_NO_THROW(tulip.run());
+	expectFDTDOutput(outputFolder, 1, 1);
 }
 
 TEST_F(LauncherTest, empty_coax_from_input_json)
@@ -31,4 +53,19 @@ TEST_F(LauncherTest, empty_coax_from_input_json)
 
 	Launcher tulip(inputFile, outputFolder);
 	EXPECT_NO_THROW(tulip.run());
+	expectFDTDOutput(outputFolder, 1, 1);
+}
+
+TEST_F(LauncherTest, coax_and_bare_wire_from_adapted)
+{
+	const std::string inputFile = inputCase("coax_and_bare_wire");
+	const std::string outputFolder =
+		outFolder() + "LauncherTest.coax_and_bare_wire/";
+
+	Launcher tulip(inputFile, outputFolder);
+	EXPECT_NO_THROW(tulip.run());
+
+	expectFDTDOutput(outputFolder, 2, 2);
+	EXPECT_TRUE(std::filesystem::exists(outputFolder + "inCellPotentials.out.json"));
+	EXPECT_TRUE(std::filesystem::exists(outputFolder + "generalizedLC.out.json"));
 }

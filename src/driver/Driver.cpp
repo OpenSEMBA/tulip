@@ -291,27 +291,12 @@ PULParameters Driver::buildGeneralizedLCMatrices()
 
 void Driver::run()
 {
-	auto openness{ model_.determineOpenness() };
-	if (openness == Model::Openness::closed) {
-		auto pul = buildPULParametersForModel();
-		saveToJSONFile(
-			pul.toJSON(), 
-			opts_.exportFolder + "tulip.out.json");
-	}
-	else if (openness == Model::Openness::open) {
-		auto inCell = getInCellPotentials();
-		saveToJSONFile(
-			inCell.toJSON(),
-			opts_.exportFolder + "inCellPotentials.out.json");
+	
+	saveToJSONFile(
+		getMultiwireParametersByDomains().toFDTDJSON(),
+		opts_.exportFolder + "tulip.out.json");
 
-		auto generalizedLCMatrices = buildGeneralizedLCMatrices();
-		saveToJSONFile(
-			generalizedLCMatrices.toJSON(),
-			opts_.exportFolder + "generalizedLC.out.json");
-	}
-	else {
-		throw std::runtime_error("Openness of the model is not supported.");
-	}
+
 }
 
 PULParameters Driver::getPULMTL()

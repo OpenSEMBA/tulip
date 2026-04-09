@@ -6,11 +6,46 @@
 #include "Driver.h"
 #include "Solver.h"
 
+#include <algorithm>
+#include <string_view>
+
 using namespace tulip;
 
 using json = nlohmann::json;
 
 class DriverTest : public ::testing::Test {};
+
+namespace {
+
+const json& findMaterialByType(const json& fdtdJSON, std::string_view type)
+{
+	auto it = std::find_if(
+		fdtdJSON["materials"].begin(),
+		fdtdJSON["materials"].end(),
+		[type](const auto& material) {
+			return material["type"] == type;
+		});
+	if (it == fdtdJSON["materials"].end()) {
+		throw std::runtime_error("Material type not found in FDTD JSON.");
+	}
+	return *it;
+}
+
+const json& findAssociationByMaterialId(const json& fdtdJSON, int materialId)
+{
+	auto it = std::find_if(
+		fdtdJSON["materialAssociations"].begin(),
+		fdtdJSON["materialAssociations"].end(),
+		[materialId](const auto& association) {
+			return association["materialId"] == materialId;
+		});
+	if (it == fdtdJSON["materialAssociations"].end()) {
+		throw std::runtime_error("Material association not found in FDTD JSON.");
+	}
+	return *it;
+}
+
+} // namespace
 
 TEST_F(DriverTest, empty_coax)
 {
@@ -911,6 +946,9 @@ TEST_F(DriverTest, empty_coax_fdtd_json)
 	auto out = dr.getMultiwireParametersByDomains();
 	auto fdtdJSON = out.toFDTDJSON();
 
+	// For debugging:
+	std::cout << fdtdJSON.dump(4) << std::endl;
+
 	// Should have 1 material of type shieldedMultiwire.
 	ASSERT_EQ(1, fdtdJSON["materials"].size());
 	EXPECT_EQ("shieldedMultiwire", fdtdJSON["materials"][0]["type"]);
@@ -925,9 +963,11 @@ TEST_F(DriverTest, empty_coax_fdtd_json)
 
 	// Check material association.
 	ASSERT_EQ(1, fdtdJSON["materialAssociations"].size());
-	EXPECT_EQ(
-		fdtdJSON["materials"][0]["id"], 
-		fdtdJSON["materialAssociations"][0]["materialId"]);
+	const auto& association = fdtdJSON["materialAssociations"][0];
+	EXPECT_EQ(fdtdJSON["materials"][0]["id"], association["materialId"]);
+	ASSERT_TRUE(association.contains("elementIds"));
+	ASSERT_EQ(1, association["elementIds"].size());
+	EXPECT_EQ(1, association["elementIds"][0]);
 }
 
 TEST_F(DriverTest, two_wires_open_fdtd_json)
@@ -935,6 +975,9 @@ TEST_F(DriverTest, two_wires_open_fdtd_json)
 	auto dr = Driver::loadFromAdaptedFile(inputCase("two_wires_open"));
 	auto out = dr.getMultiwireParametersByDomains();
 	auto fdtdJSON = out.toFDTDJSON();
+
+	// For debugging:
+	std::cout << fdtdJSON.dump(4) << std::endl;
 
 	// Should have 1 material of type unshieldedMultiwire.
 	ASSERT_EQ(1, fdtdJSON["materials"].size());
@@ -953,9 +996,12 @@ TEST_F(DriverTest, two_wires_open_fdtd_json)
 
 	// Check material association.
 	ASSERT_EQ(1, fdtdJSON["materialAssociations"].size());
-	EXPECT_EQ(
-		fdtdJSON["materials"][0]["id"],
-		fdtdJSON["materialAssociations"][0]["materialId"]);
+	const auto& association = fdtdJSON["materialAssociations"][0];
+	EXPECT_EQ(fdtdJSON["materials"][0]["id"], association["materialId"]);
+	ASSERT_TRUE(association.contains("elementIds"));
+	ASSERT_EQ(2, association["elementIds"].size());
+	EXPECT_EQ(0, association["elementIds"][0]);
+	EXPECT_EQ(1, association["elementIds"][1]);
 }
 
 TEST_F(DriverTest, coax_and_bare_wire_fdtd_json)
@@ -963,6 +1009,9 @@ TEST_F(DriverTest, coax_and_bare_wire_fdtd_json)
 	auto dr = Driver::loadFromAdaptedFile(inputCase("coax_and_bare_wire"));
 	auto out = dr.getMultiwireParametersByDomains();
 	auto fdtdJSON = out.toFDTDJSON();
+
+	// For debugging:
+	std::cout << fdtdJSON.dump(4) << std::endl;
 
 	// Should have 2 materials: 1 unshieldedMultiwire + 1 shieldedMultiwire.
 	ASSERT_EQ(2, fdtdJSON["materials"].size());
@@ -991,4 +1040,15 @@ TEST_F(DriverTest, coax_and_bare_wire_fdtd_json)
 
 	// Check material associations.
 	ASSERT_EQ(2, fdtdJSON["materialAssociations"].size());
+	const auto& shieldedAssociation =
+		findAssociationByMaterialId(fdtdJSON, (*shielded)["id"]);
+	ASSERT_EQ(1, shieldedAssociation["elementIds"].size());
+	EXPECT_EQ(0, shieldedAssociation["elementIds"][0]);
+	EXPECT_NE(1, shieldedAssociation["elementIds"][0]);
+
+	const auto& unshieldedAssociation =
+		findAssociationByMaterialId(fdtdJSON, (*unshielded)["id"]);
+	ASSERT_EQ(2, unshieldedAssociation["elementIds"].size());
+	EXPECT_EQ(1, unshieldedAssociation["elementIds"][0]);
+	EXPECT_EQ(2, unshieldedAssociation["elementIds"][1]);
 }

@@ -2,6 +2,9 @@
 
 #include "constants.h"
 
+#include <filesystem>
+#include <fstream>
+
 namespace tulip {
 
 using namespace mfem;
@@ -99,7 +102,15 @@ json PULParameters::toJSON() const
 
 void saveToJSONFile(const json& j, const std::string& filename)
 {
+    const auto outputPath = std::filesystem::path(filename);
+    if (outputPath.has_parent_path()) {
+        std::filesystem::create_directories(outputPath.parent_path());
+    }
+
     std::ofstream ofs(filename);
+    if (!ofs.is_open()) {
+        throw std::runtime_error("Unable to open output file: " + filename);
+    }
     ofs << j;
 }
 
@@ -396,8 +407,21 @@ nlohmann::json MultiwireParametersByDomain::toFDTDJSON() const
         json assoc;
         assoc["materialId"] = materialId;
         json elementIds = json::array();
-        for (auto condId : params->getDomain().conductorIds) {
-            elementIds.push_back(condId);
+        const auto& domain = params->getDomain();
+        if (dynamic_cast<PULParameters*>(params.get()) != nullptr) {
+            const auto groundCond = (domain.ground != Domain::UNDEFINED_GROUND)
+                ? domain.ground
+                : *domain.conductorIds.begin();
+            for (auto condId : domain.conductorIds) {
+                if (condId != groundCond) {
+                    elementIds.push_back(condId);
+                }
+            }
+        }
+        else {
+            for (auto condId : domain.conductorIds) {
+                elementIds.push_back(condId);
+            }
         }
         assoc["elementIds"] = elementIds;
         materialAssociations.push_back(assoc);
