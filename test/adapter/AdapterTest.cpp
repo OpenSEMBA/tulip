@@ -149,36 +149,22 @@ TEST_F(AdapterTest, empty_coax_propagates_conductor_resistance_per_meter)
 
 TEST_F(AdapterTest, empty_coax_conductivity_is_converted_to_resistance_per_meter)
 {
-    // NOTE: Conductivity-to-resistance conversion requires explicit conductor geometry
-    // to be extracted from the STEP file to compute cross-sectional area.
-    // The empty_coax test case may not have sufficient geometric detail for this conversion.
-    // This test documents the intended behavior when proper geometry is available.
-    
     const std::string caseName = "empty_coax";
     auto inputJson = readInputJsonFromCaseName(caseName);
     const double conductivity = 5.8e7;
     inputJson["materials"][1]["conductivity"] = conductivity;
 
-    // For now, we expect the adapter to either compute the resistance from conductivity
-    // or to fail gracefully if the geometry is insufficient.
-    // TODO: Use a test case with complete conductor geometry or create synthetic geometry.
-    try {
-        Adapter adapter(inputJson, caseName, inputFolderFromCaseName(caseName));
-        auto conductor = findAdaptedConductorMaterialById(adapter.getAdaptedInputJSON(), 1);
+    Adapter adapter(inputJson, caseName, inputFolderFromCaseName(caseName));
+    auto conductor = findAdaptedConductorMaterialById(adapter.getAdaptedInputJSON(), 1);
 
-        ASSERT_TRUE(conductor.contains("resistancePerMeter"));
-        const double innerRadiusMeters = 25e-3;
-        const double expectedResistancePerMeter =
-            1.0 / (conductivity * std::acos(-1.0) * innerRadiusMeters * innerRadiusMeters);
-        EXPECT_NEAR(
-            conductor.at("resistancePerMeter").get<double>(),
-            expectedResistancePerMeter,
-            expectedResistancePerMeter * 1e-12);
-    }
-    catch (const std::runtime_error& e) {
-        // Expected when conductor geometry is not extractable from STEP file
-        EXPECT_TRUE(std::string(e.what()).find("Unable to determine conductor area") != std::string::npos);
-    }
+    ASSERT_TRUE(conductor.contains("resistancePerMeter"));
+    const double innerRadiusMeters = 25e-3;
+    const double expectedResistancePerMeter =
+        1.0 / (conductivity * std::acos(-1.0) * innerRadiusMeters * innerRadiusMeters);
+    EXPECT_NEAR(
+        conductor.at("resistancePerMeter").get<double>(),
+        expectedResistancePerMeter,
+        expectedResistancePerMeter * 1e-12);
 }
 
 TEST_F(AdapterTest, partially_filled_coax)

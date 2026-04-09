@@ -43,48 +43,30 @@ std::string getFieldTypeSuffix(Driver::FieldType fieldType)
 
 namespace {
 
-mfem::DenseMatrix buildGeneralizedResistanceMatrix(const Model& model)
+mfem::Array<double> buildGeneralizedResistanceVector(const Model& model)
 {
 	auto conductors = model.getMaterials().getConductors();
-	mfem::DenseMatrix resistance(conductors.size(), conductors.size());
-	for (auto i{ 0 }; i < resistance.NumRows(); ++i) {
-		for (auto j{ 0 }; j < resistance.NumCols(); ++j) {
-			resistance(i, j) = 0.0;
-		}
+	mfem::Array<double> resistance(conductors.size());
+	for (int i = 0; i < resistance.Size(); ++i) {
+		resistance[i] = 0.0;
 	}
 
 	int conductorIndex = 0;
 	for (const auto* conductor : conductors) {
-		resistance(conductorIndex, conductorIndex) = conductor->getResistancePerMeter();
+		resistance[conductorIndex] = conductor->getResistancePerMeter();
 		++conductorIndex;
 	}
 
 	return resistance;
 }
 
-mfem::DenseMatrix reduceResistanceMatrixForPUL(
-	const mfem::DenseMatrix& generalizedResistance,
+mfem::Array<double> reduceResistanceVectorForPUL(
+	const mfem::Array<double>& generalizedResistance,
 	const Model::Openness& openness)
 {
-	if (openness == Model::Openness::open) {
-		mfem::DenseMatrix result(
-			generalizedResistance.NumRows() - 1,
-			generalizedResistance.NumCols() - 1);
-		for (int i = 1; i < generalizedResistance.NumRows(); ++i) {
-			for (int j = 1; j < generalizedResistance.NumCols(); ++j) {
-				result(i - 1, j - 1) = generalizedResistance(i, j);
-			}
-		}
-		return result;
-	}
-
-	mfem::DenseMatrix result(
-		generalizedResistance.NumRows() - 1,
-		generalizedResistance.NumCols() - 1);
-	for (int i = 1; i < generalizedResistance.NumRows(); ++i) {
-		for (int j = 1; j < generalizedResistance.NumCols(); ++j) {
-			result(i - 1, j - 1) = generalizedResistance(i, j);
-		}
+	mfem::Array<double> result(generalizedResistance.Size() - 1);
+	for (int i = 1; i < generalizedResistance.Size(); ++i) {
+		result[i - 1] = generalizedResistance[i];
 	}
 	return result;
 }
@@ -316,8 +298,8 @@ DenseMatrix Driver::getLMatrix()
 PULParameters Driver::buildPULParametersForModel()
 {
 	PULParameters res;
-	auto generalizedResistance = buildGeneralizedResistanceMatrix(model_);
-	res.R = reduceResistanceMatrixForPUL(generalizedResistance, model_.determineOpenness());
+	auto generalizedResistance = buildGeneralizedResistanceVector(model_);
+	res.R = reduceResistanceVectorForPUL(generalizedResistance, model_.determineOpenness());
 
 	res.C = getCMatrix();
 	res.C *= EPSILON0_SI;
@@ -331,7 +313,7 @@ PULParameters Driver::buildPULParametersForModel()
 PULParameters Driver::buildGeneralizedLCMatrices()
 {
 	PULParameters res;
-	res.R = buildGeneralizedResistanceMatrix(model_);
+	res.R = buildGeneralizedResistanceVector(model_);
 
 	res.C = getGeneralizedCMatrix(FieldType::electric);
 	res.C *= EPSILON0_SI;
@@ -427,8 +409,8 @@ MultiwireParametersByDomain Driver::getMultiwireParametersByDomains()
 				}
 			};
 
-			restrictToDomain(inCell->electric);
-			restrictToDomain(inCell->magnetic);
+			restrictToDomain(inCell->getElectric());
+			restrictToDomain(inCell->getMagnetic());
 			inCell->setDomain(domain);
 			res.add(domId, std::move(inCell));
 			continue;
@@ -703,10 +685,10 @@ InCellPotentials Driver::getInCellPotentials()
 	}
 
 	InCellPotentials res;
-	res.innerRegionBox = model_.getInnerRegionBoundingBox();
+	res.getInnerRegionBox() = model_.getInnerRegionBoundingBox();
 
-	res.electric = getFieldParameters(FieldType::electric);
-	res.magnetic = getFieldParameters(FieldType::magnetic);
+	res.getElectric() = getFieldParameters(FieldType::electric);
+	res.getMagnetic() = getFieldParameters(FieldType::magnetic);
 
 	return res;
 }
