@@ -4,6 +4,12 @@
 #include "AdaptedInputParser.h"
 #include "multipolarExpansion.h"
 
+#include <algorithm>
+#include <filesystem>
+#include <fstream>
+#include <string_view>
+#include <vector>
+
 using namespace mfem;
 
 namespace tulip {
@@ -71,6 +77,91 @@ mfem::Array<double> reduceResistanceVectorForPUL(
 	return result;
 }
 
+std::string getParaViewCaseName(
+	int conductorId,
+	Driver::FieldType fieldType,
+	std::string_view extraName = "")
+{
+	std::stringstream ss;
+	ss << "Conductor_" << conductorId;
+	return ss.str() + getFieldTypeSuffix(fieldType) + std::string(extraName);
+}
+
+void writeParaViewCollection(
+	const std::string& outputFile,
+	const std::vector<std::string>& relativeEntries)
+{
+	std::filesystem::create_directories(
+		std::filesystem::path(outputFile).parent_path());
+
+	std::ofstream out(outputFile, std::ios::trunc);
+	if (!out.is_open()) {
+		throw std::runtime_error(
+			"Unable to create ParaView collection file: " + outputFile);
+	}
+
+	out << "<?xml version=\"1.0\"?>\n";
+	out << "<VTKFile type=\"Collection\" version=\"0.1\" byte_order=\"LittleEndian\">\n";
+	out << "  <Collection>\n";
+	for (std::size_t i = 0; i < relativeEntries.size(); ++i) {
+		out << "    <DataSet timestep=\"" << i
+			<< "\" group=\"\" part=\"0\" file=\""
+			<< relativeEntries[i] << "\"/>\n";
+	}
+	out << "  </Collection>\n";
+	out << "</VTKFile>\n";
+}
+
+void writeAggregateParaViewCollections(const DriverOptions& opts)
+{
+	const auto paraViewDir = std::filesystem::path(opts.exportFolder) / "ParaView";
+	if (!std::filesystem::exists(paraViewDir)) {
+		return;
+	}
+
+	std::vector<std::string> allEntries;
+	std::vector<std::string> floatingEntries;
+
+	for (const auto& entry : std::filesystem::directory_iterator(paraViewDir)) {
+		if (!entry.is_directory()) {
+			continue;
+		}
+
+		const auto caseName = entry.path().filename().string();
+		const auto casePvd = entry.path() / (caseName + ".pvd");
+		if (!std::filesystem::exists(casePvd)) {
+			continue;
+		}
+
+		const auto relativeFile = caseName + "/" + caseName + ".pvd";
+		if (caseName.find("_floating") != std::string::npos) {
+			floatingEntries.push_back(relativeFile);
+		}
+		else {
+			allEntries.push_back(relativeFile);
+		}
+	}
+
+	std::sort(allEntries.begin(), allEntries.end());
+	std::sort(floatingEntries.begin(), floatingEntries.end());
+
+	const auto allConductorsCollection = paraViewDir / "all_conductors.pvd";
+	if (!allEntries.empty()) {
+		writeParaViewCollection(allConductorsCollection.string(), allEntries);
+	}
+	else {
+		std::filesystem::remove(allConductorsCollection);
+	}
+
+	const auto floatingCollection = paraViewDir / "floating_conductors.pvd";
+	if (!floatingEntries.empty()) {
+		writeParaViewCollection(floatingCollection.string(), floatingEntries);
+	}
+	else {
+		std::filesystem::remove(floatingCollection);
+	}
+}
+
 } // namespace
 
 void exportFieldSolutions(
@@ -80,13 +171,11 @@ void exportFieldSolutions(
 	Driver::FieldType fieldType,
 	std::string extraName = "")
 {
-	const std::string suffix{ getFieldTypeSuffix(fieldType) };
-
-	std::stringstream ss;
-	ss << "Conductor_" << conductorId;
+	const auto caseName =
+		getParaViewCaseName(conductorId, fieldType, extraName);
 
 	if (opts.exportParaViewSolution) {
-		std::string outputName{ opts.exportFolder + "/" + "ParaView/" + ss.str() + suffix + extraName};
+		std::string outputName{ opts.exportFolder + "/" + "ParaView/" + caseName};
 		ParaViewDataCollection pd{ outputName, s.getMesh() };
 		s.writeParaViewFields(pd);
 	}
@@ -330,6 +419,10 @@ void Driver::run()
 	saveToJSONFile(
 		getMultiwireParametersByDomains().toFDTDJSON(),
 		opts_.exportFolder + "tulip.out.json");
+
+	if (opts_.exportParaViewSolution) {
+		writeAggregateParaViewCollections(opts_);
+	}
 
 
 }
