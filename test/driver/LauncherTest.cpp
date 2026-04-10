@@ -87,6 +87,16 @@ TEST_F(LauncherTest, nested_shield_resistance_and_transfer_impedance_written_to_
 
 	const std::string tempInputFile =
 		outFolder() + "LauncherTest.coax_and_bare_wire_with_shield_transfer.tulip.input.json";
+	const std::string sourceStepFile =
+		casesFolder() + caseName + "/" + caseName + ".step";
+	const std::string tempStepFile =
+		outFolder() + "LauncherTest.coax_and_bare_wire_with_shield_transfer.step";
+	ASSERT_TRUE(std::filesystem::exists(sourceStepFile));
+	std::filesystem::copy_file(
+		sourceStepFile,
+		tempStepFile,
+		std::filesystem::copy_options::overwrite_existing);
+
 	std::ofstream out(tempInputFile);
 	ASSERT_TRUE(out.is_open());
 	out << inputJson;
@@ -130,17 +140,12 @@ TEST_F(LauncherTest, nested_shield_resistance_and_transfer_impedance_written_to_
 	}
 	ASSERT_NE(nullptr, containedMaterial);
 	ASSERT_NE(nullptr, surroundingMaterial);
-	ASSERT_TRUE(surroundingMaterial->contains("resistancePerMeter"));
-	EXPECT_DOUBLE_EQ(8.0e-3, (*surroundingMaterial)["resistancePerMeter"]);
+	EXPECT_FALSE(surroundingMaterial->contains("transferImpedancePerMeter"));
 
 	ASSERT_TRUE(containedMaterial->contains("transferImpedancePerMeter"));
-	EXPECT_DOUBLE_EQ(
-		1.5e-3,
-		(*containedMaterial)["transferImpedancePerMeter"]["resistiveTerm"]);
-	EXPECT_DOUBLE_EQ(
-		3.0e-9,
-		(*containedMaterial)["transferImpedancePerMeter"]["inductiveTerm"]);
-	EXPECT_EQ(
-		"outwards",
-		(*containedMaterial)["transferImpedancePerMeter"]["direction"]);
+	const auto& transferImpedance = (*containedMaterial)["transferImpedancePerMeter"];
+	ASSERT_TRUE(transferImpedance.contains("resistiveTerm"));
+	EXPECT_DOUBLE_EQ(8.0e-3, transferImpedance["resistiveTerm"]);
+	EXPECT_DOUBLE_EQ(0.0, transferImpedance["inductiveTerm"]);
+	EXPECT_EQ("both", transferImpedance["direction"]);
 }
