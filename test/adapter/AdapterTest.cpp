@@ -164,6 +164,16 @@ TEST_F(AdapterTest, two_wires_shielded_in_open_domain)
 
     EXPECT_TRUE(adapter.isOpenProblem());
 
+    // The shield conductor (conductorId == 2, matching the "Shield" layer id)
+    // must be represented as exactly 2 curves in its physical group, one per
+    // wire it encloses.
+    const auto shieldMaterial =
+        findAdaptedConductorMaterialById(adapter.getAdaptedInputJSON(), 2);
+    const int shieldAttribute = shieldMaterial.at("attribute").get<int>();
+    std::vector<int> shieldCurveTags;
+    gmsh::model::getEntitiesForPhysicalGroup(1, shieldAttribute, shieldCurveTags);
+    EXPECT_EQ(shieldCurveTags.size(), 2u);
+
     assertAdaptedJsonMatchesExpected(caseName, adapter);
 }
 

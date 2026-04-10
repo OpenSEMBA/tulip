@@ -18,7 +18,8 @@ constexpr double relativePermittivityTolerance = 1e-12;
 constexpr double intersectionAreaTolerance = 1e-18;
 
 std::string toLegacyMaterialType(const std::string& type) {
-    if (type == "conductor" || type == "shield") return "PEC";
+    if (type == "conductor") return "PEC";
+    if (type == "shield") return "Shield";
     if (type == "dielectric") return "Dielectric";
     if (type == "open") return "OpenBoundary";
     return type;
@@ -58,9 +59,9 @@ nlohmann::json buildCrossSectionFromInputFormat(const nlohmann::json& jsonData) 
             {"name", geometryName},
             {"material", materialJson}
         });
-        // Also register the legacy "Conductor_<id>" alias for PEC layers so that
+        // Also register the legacy "Conductor_<id>" alias for PEC/Shield layers so that
         // STEP files using that naming convention are still matched correctly.
-        if (mappedType == "PEC" && layer.contains("id")) {
+        if ((mappedType == "PEC" || mappedType == "Shield") && layer.contains("id")) {
             const std::string alias =
                 "Conductor_" + std::to_string(layer["id"].get<int>());
             if (alias != geometryName) {
@@ -257,7 +258,10 @@ EntityMap ShapesClassification::getEntitiesByMaterialType(
 }
 
 EntityMap ShapesClassification::getPECs(const EntityList& entityTags) {
-    return getEntitiesByMaterialType(entityTags, "PEC");
+    auto result = getEntitiesByMaterialType(entityTags, "PEC");
+    auto shieldEntities = getEntitiesByMaterialType(entityTags, "Shield");
+    result.insert(shieldEntities.begin(), shieldEntities.end());
+    return result;
 }
 
 EntityMap ShapesClassification::getDielectrics(const EntityList& entityTags) {
@@ -275,12 +279,18 @@ bool ShapesClassification::isOpenBoundaryDefined() const
 
 bool ShapesClassification::isOpenProblem() const 
 {
-    const bool hasShieldLikeConductorName = std::any_of(
-        conductors.begin(), conductors.end(), [](const auto& entry) {
-            return entry.first.find("Shield") != std::string::npos;
+    const bool hasShieldConductor = std::any_of(
+        conductors.begin(), conductors.end(), [this](const auto& entry) {
+            return std::any_of(
+                crossSectionData_.begin(), crossSectionData_.end(),
+                [&entry](const auto& geometry) {
+                    const std::string name = geometry["name"].template get<std::string>();
+                    const std::string type = geometry["material"]["type"].template get<std::string>();
+                    return name == entry.first && type == "Shield";
+                });
         });
 
-    if (conductors.size() > 2 && hasShieldLikeConductorName &&
+    if (conductors.size() > 2 && hasShieldConductor &&
         !conductorsIntersect(conductors)) {
         return true;
     }
