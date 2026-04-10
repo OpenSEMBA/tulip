@@ -423,6 +423,14 @@ nlohmann::json MultiwireParametersByDomain::toFDTDJSON() const
             mat["capacitancePerMeter"] = pulJSON["C"];
             mat["inductancePerMeter"] = pulJSON["L"];
             mat["resistancePerMeter"] = pulJSON["R"];
+            if (pul->getTransferImpedancePerMeter().has_value()) {
+                const auto& transfer = pul->getTransferImpedancePerMeter().value();
+                mat["transferImpedancePerMeter"] = {
+                    {"resistiveTerm", transfer.resistiveTerm},
+                    {"inductiveTerm", transfer.inductiveTerm},
+                    {"direction", transfer.direction}
+                };
+            }
         }
         else if (auto* inCell = dynamic_cast<InCellPotentials*>(params.get())) {
             mat["type"] = "unshieldedMultiwire";

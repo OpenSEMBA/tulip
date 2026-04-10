@@ -2,6 +2,9 @@
 
 #include <nlohmann/json.hpp>
 
+#include <optional>
+#include <string>
+
 #include "FES.h"
 #include "Model.h"
 #include "multipolarExpansion.h"
@@ -21,6 +24,12 @@ private:
     Domain domain;
 };
 
+struct TransferImpedancePerMeter {
+    double resistiveTerm = 0.0;
+    double inductiveTerm = 0.0;
+    std::string direction = "both";
+};
+
 class PULParameters : public MultiwireParameters {
 public:
     PULParameters() = default;
@@ -32,8 +41,18 @@ public:
 
     nlohmann::json toJSON() const;
 
+    const std::optional<TransferImpedancePerMeter>&
+        getTransferImpedancePerMeter() const { return transferImpedancePerMeter; }
+    void setTransferImpedancePerMeter(const TransferImpedancePerMeter& value)
+    {
+        transferImpedancePerMeter = value;
+    }
+
     mfem::DenseMatrix L, C; // Stored in SI units.
     mfem::Vector R; // Stored in SI units.
+
+private:
+    std::optional<TransferImpedancePerMeter> transferImpedancePerMeter;
 };
 
 class FieldReconstruction {

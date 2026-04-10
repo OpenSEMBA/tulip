@@ -369,12 +369,14 @@ MultiwireParametersByDomain Driver::getMultiwireParametersByDomains()
 		openDomainPotentials = std::make_unique<InCellPotentials>(getInCellPotentials());
 	}
 
-	// Build mapping from conductor ID to global matrix index.
+	// Build mappings from conductor ID to model data.
 	auto conductors = model_.getMaterials().getConductors();
 	std::map<ConductorId, int> condIdToIndex;
+	std::map<ConductorId, const Conductor*> condIdToConductor;
 	int idx = 0;
 	for (const auto& c : conductors) {
 		condIdToIndex[c->getConductorId()] = idx++;
+		condIdToConductor[c->getConductorId()] = c;
 	}
 
 	// Get global generalized C matrices.
@@ -480,6 +482,21 @@ MultiwireParametersByDomain Driver::getMultiwireParametersByDomains()
 		pul->L = extractStdC(buildDomainGC(globalGC0));
 		pul->L.Invert();
 		pul->L *= MU0_SI;
+
+		// Transfer impedance is only defined for domains contained in another one.
+		if (domain.ground != Domain::UNDEFINED_GROUND) {
+			auto groundIt = condIdToConductor.find(domain.ground);
+			if (groundIt != condIdToConductor.end() && groundIt->second->getIsShield()) {
+				TransferImpedancePerMeter transfer;
+				transfer.resistiveTerm =
+					groundIt->second->getShieldResistancePerMeter();
+				transfer.inductiveTerm =
+					groundIt->second->getShieldInductancePerMeter();
+				transfer.direction =
+					groundIt->second->getShieldDirection();
+				pul->setTransferImpedancePerMeter(transfer);
+			}
+		}
 
 		res.add(domId, std::move(pul));
 	}

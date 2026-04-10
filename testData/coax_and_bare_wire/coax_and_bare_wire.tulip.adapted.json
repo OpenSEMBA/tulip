@@ -6,7 +6,7 @@
     "gmshFile": "coax_and_bare_wire.msh",
     "materials": [
       { "attribute": 3, "conductorId": 0, "type": "conductor" },
-      { "attribute": 6, "conductorId": 1, "type": "conductor" },
+      { "attribute": 6, "conductorId": 1, "type": "conductor", "isShield": true },
       { "attribute": 1, "conductorId": 2, "type": "conductor" },
       { "attribute": 2, "type": "dielectric" },
       { "attribute": 5, "type": "dielectric" },

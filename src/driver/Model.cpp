@@ -39,7 +39,12 @@ Materials filterOutMaterialsNotPresentInMesh(
 			res.addConductor(
 				c->getAttribute(),
 				c->getConductorId(),
-				c->getResistancePerMeter());
+				c->getResistancePerMeter(),
+				false,
+				c->getIsShield(),
+				c->getShieldResistancePerMeter(),
+				c->getShieldInductancePerMeter(),
+				c->getShieldDirection());
 		} else if (const auto* d = dynamic_cast<const Dielectric*>(m)) {
 			res.addDielectric(d->getAttribute(), d->getRelativePermittivity());
 		} else if (dynamic_cast<const Open*>(m) != nullptr) {
