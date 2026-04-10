@@ -275,12 +275,32 @@ bool ShapesClassification::isOpenBoundaryDefined() const
 
 bool ShapesClassification::isOpenProblem() const 
 {
-    if (conductors.size() == 1) {
+    const bool hasShieldLikeConductorName = std::any_of(
+        conductors.begin(), conductors.end(), [](const auto& entry) {
+            return entry.first.find("Shield") != std::string::npos;
+        });
+
+    if (conductors.size() > 2 && hasShieldLikeConductorName &&
+        !conductorsIntersect(conductors)) {
         return true;
     }
-    if (conductors.size() > 2  && !conductorsIntersect(conductors)) {
-        return true;
+
+    auto roots = nestedGraph.roots();
+    if (open.size() == 1) return true;
+    if (roots.size() > 1) return true;
+    if (!roots.empty()) {
+        const auto& root = roots[0];
+        if (dielectrics.count(root)) {
+            return true;
+        }
+        if (conductors.count(root)) {
+            auto parentNodes = nestedGraph.getParentNodes();
+            if (std::find(parentNodes.begin(), parentNodes.end(), root) == parentNodes.end()) {
+                return true;
+            }
+        }
     }
+
     return false;
 }
 
