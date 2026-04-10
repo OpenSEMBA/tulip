@@ -10,6 +10,17 @@ namespace tulip {
 
 namespace {
 
+void configureMfemDeviceIfAvailable()
+{
+#ifdef MFEM_USE_OPENMP
+	// Keep the device alive for the full process lifetime.
+	static std::unique_ptr<mfem::Device> device;
+	if (!device) {
+		device = std::make_unique<mfem::Device>("omp");
+	}
+#endif
+}
+
 bool ignoresDielectrics(Driver::FieldType fieldType)
 {
 	return fieldType == Driver::FieldType::magnetic;
@@ -106,6 +117,8 @@ Driver::Driver(Model&& model, const DriverOptions& opts) :
 	model_{ std::move(model) },
 	opts_{ opts }
 {
+	configureMfemDeviceIfAvailable();
+
 	if (model_.getMaterials().getConductors().empty()) { 
 		throw std::runtime_error("Model must have at least one conductor.");
 	}
