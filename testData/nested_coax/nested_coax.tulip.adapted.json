@@ -8,11 +8,13 @@
       {
         "attribute": 1,
         "conductorId": 0,
+        "isShield": true,
         "type": "conductor"
       },
       {
         "attribute": 2,
         "conductorId": 1,
+        "isShield": true,
         "type": "conductor"
       },
       {

@@ -4,7 +4,7 @@
   },
   "model": {
     "materials": [
-      {"type": "conductor", "conductorId": 0, "attribute": 1 },
+      {"type": "conductor", "conductorId": 0, "attribute": 1, "isShield": true },
       {"type": "conductor", "conductorId": 1, "attribute": 2 },
       {"type": "dielectric", "relativePermittivity": 4.0, "attribute": 3},
       {"type": "dielectric", "attribute": 4}

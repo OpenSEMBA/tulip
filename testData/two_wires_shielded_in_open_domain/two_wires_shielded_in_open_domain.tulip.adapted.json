@@ -18,6 +18,7 @@
 			{
 				"attribute": 6,
 				"conductorId": 2,
+				"isShield": true,
 				"type": "conductor"
 			},
 			{
