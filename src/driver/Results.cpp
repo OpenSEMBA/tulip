@@ -32,9 +32,9 @@ std::vector<std::vector<double>> toVecVec(const DenseMatrix& m)
     return r;
 }
 
-Array<double> toMFEMVector(const std::vector<double>& v)
+Vector toMFEMVector(const std::vector<double>& v)
 {
-    Array<double> r(v.size());
+    Vector r(v.size());
 	for (auto i{ 0 }; i < v.size(); ++i) {
         r[i] = v[i];
 	}
@@ -64,9 +64,9 @@ DenseMatrix toMFEMDenseMatrix(const std::vector<std::vector<double>>& v)
     return r;
 }
 
-Array<double> zeroVectorLike(const DenseMatrix& matrix)
+Vector zeroVectorLike(const DenseMatrix& matrix)
 {
-    Array<double> result(matrix.NumRows());
+    Vector result(matrix.NumRows());
     for (auto i{ 0 }; i < result.Size(); ++i) {
         result[i] = 0.0;
     }

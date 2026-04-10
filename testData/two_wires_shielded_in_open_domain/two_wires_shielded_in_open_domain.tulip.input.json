@@ -1,0 +1,14 @@
+{
+  "driverOptions": {
+    "exportFolder": "Results/two_wires_shielded_in_open_domain/"
+  },
+  "materials": [
+    { "id": 1, "type": "conductor" },
+    { "id": 2, "type": "shield" }
+  ],
+  "layers": [
+    { "name": "Left_wire", "id": 0, "materialId": 1 },
+    { "name": "Right_wire", "id": 1, "materialId": 1 },
+    { "name": "Shield", "id": 2, "materialId": 2 }
+  ]
+}

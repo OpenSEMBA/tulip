@@ -15,9 +15,11 @@ constexpr double innerRegionBoxScalingFactor = 1.15;
 constexpr double farRegionBoxScalingFactor = 4.0;
 constexpr double defaultRelativePermittivity = 1.0;
 constexpr double relativePermittivityTolerance = 1e-12;
+constexpr double intersectionAreaTolerance = 1e-18;
 
 std::string toLegacyMaterialType(const std::string& type) {
-    if (type == "conductor" || type == "shield") return "PEC";
+    if (type == "conductor") return "PEC";
+    if (type == "shield") return "Shield";
     if (type == "dielectric") return "Dielectric";
     if (type == "open") return "OpenBoundary";
     return type;
@@ -57,9 +59,9 @@ nlohmann::json buildCrossSectionFromInputFormat(const nlohmann::json& jsonData) 
             {"name", geometryName},
             {"material", materialJson}
         });
-        // Also register the legacy "Conductor_<id>" alias for PEC layers so that
+        // Also register the legacy "Conductor_<id>" alias for PEC/Shield layers so that
         // STEP files using that naming convention are still matched correctly.
-        if (mappedType == "PEC" && layer.contains("id")) {
+        if ((mappedType == "PEC" || mappedType == "Shield") && layer.contains("id")) {
             const std::string alias =
                 "Conductor_" + std::to_string(layer["id"].get<int>());
             if (alias != geometryName) {
@@ -71,6 +73,93 @@ nlohmann::json buildCrossSectionFromInputFormat(const nlohmann::json& jsonData) 
         }
     }
     return crossSection;
+}
+
+bool conductorsIntersect(const EntityMap& conductors)
+{
+    std::vector<std::string> conductorNames;
+    conductorNames.reserve(conductors.size());
+    for (const auto& [name, _] : conductors) {
+        conductorNames.push_back(name);
+    }
+
+    for (std::size_t i = 0; i < conductorNames.size(); ++i) {
+        for (std::size_t j = i + 1; j < conductorNames.size(); ++j) {
+            const auto& lhs = conductors.at(conductorNames[i]);
+            const auto& rhs = conductors.at(conductorNames[j]);
+
+            gmsh::vectorpair intersection;
+            std::vector<gmsh::vectorpair> outMap;
+            gmsh::model::occ::intersect(
+                lhs, rhs, intersection, outMap, -1, false, false);
+
+            gmsh::vectorpair removableIntersection;
+            for (const auto& [dim, tag] : intersection) {
+                if (dim == 2 && tag > 0) {
+                    removableIntersection.push_back({dim, tag});
+                }
+            }
+
+            for (const auto& [dim, tag] : intersection) {
+                if (dim != 2) {
+                    continue;
+                }
+                double area = 0.0;
+                gmsh::model::occ::getMass(dim, tag, area);
+                if (area > intersectionAreaTolerance) {
+                    if (!removableIntersection.empty()) {
+                        gmsh::model::occ::remove(removableIntersection, true);
+                    }
+                    gmsh::model::occ::synchronize();
+                    return true;
+                }
+            }
+
+            if (!removableIntersection.empty()) {
+                gmsh::model::occ::remove(removableIntersection, true);
+            }
+        }
+    }
+
+    gmsh::model::occ::synchronize();
+    return false;
+}
+
+// Returns true if the bounding-box centroid of any entity in `inner` tests
+// as geometrically inside any 2-D surface of `outer`.
+bool conductorContains(const EntityList& outer, const EntityList& inner)
+{
+    for (const auto& [odim, otag] : outer) {
+        if (odim != 2) continue;
+        for (const auto& [idim, itag] : inner) {
+            if (idim != 2) continue;
+            double xmin, ymin, zmin, xmax, ymax, zmax;
+            gmsh::model::getBoundingBox(idim, itag, xmin, ymin, zmin, xmax, ymax, zmax);
+            const double cx = 0.5 * (xmin + xmax);
+            const double cy = 0.5 * (ymin + ymax);
+            const double cz = 0.5 * (zmin + zmax);
+            if (gmsh::model::isInside(odim, otag, {cx, cy, cz})) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+bool anyPairOfConductorsOverlap(const EntityMap& conductors)
+{
+    std::vector<std::string> names;
+    names.reserve(conductors.size());
+    for (const auto& [name, _] : conductors) names.push_back(name);
+
+    for (std::size_t i = 0; i < names.size(); ++i) {
+        for (std::size_t j = i + 1; j < names.size(); ++j) {
+            const auto& a = conductors.at(names[i]);
+            const auto& b = conductors.at(names[j]);
+            if (conductorContains(a, b) || conductorContains(b, a)) return true;
+        }
+    }
+    return false;
 }
 }
 
@@ -206,7 +295,10 @@ EntityMap ShapesClassification::getEntitiesByMaterialType(
 }
 
 EntityMap ShapesClassification::getPECs(const EntityList& entityTags) {
-    return getEntitiesByMaterialType(entityTags, "PEC");
+    auto result = getEntitiesByMaterialType(entityTags, "PEC");
+    auto shieldEntities = getEntitiesByMaterialType(entityTags, "Shield");
+    result.insert(shieldEntities.begin(), shieldEntities.end());
+    return result;
 }
 
 EntityMap ShapesClassification::getDielectrics(const EntityList& entityTags) {
@@ -217,17 +309,37 @@ EntityMap ShapesClassification::getOpenBoundaries(const EntityList& entityTags) 
     return getEntitiesByMaterialType(entityTags, "OpenBoundary");
 }
 
-bool ShapesClassification::isOpenBoundaryDefined() const {
+bool ShapesClassification::isOpenBoundaryDefined() const 
+{
     return !open.empty();
 }
 
-bool ShapesClassification::isOpenProblem() const {
+bool ShapesClassification::isOpenProblem() const 
+{
+    const bool hasShieldConductor = std::any_of(
+        conductors.begin(), conductors.end(), [this](const auto& entry) {
+            return std::any_of(
+                crossSectionData_.begin(), crossSectionData_.end(),
+                [&entry](const auto& geometry) {
+                    const std::string name = geometry["name"].template get<std::string>();
+                    const std::string type = geometry["material"]["type"].template get<std::string>();
+                    return name == entry.first && type == "Shield";
+                });
+        });
+
+    if (conductors.size() > 2 && hasShieldConductor &&
+        !anyPairOfConductorsOverlap(conductors)) {
+        return true;
+    }
+
     auto roots = nestedGraph.roots();
     if (open.size() == 1) return true;
     if (roots.size() > 1) return true;
     if (!roots.empty()) {
         const auto& root = roots[0];
-        if (dielectrics.count(root)) return true;
+        if (dielectrics.count(root)) {
+            return true;
+        }
         if (conductors.count(root)) {
             auto parentNodes = nestedGraph.getParentNodes();
             if (std::find(parentNodes.begin(), parentNodes.end(), root) == parentNodes.end()) {
@@ -235,6 +347,7 @@ bool ShapesClassification::isOpenProblem() const {
             }
         }
     }
+
     return false;
 }
 
@@ -372,7 +485,13 @@ EntityMap ShapesClassification::buildOpenVacuumDomain() {
 
         gmsh::vectorpair farBoundary;
         gmsh::model::getBoundary(farVacuum, farBoundary, true, true, false);
-        open = {{"OpenBoundary", farBoundary}};
+        EntityList externalBoundaries;
+        for (const auto& [dim, tag] : farBoundary) {
+            if (tag > 0) {
+                externalBoundaries.push_back({dim, tag});
+            }
+        }
+        open = {{"OpenBoundary", externalBoundaries}};
 
         {
             gmsh::vectorpair out;

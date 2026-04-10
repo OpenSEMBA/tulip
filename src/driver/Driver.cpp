@@ -10,6 +10,17 @@ namespace tulip {
 
 namespace {
 
+void configureMfemDeviceIfAvailable()
+{
+#ifdef MFEM_USE_OPENMP
+	// Keep the device alive for the full process lifetime.
+	static std::unique_ptr<mfem::Device> device;
+	if (!device) {
+		device = std::make_unique<mfem::Device>("omp");
+	}
+#endif
+}
+
 bool ignoresDielectrics(Driver::FieldType fieldType)
 {
 	return fieldType == Driver::FieldType::magnetic;
@@ -43,10 +54,10 @@ std::string getFieldTypeSuffix(Driver::FieldType fieldType)
 
 namespace {
 
-mfem::Array<double> buildGeneralizedResistanceVector(const Model& model)
+mfem::Vector buildGeneralizedResistanceVector(const Model& model)
 {
 	auto conductors = model.getMaterials().getConductors();
-	mfem::Array<double> resistance(conductors.size());
+	mfem::Vector resistance(conductors.size());
 	for (int i = 0; i < resistance.Size(); ++i) {
 		resistance[i] = 0.0;
 	}
@@ -60,11 +71,11 @@ mfem::Array<double> buildGeneralizedResistanceVector(const Model& model)
 	return resistance;
 }
 
-mfem::Array<double> reduceResistanceVectorForPUL(
-	const mfem::Array<double>& generalizedResistance,
+mfem::Vector reduceResistanceVectorForPUL(
+	const mfem::Vector& generalizedResistance,
 	const Model::Openness& openness)
 {
-	mfem::Array<double> result(generalizedResistance.Size() - 1);
+	mfem::Vector result(generalizedResistance.Size() - 1);
 	for (int i = 1; i < generalizedResistance.Size(); ++i) {
 		result[i - 1] = generalizedResistance[i];
 	}
@@ -106,6 +117,8 @@ Driver::Driver(Model&& model, const DriverOptions& opts) :
 	model_{ std::move(model) },
 	opts_{ opts }
 {
+	configureMfemDeviceIfAvailable();
+
 	if (model_.getMaterials().getConductors().empty()) { 
 		throw std::runtime_error("Model must have at least one conductor.");
 	}
@@ -456,6 +469,12 @@ MultiwireParametersByDomain Driver::getMultiwireParametersByDomains()
 
 		auto pul = std::make_unique<PULParameters>();
 		pul->setDomain(domain);
+
+		pul->R.SetSize(n - 1);
+		for (int i = 1; i < n; ++i) {
+			const auto conductor = model_.getMaterials().getConductorWithId(orderedConds[i]);
+			pul->R[i - 1] = conductor->getResistancePerMeter();
+		}
 
 		pul->C = extractStdC(buildDomainGC(globalGC));
 		pul->C *= EPSILON0_SI;
