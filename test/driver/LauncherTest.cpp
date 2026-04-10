@@ -69,16 +69,19 @@ TEST_F(LauncherTest, coax_and_bare_wire_from_adapted)
 	expectFDTDOutput(outputFolder, 2, 2);
 }
 
-TEST_F(LauncherTest, nested_shield_transfer_impedance_written_to_output_json)
+TEST_F(LauncherTest, nested_shield_resistance_and_transfer_impedance_written_to_output_json)
 {
 	const std::string caseName = "coax_and_bare_wire";
 	auto inputJson = readJSON(
 		casesFolder() + caseName + "/" + caseName + ".tulip.input.json");
 	for (auto& material : inputJson["materials"]) {
 		if (material.value("type", "") == "shield") {
-			material["resistancePerMeter"] = 1.5e-3;
-			material["inductancePerMeter"] = 3.0e-9;
-			material["direction"] = "outwards";
+			material["resistancePerMeter"] = 8.0e-3;
+			material["transferImpedancePerMeter"] = {
+				{"resistiveTerm", 1.5e-3},
+				{"inductiveTerm", 3.0e-9},
+				{"direction", "outwards"}
+			};
 		}
 	}
 
@@ -96,26 +99,40 @@ TEST_F(LauncherTest, nested_shield_transfer_impedance_written_to_output_json)
 	EXPECT_NO_THROW(tulip.run());
 
 	const auto outJson = readJSON(outputFolder + "tulip.out.json");
+
+	std::cout << outJson.dump(4) << std::endl;
+
 	ASSERT_EQ(2, outJson["materials"].size());
 	ASSERT_EQ(2, outJson["materialAssociations"].size());
 
 	int containedMaterialId = -1;
+	int surroundingMaterialId = -1;
 	for (const auto& association : outJson["materialAssociations"]) {
 		if (association.contains("containedWithinElementId")) {
 			containedMaterialId = association["materialId"].get<int>();
-			break;
+		}
+		else {
+			surroundingMaterialId = association["materialId"].get<int>();
 		}
 	}
 	ASSERT_NE(-1, containedMaterialId);
+	ASSERT_NE(-1, surroundingMaterialId);
 
 	const nlohmann::json* containedMaterial = nullptr;
+	const nlohmann::json* surroundingMaterial = nullptr;
 	for (const auto& material : outJson["materials"]) {
 		if (material["id"] == containedMaterialId) {
 			containedMaterial = &material;
-			break;
+		}
+		if (material["id"] == surroundingMaterialId) {
+			surroundingMaterial = &material;
 		}
 	}
 	ASSERT_NE(nullptr, containedMaterial);
+	ASSERT_NE(nullptr, surroundingMaterial);
+	ASSERT_TRUE(surroundingMaterial->contains("resistancePerMeter"));
+	EXPECT_DOUBLE_EQ(8.0e-3, (*surroundingMaterial)["resistancePerMeter"]);
+
 	ASSERT_TRUE(containedMaterial->contains("transferImpedancePerMeter"));
 	EXPECT_DOUBLE_EQ(
 		1.5e-3,
