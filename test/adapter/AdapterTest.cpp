@@ -138,6 +138,9 @@ TEST_F(AdapterTest, two_wires_coax)
 {
     const std::string caseName = "two_wires_coax";
     Adapter adapter(inputFileFromCaseName(caseName));
+
+    EXPECT_FALSE(adapter.isOpenProblem());
+
     assertAdaptedJsonMatchesExpected(caseName, adapter);
 }
 

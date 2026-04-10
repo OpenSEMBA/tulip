@@ -15,6 +15,7 @@ constexpr double innerRegionBoxScalingFactor = 1.15;
 constexpr double farRegionBoxScalingFactor = 4.0;
 constexpr double defaultRelativePermittivity = 1.0;
 constexpr double relativePermittivityTolerance = 1e-12;
+constexpr double intersectionAreaTolerance = 1e-18;
 
 std::string toLegacyMaterialType(const std::string& type) {
     if (type == "conductor" || type == "shield") return "PEC";
@@ -71,6 +72,56 @@ nlohmann::json buildCrossSectionFromInputFormat(const nlohmann::json& jsonData) 
         }
     }
     return crossSection;
+}
+
+bool conductorsIntersect(const EntityMap& conductors)
+{
+    std::vector<std::string> conductorNames;
+    conductorNames.reserve(conductors.size());
+    for (const auto& [name, _] : conductors) {
+        conductorNames.push_back(name);
+    }
+
+    for (std::size_t i = 0; i < conductorNames.size(); ++i) {
+        for (std::size_t j = i + 1; j < conductorNames.size(); ++j) {
+            const auto& lhs = conductors.at(conductorNames[i]);
+            const auto& rhs = conductors.at(conductorNames[j]);
+
+            gmsh::vectorpair intersection;
+            std::vector<gmsh::vectorpair> outMap;
+            gmsh::model::occ::intersect(
+                lhs, rhs, intersection, outMap, -1, false, false);
+
+            gmsh::vectorpair removableIntersection;
+            for (const auto& [dim, tag] : intersection) {
+                if (dim == 2 && tag > 0) {
+                    removableIntersection.push_back({dim, tag});
+                }
+            }
+
+            for (const auto& [dim, tag] : intersection) {
+                if (dim != 2) {
+                    continue;
+                }
+                double area = 0.0;
+                gmsh::model::occ::getMass(dim, tag, area);
+                if (area > intersectionAreaTolerance) {
+                    if (!removableIntersection.empty()) {
+                        gmsh::model::occ::remove(removableIntersection, true);
+                    }
+                    gmsh::model::occ::synchronize();
+                    return true;
+                }
+            }
+
+            if (!removableIntersection.empty()) {
+                gmsh::model::occ::remove(removableIntersection, true);
+            }
+        }
+    }
+
+    gmsh::model::occ::synchronize();
+    return false;
 }
 }
 
@@ -224,20 +275,11 @@ bool ShapesClassification::isOpenBoundaryDefined() const
 
 bool ShapesClassification::isOpenProblem() const 
 {
-    auto roots = nestedGraph.roots();
-    if (open.size() == 1) return true;
-    if (roots.size() > 1) return true;
-    if (!roots.empty()) {
-        const auto& root = roots[0];
-        if (dielectrics.count(root)) {
-            return true;
-        }
-        if (conductors.count(root)) {
-            auto parentNodes = nestedGraph.getParentNodes();
-            if (std::find(parentNodes.begin(), parentNodes.end(), root) == parentNodes.end()) {
-                return true;
-            }
-        }
+    if (conductors.size() == 1) {
+        return true;
+    }
+    if (conductors.size() > 2  && !conductorsIntersect(conductors)) {
+        return true;
     }
     return false;
 }
@@ -376,7 +418,13 @@ EntityMap ShapesClassification::buildOpenVacuumDomain() {
 
         gmsh::vectorpair farBoundary;
         gmsh::model::getBoundary(farVacuum, farBoundary, true, true, false);
-        open = {{"OpenBoundary", farBoundary}};
+        EntityList externalBoundaries;
+        for (const auto& [dim, tag] : farBoundary) {
+            if (tag > 0) {
+                externalBoundaries.push_back({dim, tag});
+            }
+        }
+        open = {{"OpenBoundary", externalBoundaries}};
 
         {
             gmsh::vectorpair out;

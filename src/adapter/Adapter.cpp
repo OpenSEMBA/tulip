@@ -855,7 +855,7 @@ nlohmann::json Adapter::getAdaptedInputJSON() const {
 }
 
 bool Adapter::isOpenProblem() const {
-    return allShapes.isOpenProblem();
+    return allShapes.isOpenCase;
 }
 
 const AdapterOptions& Adapter::getAdapterOptions() const {
@@ -920,7 +920,7 @@ EntityMap Adapter::extractBoundaries(const EntityMap& shapes) {
     for (const auto& [name, surfs] : shapes) {
         gmsh::vectorpair bdrs;
         gmsh::model::getBoundary(surfs, bdrs, true, true, false);
-        boundaries[name] = bdrs;
+        boundaries[name] = std::move(bdrs);
     }
     return boundaries;
 }
