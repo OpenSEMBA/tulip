@@ -134,7 +134,7 @@ Domain::IdToDomain Model::buildDomains() const
 		res[id++] = domain;
 	}
 
-	// Sets grounds. root domain is left with the default value.
+	// Sets grounds. 
 	for (const auto& edge : DomainTree{ res }.getEdgesAsPairs()) {
 		const auto& c1{ res[edge.first].conductorIds };
 		const auto& c2{ res[edge.second].conductorIds };

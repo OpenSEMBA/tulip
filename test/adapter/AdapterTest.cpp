@@ -72,46 +72,6 @@ protected:
 
     void TearDown() override { gmsh::finalize(); }
 
-    int countEntitiesInPhysicalGroupWithName(const std::string& name)
-    {
-        auto [dim, tag] = Adapter::getPhysicalGroupWithName(name);
-        if (dim < 0) {
-            return 0;
-        }
-        std::vector<int> tags;
-        gmsh::model::getEntitiesForPhysicalGroup(dim, tag, tags);
-        return static_cast<int>(tags.size());
-    }
-
-    // expectedCounts[i] corresponds to expectedNames[i]. If empty, entity counts are not checked.
-    void assertPhysicalGroups(const std::vector<std::string>& expectedNames,
-                              const std::vector<int>& expectedCounts = {})
-    {
-        gmsh::vectorpair pGs;
-        gmsh::model::getPhysicalGroups(pGs);
-
-        std::vector<std::string> pgNames;
-        for (const auto& [dim, tag] : pGs)
-        {
-            std::string n;
-            gmsh::model::getPhysicalName(dim, tag, n);
-            pgNames.push_back(n);
-        }
-
-        auto sortedActual = pgNames;
-        auto sortedExpected = expectedNames;
-        std::sort(sortedActual.begin(), sortedActual.end());
-        std::sort(sortedExpected.begin(), sortedExpected.end());
-        EXPECT_EQ(sortedActual, sortedExpected);
-
-        for (std::size_t i = 0; i < expectedCounts.size(); ++i)
-        {
-            EXPECT_EQ(countEntitiesInPhysicalGroupWithName(expectedNames[i]),
-                      expectedCounts[i])
-                << expectedNames[i];
-        }
-    }
-
     void assertAdaptedJsonMatchesExpected(const std::string& caseName,
                                           const Adapter& adapter)
     {
@@ -191,7 +151,16 @@ TEST_F(AdapterTest, five_wires)
 TEST_F(AdapterTest, two_wires_open)
 {
     const std::string caseName = "two_wires_open";
+    Adapter adapter(inputFileFromCaseName(caseName));    assertAdaptedJsonMatchesExpected(caseName, adapter);
+}
+
+TEST_F(AdapterTest, two_wires_shielded_in_open_domain)
+{
+    const std::string caseName = "two_wires_shielded_in_open_domain";
     Adapter adapter(inputFileFromCaseName(caseName));
+
+    EXPECT_TRUE(adapter.isOpenProblem());
+
     assertAdaptedJsonMatchesExpected(caseName, adapter);
 }
 

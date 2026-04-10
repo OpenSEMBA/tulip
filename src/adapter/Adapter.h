@@ -21,25 +21,23 @@ public:
     static const MeshingOptions DEFAULT_MESHING_OPTIONS;
 
     Adapter(const std::string& inputFile);
-        Adapter(const nlohmann::json& inputJson,
-            const std::string& caseName,
-            const std::string& inputDir = ".");
+    Adapter(const nlohmann::json& inputJson,
+        const std::string& caseName,
+        const std::string& inputDir = ".");
     
     void buildPhysicalModel(ShapesClassification& shapes,
                             const std::map<std::string, std::string>& labelMapping);
 
-    static std::pair<int, int> getPhysicalGroupWithName(const std::string& name);
-
-    EntityMap extractBoundaries(const EntityMap& shapes);
-
     nlohmann::json getAdaptedInputJSON() const;
     const AdapterOptions& getAdapterOptions() const;
 
+    bool isOpenProblem() const;
 private:
     std::string caseName_;
     std::string inputDir_;
     nlohmann::json adaptedInputJSON_;
     AdapterOptions adapterOptions_;
+    ShapesClassification allShapes;
 
     void initialize(const nlohmann::json& inputJson,
                     const std::string& caseName,
@@ -50,6 +48,7 @@ private:
                               std::vector<std::size_t>>>
     findDuplicateNodes();
 
+    EntityMap extractBoundaries(const EntityMap& shapes);
     void createPhysicalGroups(const EntityMap& objsDict,
                               const std::map<std::string, std::string>& labelMapping);
 };

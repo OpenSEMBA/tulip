@@ -750,6 +750,7 @@ nlohmann::json buildAdaptedJson(const std::string& caseName,
 } // namespace
 
 Adapter::Adapter(const std::string& inputFile)
+    : allShapes(EntityList{}, nlohmann::json::object())
 {
     const std::filesystem::path inputPath(inputFile);
     if (!hasSuffix(inputPath.filename().string(), ".tulip.input.json")) {
@@ -763,6 +764,7 @@ Adapter::Adapter(const std::string& inputFile)
 Adapter::Adapter(const nlohmann::json& inputJson,
                  const std::string& caseName,
                  const std::string& inputDir)
+    : allShapes(EntityList{}, inputJson)
 {
     initialize(inputJson, caseName, inputDir);
 }
@@ -794,7 +796,7 @@ void Adapter::initialize(const nlohmann::json& inputJson,
     gmsh::model::occ::synchronize();
     validateLayerNamesMatchStep(inputJson, shapes);
 
-    ShapesClassification allShapes(shapes, inputJson);
+    allShapes = ShapesClassification(shapes, inputJson);
 
     allShapes.ensureDielectricsDoNotOverlap();
     allShapes.vacuum = allShapes.buildVacuumDomain();
@@ -832,8 +834,8 @@ void Adapter::initialize(const nlohmann::json& inputJson,
     }
     
     // For debugging.
-    // gmsh::write("./debug_state.geo_unrolled");
-    // gmsh::write("./debug_state.vtk");
+    gmsh::write("./debug_state.geo_unrolled");
+    gmsh::write("./debug_state.vtk");
     
     const std::filesystem::path mshPath = std::filesystem::path(inputDir_) / (caseName_ + ".msh");
     gmsh::write(mshPath.string());
@@ -850,6 +852,10 @@ void Adapter::initialize(const nlohmann::json& inputJson,
 
 nlohmann::json Adapter::getAdaptedInputJSON() const {
     return adaptedInputJSON_;
+}
+
+bool Adapter::isOpenProblem() const {
+    return allShapes.isOpenProblem();
 }
 
 const AdapterOptions& Adapter::getAdapterOptions() const {
@@ -909,17 +915,6 @@ void Adapter::createPhysicalGroups(
     }
 }
 
-std::pair<int, int> Adapter::getPhysicalGroupWithName(const std::string& name) {
-    gmsh::vectorpair pGs;
-    gmsh::model::getPhysicalGroups(pGs);
-    for (const auto& [dim, tag] : pGs) {
-        std::string pgName;
-        gmsh::model::getPhysicalName(dim, tag, pgName);
-        if (pgName == name) return {dim, tag};
-    }
-    return {-1, -1};
-}
-
 EntityMap Adapter::extractBoundaries(const EntityMap& shapes) {
     EntityMap boundaries;
     for (const auto& [name, surfs] : shapes) {
@@ -929,6 +924,5 @@ EntityMap Adapter::extractBoundaries(const EntityMap& shapes) {
     }
     return boundaries;
 }
-
 
 } // namespace tulip

@@ -66,7 +66,9 @@ TEST_F(DriverTest, empty_coax)
 	auto LExpected{ EPSILON0_SI * MU0_SI / CExpected };
 	ASSERT_EQ(1, out.L.NumCols() * out.L.NumRows());
 	EXPECT_LE(relError(LExpected, out.L(0, 0)), rTol);
-	EXPECT_EQ(0, out.R.Size());
+	
+	ASSERT_EQ(1, out.R.Size());
+	EXPECT_DOUBLE_EQ(0, out.R[0]);
 }
 
 TEST_F(DriverTest, empty_coax_includes_conductor_resistance_in_pul_results)
@@ -126,15 +128,15 @@ TEST_F(DriverTest, two_wires_coax)
 	CMatExpected(1, 1) = CMatExpected(0, 0);
 	CMatExpected *= EPSILON0_SI;
 
-	const double rTol{ 2.5e-2 };
-
+	
 	auto out{ Driver::loadFromAdaptedFile(fn).getPULMTL() };
-
+	
 	const int N{ 2 };
 	ASSERT_EQ(N, out.C.NumCols());
 	ASSERT_EQ(N, out.C.NumRows());
-
+	
 	// Compares with analytical solution.
+	const double rTol{ 2.5e-2 };
 	for (int i{ 0 }; i < N; i++) {
 		for (int j{ 0 }; j < N; j++) {
 			EXPECT_LE(relError(CMatExpected(i, j), out.C(i, j)), rTol);
@@ -148,6 +150,26 @@ TEST_F(DriverTest, two_wires_coax)
 			EXPECT_EQ(out.L(i, j), out.L(j, i));
 		}
 	}
+}
+
+TEST_F(DriverTest, two_wires_shielded_in_open_domain)
+{
+	// In this test, for the shielded domain, ground is id 2 
+	// and the other two conductors are 0 and 1.	
+	auto dr = Driver::loadFromAdaptedFile(
+		inputCase("two_wires_shielded_in_open_domain"));
+	auto out = dr.getMultiwireParametersByDomains();
+
+	ASSERT_EQ(1, out.getPULParameters().size());
+	ASSERT_EQ(1, out.getPULParameters().count(1));
+
+	// We check that C is using the correct ground. 
+	const auto& pul = out.getPULParameters().at(1);
+	EXPECT_EQ(2, pul->getDomain().ground);
+	EXPECT_EQ(IdSet({0,1,2}), pul->getDomain().conductorIds);
+
+	// As cond 0 and cond 1 are identical they should have the same C.
+	EXPECT_LE(relError(pul->C(0,0), pul->C(1,1)), 1e-5);
 }
 
 TEST_F(DriverTest, two_wires_shielded_floating_potentials)

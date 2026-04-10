@@ -217,17 +217,21 @@ EntityMap ShapesClassification::getOpenBoundaries(const EntityList& entityTags) 
     return getEntitiesByMaterialType(entityTags, "OpenBoundary");
 }
 
-bool ShapesClassification::isOpenBoundaryDefined() const {
+bool ShapesClassification::isOpenBoundaryDefined() const 
+{
     return !open.empty();
 }
 
-bool ShapesClassification::isOpenProblem() const {
+bool ShapesClassification::isOpenProblem() const 
+{
     auto roots = nestedGraph.roots();
     if (open.size() == 1) return true;
     if (roots.size() > 1) return true;
     if (!roots.empty()) {
         const auto& root = roots[0];
-        if (dielectrics.count(root)) return true;
+        if (dielectrics.count(root)) {
+            return true;
+        }
         if (conductors.count(root)) {
             auto parentNodes = nestedGraph.getParentNodes();
             if (std::find(parentNodes.begin(), parentNodes.end(), root) == parentNodes.end()) {
