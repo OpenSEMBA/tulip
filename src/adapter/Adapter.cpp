@@ -834,8 +834,8 @@ void Adapter::initialize(const nlohmann::json& inputJson,
     }
     
     // For debugging.
-    gmsh::write("./debug_state.geo_unrolled");
-    gmsh::write("./debug_state.vtk");
+    // gmsh::write("./debug_state.geo_unrolled");
+    // gmsh::write("./debug_state.vtk");
     
     const std::filesystem::path mshPath = std::filesystem::path(inputDir_) / (caseName_ + ".msh");
     gmsh::write(mshPath.string());

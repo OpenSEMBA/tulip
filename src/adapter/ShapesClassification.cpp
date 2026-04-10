@@ -124,6 +124,43 @@ bool conductorsIntersect(const EntityMap& conductors)
     gmsh::model::occ::synchronize();
     return false;
 }
+
+// Returns true if the bounding-box centroid of any entity in `inner` tests
+// as geometrically inside any 2-D surface of `outer`.
+bool conductorContains(const EntityList& outer, const EntityList& inner)
+{
+    for (const auto& [odim, otag] : outer) {
+        if (odim != 2) continue;
+        for (const auto& [idim, itag] : inner) {
+            if (idim != 2) continue;
+            double xmin, ymin, zmin, xmax, ymax, zmax;
+            gmsh::model::getBoundingBox(idim, itag, xmin, ymin, zmin, xmax, ymax, zmax);
+            const double cx = 0.5 * (xmin + xmax);
+            const double cy = 0.5 * (ymin + ymax);
+            const double cz = 0.5 * (zmin + zmax);
+            if (gmsh::model::isInside(odim, otag, {cx, cy, cz})) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+bool anyPairOfConductorsOverlap(const EntityMap& conductors)
+{
+    std::vector<std::string> names;
+    names.reserve(conductors.size());
+    for (const auto& [name, _] : conductors) names.push_back(name);
+
+    for (std::size_t i = 0; i < names.size(); ++i) {
+        for (std::size_t j = i + 1; j < names.size(); ++j) {
+            const auto& a = conductors.at(names[i]);
+            const auto& b = conductors.at(names[j]);
+            if (conductorContains(a, b) || conductorContains(b, a)) return true;
+        }
+    }
+    return false;
+}
 }
 
 ShapesClassification::ShapesClassification(const EntityList& shapes,
@@ -291,7 +328,7 @@ bool ShapesClassification::isOpenProblem() const
         });
 
     if (conductors.size() > 2 && hasShieldConductor &&
-        !conductorsIntersect(conductors)) {
+        !anyPairOfConductorsOverlap(conductors)) {
         return true;
     }
 
