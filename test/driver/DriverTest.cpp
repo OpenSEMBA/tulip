@@ -24,7 +24,10 @@ const json& findMaterialByType(const json& fdtdJSON, std::string_view type)
 		fdtdJSON["materials"].begin(),
 		fdtdJSON["materials"].end(),
 		[type](const auto& material) {
-			return material["type"] == type;
+			if (!material.contains("type") || !material["type"].is_string()) {
+				return false;
+			}
+			return material["type"].template get<std::string>() == type;
 		});
 	if (it == fdtdJSON["materials"].end()) {
 		throw std::runtime_error("Material type not found in FDTD JSON.");
@@ -63,8 +66,7 @@ TEST_F(DriverTest, empty_coax)
 	auto LExpected{ EPSILON0_SI * MU0_SI / CExpected };
 	ASSERT_EQ(1, out.L.NumCols() * out.L.NumRows());
 	EXPECT_LE(relError(LExpected, out.L(0, 0)), rTol);
-	ASSERT_EQ(1, out.R.Size());
-	EXPECT_DOUBLE_EQ(0.0, out.R[0]);
+	EXPECT_EQ(0, out.R.Size());
 }
 
 TEST_F(DriverTest, empty_coax_includes_conductor_resistance_in_pul_results)
