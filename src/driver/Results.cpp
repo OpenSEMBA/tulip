@@ -422,6 +422,7 @@ nlohmann::json MultiwireParametersByDomain::toFDTDJSON() const
             mat["type"] = "shieldedMultiwire";
             mat["capacitancePerMeter"] = pulJSON["C"];
             mat["inductancePerMeter"] = pulJSON["L"];
+            mat["resistancePerMeter"] = pulJSON["R"];
         }
         else if (auto* inCell = dynamic_cast<InCellPotentials*>(params.get())) {
             mat["type"] = "unshieldedMultiwire";

@@ -1002,12 +1002,15 @@ TEST_F(DriverTest, empty_coax_fdtd_json)
 	EXPECT_EQ("shieldedMultiwire", fdtdJSON["materials"][0]["type"]);
 	ASSERT_TRUE(fdtdJSON["materials"][0].contains("capacitancePerMeter"));
 	ASSERT_TRUE(fdtdJSON["materials"][0].contains("inductancePerMeter"));
+	ASSERT_TRUE(fdtdJSON["materials"][0].contains("resistancePerMeter"));
 
 	// C and L should be 1x1 matrices.
 	ASSERT_EQ(1, fdtdJSON["materials"][0]["capacitancePerMeter"].size());
 	ASSERT_EQ(1, fdtdJSON["materials"][0]["capacitancePerMeter"][0].size());
 	ASSERT_EQ(1, fdtdJSON["materials"][0]["inductancePerMeter"].size());
 	ASSERT_EQ(1, fdtdJSON["materials"][0]["inductancePerMeter"][0].size());
+	ASSERT_EQ(1, fdtdJSON["materials"][0]["resistancePerMeter"].size());
+	EXPECT_DOUBLE_EQ(0.0, fdtdJSON["materials"][0]["resistancePerMeter"][0]);
 
 	// Check material association.
 	ASSERT_EQ(1, fdtdJSON["materialAssociations"].size());
