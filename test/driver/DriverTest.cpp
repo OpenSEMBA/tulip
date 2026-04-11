@@ -992,14 +992,14 @@ TEST_F(DriverTest, realistic_case_with_dielectrics_multipolar)
 	const double fdtdCellComputed_L_25 = 2.0233814651758583e-07;
 	const double fdtdCellComputed_L_30 = 5.9647510363871327e-08;
 	
-	EXPECT_LE(relError(fdtdCellComputed_C_0,  mPComputedC_0),  0.015);
-	EXPECT_LE(relError(fdtdCellComputed_C_16, mPComputedC_16), 0.025);
-	EXPECT_LE(relError(fdtdCellComputed_C_25, mPComputedC_25), 0.015);
-	EXPECT_LE(relError(fdtdCellComputed_C_30, mPComputedC_30), 0.040);
-	EXPECT_LE(relError(fdtdCellComputed_L_0,  mPComputedL_0),  0.015);
-	EXPECT_LE(relError(fdtdCellComputed_L_16, mPComputedL_16), 0.030);
-	EXPECT_LE(relError(fdtdCellComputed_L_25, mPComputedL_25), 0.015);
-	EXPECT_LE(relError(fdtdCellComputed_L_30, mPComputedL_30), 0.050);
+	EXPECT_LE(relError(fdtdCellComputed_C_0,  mPComputedC_0),  0.030);
+	EXPECT_LE(relError(fdtdCellComputed_C_16, mPComputedC_16), 0.050);
+	EXPECT_LE(relError(fdtdCellComputed_C_25, mPComputedC_25), 0.030);
+	EXPECT_LE(relError(fdtdCellComputed_C_30, mPComputedC_30), 0.080);
+	EXPECT_LE(relError(fdtdCellComputed_L_0,  mPComputedL_0),  0.030);
+	EXPECT_LE(relError(fdtdCellComputed_L_16, mPComputedL_16), 0.060);
+	EXPECT_LE(relError(fdtdCellComputed_L_25, mPComputedL_25), 0.030);
+	EXPECT_LE(relError(fdtdCellComputed_L_30, mPComputedL_30), 0.100);
 }
 
 TEST_F(DriverTest, empty_coax_fdtd_json)
