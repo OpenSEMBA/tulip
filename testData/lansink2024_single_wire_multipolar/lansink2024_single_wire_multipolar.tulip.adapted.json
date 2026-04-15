@@ -1,0 +1,32 @@
+{
+  "driverOptions": {
+    "exportFolder": "Results/lansink2024_single_wire_multipolar/"
+  },
+  "model": {
+    "gmshFile": "lansink2024_single_wire_multipolar.msh",
+    "materials": [
+      {
+        "attribute": 1,
+        "conductorId": 0,
+        "type": "conductor"
+      },
+      {
+        "attribute": 2,
+        "type": "dielectric",
+        "relativePermittivity": 3.2
+      },
+      {
+        "attribute": 3,
+        "type": "dielectric"
+      },
+      {
+        "attribute": 5,
+        "type": "dielectric"
+      },
+      {
+        "attribute": 4,
+        "type": "open"
+      }
+    ]
+  }
+}

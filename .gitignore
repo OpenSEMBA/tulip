@@ -1,6 +1,6 @@
 .vs/
 out/
-build/
+build*/
 builds/
 ParaView/
 tmp_cases/
@@ -10,8 +10,6 @@ CMakeSettings.json
 .vscode/settings.json
 .vscode/c_cpp_properties.json
 
-
-/*.msh
 
 *.csv
 *.gf
@@ -61,7 +59,7 @@ __pycache__/
 
 /CMakeUserPresets.json
 
-/to_from_JSONFile_test.pulmtln.out.json
+/to_from_JSONFile_test.tulip.out.json
 /Results
 /mfem-build
 /testData/lansink2024_single_wire/lansink2024_single_wire.areas.json
@@ -69,3 +67,21 @@ __pycache__/
 /testData/lansink2024/inCellPotentials.out.json
 /XMLGoogleTestResults.xml
 *.inCellPotentials.out.json
+*.FCStd1
+*.pyc
+.vscode/
+.pytest_cache/
+.idea/
+tmpFolder/
+venv/
+gmshDoc/
+vcpkg_installed/
+
+*.msh
+*.vtk
+*.areas.json
+build
+Testing/Temporary/CTestCostData.txt
+Testing/Temporary/LastTest.log
+debug_state.geo_unrolled
+debug_state.geo_unrolled.xao

@@ -1,0 +1,38 @@
+{
+  "driverOptions": {
+    "exportFolder": "Results/two_wires_with_touching_dielectric/"
+  },
+  "materials": [
+    {
+      "id": 1,
+      "type": "conductor"
+    },
+    {
+      "id": 2,
+      "type": "dielectric",
+      "relativePermittivity": 3.0
+    }
+  ],
+  "layers": [
+    {
+      "name": "LeftConductor",
+      "id": 0,
+      "materialId": 1
+    },
+    {
+      "name": "RightConductor",
+      "id": 1,
+      "materialId": 1
+    },
+    {
+      "name": "RightDielectric",
+      "id": 2,
+      "materialId": 2
+    },
+    {
+      "name": "LeftDielectric",
+      "id": 3,
+      "materialId": 2
+    }
+  ]
+}

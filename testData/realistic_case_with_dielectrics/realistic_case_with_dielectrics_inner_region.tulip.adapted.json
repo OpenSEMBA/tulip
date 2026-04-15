@@ -1,0 +1,333 @@
+{
+  "driverOptions": {
+    "exportFolder": "Results/realistic_case_with_dielectrics_inner_region/",
+    "exportParaViewSolution": true
+  },
+  "model": {
+    "gmshFile": "realistic_case_with_dielectrics_inner_region.msh",
+    "materials": [
+      {
+        "attribute": 1,
+        "conductorId": 0,
+        "type": "conductor"
+      },
+      {
+        "attribute": 2,
+        "conductorId": 1,
+        "type": "conductor"
+      },
+      {
+        "attribute": 3,
+        "conductorId": 2,
+        "type": "conductor"
+      },
+      {
+        "attribute": 4,
+        "conductorId": 3,
+        "type": "conductor"
+      },
+      {
+        "attribute": 5,
+        "conductorId": 4,
+        "type": "conductor"
+      },
+      {
+        "attribute": 6,
+        "conductorId": 5,
+        "type": "conductor"
+      },
+      {
+        "attribute": 7,
+        "conductorId": 6,
+        "type": "conductor"
+      },
+      {
+        "attribute": 8,
+        "conductorId": 7,
+        "type": "conductor"
+      },
+      {
+        "attribute": 9,
+        "conductorId": 8,
+        "type": "conductor"
+      },
+      {
+        "attribute": 10,
+        "conductorId": 9,
+        "type": "conductor"
+      },
+      {
+        "attribute": 11,
+        "conductorId": 10,
+        "type": "conductor"
+      },
+      {
+        "attribute": 12,
+        "conductorId": 11,
+        "type": "conductor"
+      },
+      {
+        "attribute": 13,
+        "conductorId": 12,
+        "type": "conductor"
+      },
+      {
+        "attribute": 14,
+        "conductorId": 13,
+        "type": "conductor"
+      },
+      {
+        "attribute": 15,
+        "conductorId": 14,
+        "type": "conductor"
+      },
+      {
+        "attribute": 16,
+        "conductorId": 15,
+        "type": "conductor"
+      },
+      {
+        "attribute": 17,
+        "conductorId": 16,
+        "type": "conductor"
+      },
+      {
+        "attribute": 18,
+        "conductorId": 17,
+        "type": "conductor"
+      },
+      {
+        "attribute": 19,
+        "conductorId": 18,
+        "type": "conductor"
+      },
+      {
+        "attribute": 20,
+        "conductorId": 19,
+        "type": "conductor"
+      },
+      {
+        "attribute": 21,
+        "conductorId": 20,
+        "type": "conductor"
+      },
+      {
+        "attribute": 22,
+        "conductorId": 21,
+        "type": "conductor"
+      },
+      {
+        "attribute": 23,
+        "conductorId": 22,
+        "type": "conductor"
+      },
+      {
+        "attribute": 24,
+        "conductorId": 23,
+        "type": "conductor"
+      },
+      {
+        "attribute": 25,
+        "conductorId": 24,
+        "type": "conductor"
+      },
+      {
+        "attribute": 26,
+        "conductorId": 25,
+        "type": "conductor"
+      },
+      {
+        "attribute": 27,
+        "conductorId": 26,
+        "type": "conductor"
+      },
+      {
+        "attribute": 28,
+        "conductorId": 27,
+        "type": "conductor"
+      },
+      {
+        "attribute": 29,
+        "conductorId": 28,
+        "type": "conductor"
+      },
+      {
+        "attribute": 30,
+        "conductorId": 29,
+        "type": "conductor"
+      },
+      {
+        "attribute": 31,
+        "conductorId": 30,
+        "type": "conductor"
+      },
+      {
+        "attribute": 32,
+        "type": "dielectric",
+        "relativePermittivity": 2.0
+      },
+      {
+        "attribute": 33,
+        "type": "dielectric",
+        "relativePermittivity": 2.0
+      },
+      {
+        "attribute": 34,
+        "type": "dielectric",
+        "relativePermittivity": 2.0
+      },
+      {
+        "attribute": 35,
+        "type": "dielectric",
+        "relativePermittivity": 2.0
+      },
+      {
+        "attribute": 36,
+        "type": "dielectric",
+        "relativePermittivity": 2.0
+      },
+      {
+        "attribute": 37,
+        "type": "dielectric",
+        "relativePermittivity": 2.0
+      },
+      {
+        "attribute": 38,
+        "type": "dielectric",
+        "relativePermittivity": 2.0
+      },
+      {
+        "attribute": 39,
+        "type": "dielectric",
+        "relativePermittivity": 2.0
+      },
+      {
+        "attribute": 40,
+        "type": "dielectric",
+        "relativePermittivity": 2.0
+      },
+      {
+        "attribute": 41,
+        "type": "dielectric",
+        "relativePermittivity": 2.0
+      },
+      {
+        "attribute": 42,
+        "type": "dielectric",
+        "relativePermittivity": 2.0
+      },
+      {
+        "attribute": 43,
+        "type": "dielectric",
+        "relativePermittivity": 2.0
+      },
+      {
+        "attribute": 44,
+        "type": "dielectric",
+        "relativePermittivity": 2.0
+      },
+      {
+        "attribute": 45,
+        "type": "dielectric",
+        "relativePermittivity": 2.0
+      },
+      {
+        "attribute": 46,
+        "type": "dielectric",
+        "relativePermittivity": 2.0
+      },
+      {
+        "attribute": 47,
+        "type": "dielectric",
+        "relativePermittivity": 2.0
+      },
+      {
+        "attribute": 48,
+        "type": "dielectric",
+        "relativePermittivity": 2.0
+      },
+      {
+        "attribute": 49,
+        "type": "dielectric",
+        "relativePermittivity": 2.0
+      },
+      {
+        "attribute": 50,
+        "type": "dielectric",
+        "relativePermittivity": 2.0
+      },
+      {
+        "attribute": 51,
+        "type": "dielectric",
+        "relativePermittivity": 2.0
+      },
+      {
+        "attribute": 52,
+        "type": "dielectric",
+        "relativePermittivity": 2.0
+      },
+      {
+        "attribute": 53,
+        "type": "dielectric",
+        "relativePermittivity": 2.0
+      },
+      {
+        "attribute": 54,
+        "type": "dielectric",
+        "relativePermittivity": 2.0
+      },
+      {
+        "attribute": 55,
+        "type": "dielectric",
+        "relativePermittivity": 2.0
+      },
+      {
+        "attribute": 56,
+        "type": "dielectric",
+        "relativePermittivity": 2.0
+      },
+      {
+        "attribute": 57,
+        "type": "dielectric",
+        "relativePermittivity": 2.0
+      },
+      {
+        "attribute": 58,
+        "type": "dielectric",
+        "relativePermittivity": 2.0
+      },
+      {
+        "attribute": 59,
+        "type": "dielectric",
+        "relativePermittivity": 2.0
+      },
+      {
+        "attribute": 60,
+        "type": "dielectric",
+        "relativePermittivity": 2.0
+      },
+      {
+        "attribute": 61,
+        "type": "dielectric",
+        "relativePermittivity": 2.0
+      },
+      {
+        "attribute": 62,
+        "type": "dielectric",
+        "relativePermittivity": 2.0
+      },
+      {
+        "attribute": 64,
+        "type": "dielectric"
+      },
+      {
+        "attribute": 65,
+        "type": "dielectric"
+      },
+      {
+        "attribute": 63,
+        "type": "open"
+      }
+    ]
+  }
+}

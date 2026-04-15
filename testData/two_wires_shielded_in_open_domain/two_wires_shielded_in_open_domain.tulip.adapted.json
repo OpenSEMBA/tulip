@@ -1,0 +1,38 @@
+{
+	"driverOptions": {
+		"exportFolder": "Results/two_wires_shielded_in_open_domain/"
+	},
+	"model": {
+		"gmshFile": "two_wires_shielded_in_open_domain.msh",
+		"materials": [
+			{
+				"attribute": 2,
+				"conductorId": 0,
+				"type": "conductor"
+			},
+			{
+				"attribute": 5,
+				"conductorId": 1,
+				"type": "conductor"
+			},
+			{
+				"attribute": 6,
+				"conductorId": 2,
+				"isShield": true,
+				"type": "conductor"
+			},
+			{
+				"attribute": 1,
+				"type": "dielectric"
+			},
+			{
+				"attribute": 4,
+				"type": "dielectric"
+			},
+			{
+				"attribute": 3,
+				"type": "open"
+			}
+		]
+	}
+}

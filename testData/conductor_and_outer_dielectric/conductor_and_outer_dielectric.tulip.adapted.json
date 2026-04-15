@@ -1,0 +1,32 @@
+{
+  "driverOptions": {
+    "exportFolder": "Results/conductor_and_outer_dielectric/"
+  },
+  "model": {
+    "gmshFile": "conductor_and_outer_dielectric.msh",
+    "materials": [
+      {
+        "attribute": 1,
+        "conductorId": 0,
+        "type": "conductor"
+      },
+      {
+        "attribute": 2,
+        "type": "dielectric",
+        "relativePermittivity": 2.0
+      },
+      {
+        "attribute": 3,
+        "type": "dielectric"
+      },
+      {
+        "attribute": 5,
+        "type": "dielectric"
+      },
+      {
+        "attribute": 4,
+        "type": "open"
+      }
+    ]
+  }
+}

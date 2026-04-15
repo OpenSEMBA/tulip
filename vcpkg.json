@@ -4,6 +4,10 @@
       "gtest",
       "nlohmann-json",
       "boost-graph",
-      "boost-program-options"
+      "boost-program-options",
+      {
+        "name": "gmsh",
+        "features": ["occ"]
+      }
     ]
   }

@@ -1,0 +1,17 @@
+{
+  "driverOptions": {
+    "order": 3,
+    "exportParaViewSolution": true,
+    "exportFolder": "Results/lansink2024_large_one_centered_fdtd_cell/"
+  },
+  "model": {
+    "materials": [
+      {"type": "conductor", "conductorId": 0, "attribute": 1},
+      {"type": "conductor", "conductorId": 1, "attribute": 2},
+      {"type": "open", "attribute": 4},
+      {"type": "dielectric", "attribute": 3},
+      {"type": "dielectric", "attribute": 5}
+    ],
+    "gmshFile": "lansink2024_large_one_centered_fdtd_cell.msh"
+  }
+}

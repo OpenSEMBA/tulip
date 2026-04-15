@@ -1,0 +1,42 @@
+{
+  "driverOptions": {
+    "exportFolder": "Results/two_wires_with_touching_dielectric/"
+  },
+  "model": {
+    "gmshFile": "two_wires_with_touching_dielectric.msh",
+    "materials": [
+      {
+        "attribute": 2,
+        "conductorId": 0,
+        "type": "conductor"
+      },
+      {
+        "attribute": 6,
+        "conductorId": 1,
+        "type": "conductor"
+      },
+      {
+        "attribute": 1,
+        "type": "dielectric"
+      },
+      {
+        "attribute": 3,
+        "relativePermittivity": 3.0,
+        "type": "dielectric"
+      },
+      {
+        "attribute": 5,
+        "type": "dielectric"
+      },
+      {
+        "attribute": 7,
+        "relativePermittivity": 3.0,
+        "type": "dielectric"
+      },
+      {
+        "attribute": 4,
+        "type": "open"
+      }
+    ]
+  }
+}

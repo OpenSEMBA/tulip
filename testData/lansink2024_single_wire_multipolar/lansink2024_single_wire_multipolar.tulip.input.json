@@ -1,0 +1,28 @@
+{
+  "driverOptions": {
+    "exportFolder": "Results/lansink2024_single_wire_multipolar/"
+  },
+  "materials": [
+    {
+      "id": 1,
+      "type": "conductor"
+    },
+    {
+      "id": 2,
+      "type": "dielectric",
+      "relativePermittivity": 3.2
+    }
+  ],
+  "layers": [
+    {
+      "name": "Conductor_0",
+      "id": 0,
+      "materialId": 1
+    },
+    {
+      "name": "Dielectric_0",
+      "id": 1,
+      "materialId": 2
+    }
+  ]
+}

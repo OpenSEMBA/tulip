@@ -1,0 +1,36 @@
+{
+  "driverOptions": {
+    "exportFolder": "Results/dielectric_unshielded_pair_defined_boundary/"
+  },
+  "model": {
+    "gmshFile": "dielectric_unshielded_pair_defined_boundary.msh",
+    "materials": [
+      {
+        "attribute": 4,
+        "conductorId": 0,
+        "type": "conductor"
+      },
+      {
+        "attribute": 2,
+        "conductorId": 1,
+        "type": "conductor"
+      },
+      {
+        "attribute": 3,
+        "type": "dielectric"
+      },
+      {
+        "attribute": 5,
+        "type": "dielectric"
+      },
+      {
+        "attribute": 6,
+        "type": "dielectric"
+      },
+      {
+        "attribute": 1,
+        "type": "open"
+      }
+    ]
+  }
+}

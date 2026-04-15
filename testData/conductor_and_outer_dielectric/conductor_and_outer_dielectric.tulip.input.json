@@ -1,0 +1,28 @@
+{
+  "driverOptions": {
+    "exportFolder": "Results/conductor_and_outer_dielectric/"
+  },
+  "materials": [
+    {
+      "id": 1,
+      "type": "conductor"
+    },
+    {
+      "id": 2,
+      "type": "dielectric",
+      "relativePermittivity": 2.0
+    }
+  ],
+  "layers": [
+    {
+      "name": "Conductor_000",
+      "id": 0,
+      "materialId": 1
+    },
+    {
+      "name": "Dielectric_000",
+      "id": 1,
+      "materialId": 2
+    }
+  ]
+}

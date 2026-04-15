@@ -1,0 +1,14 @@
+{
+  "driverOptions": {
+    "exportFolder": "Results/coax_and_bare_wire/"
+  },
+  "materials": [
+    { "id": 1, "type": "conductor" },
+    { "id": 2, "type": "shield" }
+  ],
+  "layers": [
+    { "name": "Inner_wire", "id": 0, "materialId": 1},
+    { "name": "Shield", "id": 1, "materialId": 2},
+    { "name": "External_wire", "id": 2, "materialId": 1}
+  ]
+}

@@ -1,0 +1,46 @@
+{
+  "driverOptions": {
+    "exportFolder": "Results/dielectric_unshielded_pair_defined_boundary/"
+  },
+  "materials": [
+    {
+      "id": 1,
+      "type": "conductor"
+    },
+    {
+      "id": 2,
+      "type": "dielectric"
+    },
+    {
+      "id": 3,
+      "type": "open"
+    }
+  ],
+  "layers": [
+    {
+      "name": "RightConductor",
+      "id": 0,
+      "materialId": 1
+    },
+    {
+      "name": "LeftConductor",
+      "id": 1,
+      "materialId": 1
+    },
+    {
+      "name": "LeftDielectric",
+      "id": 2,
+      "materialId": 2
+    },
+    {
+      "name": "RightDielectric",
+      "id": 3,
+      "materialId": 2
+    },
+    {
+      "name": "ExternalShield",
+      "id": 4,
+      "materialId": 3
+    }
+  ]
+}
