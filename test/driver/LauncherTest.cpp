@@ -108,7 +108,7 @@ TEST_F(LauncherTest, nested_shield_resistance_and_transfer_impedance_written_to_
 	Launcher tulip(tempInputFile, outputFolder);
 	EXPECT_NO_THROW(tulip.run());
 
-	const auto outJson = readJSON(outputFolder + "tulip.out.json");
+	const auto outJson = readJSON(outputFolder + caseName + "tulip.out.json");
 
 	std::cout << outJson.dump(4) << std::endl;
 
