@@ -29,6 +29,26 @@ bool isAdaptedJson(const std::string& filename)
     return hasSuffix(filename, ".tulip.adapted.json");
 }
 
+std::string ensureTrailingSlash(const std::string& folder)
+{
+    if (folder.empty() || folder.back() == '/') {
+        return folder;
+    }
+    return folder + "/";
+}
+
+std::string extractCaseName(const std::string& inputFile)
+{
+    const auto filename = std::filesystem::path(inputFile).filename().string();
+    if (hasSuffix(filename, ".tulip.input.json")) {
+        return filename.substr(0, filename.size() - std::string(".tulip.input.json").size());
+    }
+    if (hasSuffix(filename, ".tulip.adapted.json")) {
+        return filename.substr(0, filename.size() - std::string(".tulip.adapted.json").size());
+    }
+    return std::filesystem::path(filename).stem().string();
+}
+
 } // namespace
 
 Launcher::Launcher(const std::string& inputFile, const std::string& exportFolder)
@@ -43,10 +63,12 @@ Launcher::Launcher(const std::string& inputFile, const std::string& exportFolder
 void Launcher::run()
 {
     std::cout << "Loading input file: " << inputFile_ << std::endl;
+    const std::string outputPrefix = extractCaseName(inputFile_) + ".";
+    const std::string driverExportFolder = ensureTrailingSlash(exportFolder_) + outputPrefix;
 
     if (isAdaptedJson(inputFile_)) {
         auto driver = Driver::loadFromAdaptedFile(inputFile_);
-        driver.setExportFolder(exportFolder_);
+        driver.setExportFolder(driverExportFolder);
         std::cout << "Running Tulip analysis..." << std::endl;
         driver.run();
     }
@@ -60,7 +82,7 @@ void Launcher::run()
             Adapter adapter(inputFile_);
             AdaptedInputParser parser(inputFile_, adapter.getAdaptedInputJSON());
             Driver driver(parser.readModel(), parser.readDriverOptions());
-            driver.setExportFolder(exportFolder_);
+            driver.setExportFolder(driverExportFolder);
             std::cout << "Running Tulip analysis..." << std::endl;
             driver.run();
         }

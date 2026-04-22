@@ -12,10 +12,11 @@ namespace {
 
 void expectFDTDOutput(
 	const std::string& outputFolder,
+	const std::string& caseName,
 	std::size_t expectedMaterials,
 	std::size_t expectedAssociations)
 {
-	const auto outputFile = outputFolder + "tulip.out.json";
+	const auto outputFile = outputFolder + caseName + ".tulip.out.json";
 	ASSERT_TRUE(std::filesystem::exists(outputFile));
 
 	const auto outJSON = readJSON(outputFile);
@@ -33,6 +34,7 @@ class LauncherTest : public ::testing::Test {};
 TEST_F(LauncherTest, empty_coax_from_adapted)
 {
 	// Create Launcher instance with empty_coax adapted JSON file
+	const std::string caseName = "empty_coax";
 	const std::string inputFile = inputCase("empty_coax");
 	const std::string outputFolder = outFolder() + "LauncherTest.empty_coax/";
 	
@@ -41,7 +43,7 @@ TEST_F(LauncherTest, empty_coax_from_adapted)
 	
 	// This should complete without throwing an exception
 	EXPECT_NO_THROW(tulip.run());
-	expectFDTDOutput(outputFolder, 1, 1);
+	expectFDTDOutput(outputFolder, caseName, 1, 1);
 }
 
 TEST_F(LauncherTest, empty_coax_from_input_json)
@@ -54,11 +56,12 @@ TEST_F(LauncherTest, empty_coax_from_input_json)
 
 	Launcher tulip(inputFile, outputFolder);
 	EXPECT_NO_THROW(tulip.run());
-	expectFDTDOutput(outputFolder, 1, 1);
+	expectFDTDOutput(outputFolder, caseName, 1, 1);
 }
 
 TEST_F(LauncherTest, coax_and_bare_wire_from_adapted)
 {
+	const std::string caseName = "coax_and_bare_wire";
 	const std::string inputFile = inputCase("coax_and_bare_wire");
 	const std::string outputFolder =
 		outFolder() + "LauncherTest.coax_and_bare_wire/";
@@ -66,7 +69,7 @@ TEST_F(LauncherTest, coax_and_bare_wire_from_adapted)
 	Launcher tulip(inputFile, outputFolder);
 	EXPECT_NO_THROW(tulip.run());
 
-	expectFDTDOutput(outputFolder, 2, 2);
+	expectFDTDOutput(outputFolder, caseName, 2, 2);
 }
 
 TEST_F(LauncherTest, nested_shield_resistance_and_transfer_impedance_written_to_output_json)
@@ -104,11 +107,13 @@ TEST_F(LauncherTest, nested_shield_resistance_and_transfer_impedance_written_to_
 
 	const std::string outputFolder =
 		outFolder() + "LauncherTest.coax_and_bare_wire_with_shield_transfer/";
+	const std::string outputCaseName =
+		"LauncherTest.coax_and_bare_wire_with_shield_transfer";
 
 	Launcher tulip(tempInputFile, outputFolder);
 	EXPECT_NO_THROW(tulip.run());
 
-	const auto outJson = readJSON(outputFolder + caseName + "tulip.out.json");
+	const auto outJson = readJSON(outputFolder + outputCaseName + ".tulip.out.json");
 
 	std::cout << outJson.dump(4) << std::endl;
 
