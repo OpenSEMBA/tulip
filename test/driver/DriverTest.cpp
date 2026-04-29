@@ -1048,11 +1048,10 @@ TEST_F(DriverTest, two_wires_open_fdtd_json)
 	// Should have 1 material of type unshieldedMultiwire.
 	ASSERT_EQ(1, fdtdJSON["materials"].size());
 	EXPECT_EQ("unshieldedMultiwire", fdtdJSON["materials"][0]["type"]);
-	ASSERT_TRUE(fdtdJSON["materials"][0].contains("inCellParameters"));
 	ASSERT_TRUE(
-		fdtdJSON["materials"][0]["inCellParameters"].contains("multipolarExpansion"));
+		fdtdJSON["materials"][0].contains("multipolarExpansion"));
 
-	auto& mp = fdtdJSON["materials"][0]["inCellParameters"]["multipolarExpansion"];
+	auto& mp = fdtdJSON["materials"][0]["multipolarExpansion"];
 	ASSERT_TRUE(mp.contains("innerRegionBox"));
 	ASSERT_TRUE(mp.contains("electric"));
 	ASSERT_TRUE(mp.contains("magnetic"));
@@ -1100,8 +1099,8 @@ TEST_F(DriverTest, coax_and_bare_wire_fdtd_json)
 	ASSERT_EQ(1, (*shielded)["capacitancePerMeter"].size());
 
 	// Check unshielded multiwire (open domain).
-	ASSERT_TRUE(unshielded->contains("inCellParameters"));
-	auto& mp = (*unshielded)["inCellParameters"]["multipolarExpansion"];
+	ASSERT_TRUE(unshielded->contains("multipolarExpansion"));
+	auto& mp = (*unshielded)["multipolarExpansion"];
 	EXPECT_EQ(2, mp["electric"].size());
 	EXPECT_EQ(2, mp["magnetic"].size());
 

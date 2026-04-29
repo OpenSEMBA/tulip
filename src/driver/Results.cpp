@@ -434,7 +434,7 @@ nlohmann::json MultiwireParametersByDomain::toFDTDJSON() const
         }
         else if (auto* inCell = dynamic_cast<InCellPotentials*>(params.get())) {
             mat["type"] = "unshieldedMultiwire";
-            mat["inCellParameters"]["multipolarExpansion"] = inCell->toJSON();
+            mat["multipolarExpansion"] = inCell->toJSON();
         }
 
         materials.push_back(mat);
