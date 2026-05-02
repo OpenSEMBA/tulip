@@ -1,0 +1,31 @@
+{
+  "driverOptions": {
+    "exportFolder": "Results/nested_coax/"
+  },
+  "model": {
+    "gmshFile": "nested_coax.msh",
+    "materials": [
+      {
+        "attribute": 1,
+        "conductorId": 0,
+        "isShield": true,
+        "type": "conductor"
+      },
+      {
+        "attribute": 2,
+        "conductorId": 1,
+        "isShield": true,
+        "type": "conductor"
+      },
+      {
+        "attribute": 3,
+        "conductorId": 2,
+        "type": "conductor"
+      },
+      {
+        "attribute": 4,
+        "type": "dielectric"
+      }
+    ]
+  }
+}

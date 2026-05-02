@@ -1,0 +1,12 @@
+{
+  "driverOptions": {
+    "exportFolder": "Results/lansink2024_small_one_centered/"
+  },
+  "materials": [
+    { "id": 1, "type": "conductor" }
+  ],
+  "layers": [ 
+    { "name":"Conductor_0", "id": 0, "materialId": 1 },
+    { "name":"Conductor_1", "id": 1, "materialId": 1 }
+  ]
+}

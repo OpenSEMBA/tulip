@@ -1,0 +1,27 @@
+{
+  "driverOptions": {
+    "exportFolder": "Results/single_wire/"
+  },
+  "model": {
+    "gmshFile": "single_wire.msh",
+    "materials": [
+      {
+        "attribute": 1,
+        "conductorId": 0,
+        "type": "conductor"
+      },
+      {
+        "attribute": 2,
+        "type": "dielectric"
+      },
+      {
+        "attribute": 4,
+        "type": "dielectric"
+      },
+      {
+        "attribute": 3,
+        "type": "open"
+      }
+    ]
+  }
+}

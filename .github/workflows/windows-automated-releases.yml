@@ -7,11 +7,11 @@ permissions:
 on:
   push:
     branches:
-      - master
+      - main
       - feature/automate-release
 
 env:
-  PULMTLN_TOP_DIR: pulmtln
+  TULIP_TOP_DIR: tulip
   MFEM_TOP_DIR: mfem
 
 
@@ -32,10 +32,10 @@ jobs:
       with:
         access_token: ${{ github.token }}
 
-    - name: checkout PULMTLN
+    - name: checkout TULIP
       uses: actions/checkout@v4
       with:
-        path: ${{ env.PULMTLN_TOP_DIR }}
+        path: ${{ env.TULIP_TOP_DIR }}
 
     - name: getcmake
       uses: lukka/get-cmake@latest
@@ -44,7 +44,7 @@ jobs:
       uses: lukka/run-vcpkg@v11
       with:
         vcpkgGitCommitId: 120deac3062162151622ca4860575a33844ba10b
-        vcpkgJsonGlob: 'pulmtln/vcpkg.json'
+        vcpkgJsonGlob: 'tulip/vcpkg.json'
 
     - name: cache MFEM
       uses: actions/cache@v3
@@ -79,29 +79,29 @@ jobs:
     # - name: Setup tmate session
     #   uses: mxschmitt/action-tmate@v3
 
-    - name: Configuring PULMTLN
+    - name: Configuring TULIP
       env:
         MFEM_PACKAGE: ${{ github.workspace }}/${{env.MFEM_TOP_DIR}}/build
       run: |
-        cmake --preset "msbuild-vcpkg" -S pulmtln -B pulmtln/build
+        cmake --preset "msbuild-vcpkg" -S tulip -B tulip/build
 
-    - name: Building PULMTLN
+    - name: Building TULIP
       run: |
-        cmake --build pulmtln/build/ --config Release
+        cmake --build tulip/build/ --config Release
 
-    # - name: Configuring and building PULMTLN
+    # - name: Configuring and building TULIP
     #   uses: lukka/run-cmake@v10
     #   id: runcmake
 
     #   with:
-    #     cmakeListsTxtPath: '${{ github.workspace }}/pulmtln/CMakeLists.txt'
+    #     cmakeListsTxtPath: '${{ github.workspace }}/tulip/CMakeLists.txt'
     #     configurePreset: 'msbuild-vcpkg'
     #     configurePresetAdditionalArgs: '[`-DCMAKE_PREFIX_PATH=../mfem`]'
     #     buildPreset: 'msbuild-vcpkg'
     #     buildPresetAdditionalArgs: '[`--config Release`]'
 
-    - name: test PULMTLN
-      run: cd pulmtln && build/bin/Release/pulmtln_tests.exe
+    - name: test TULIP
+      run: cd tulip && build/bin/Release/tulip_tests.exe
 
     - name: Get current date
       id: date
@@ -110,11 +110,11 @@ jobs:
     - name: Create dist folder
       shell: bash
       run: |
-        ${{ env.PULMTLN_TOP_DIR }}/.github/workflows/create-dist.bat
+        ${{ env.TULIP_TOP_DIR }}/.github/workflows/create-dist.bat
 
     - name: Create .tar file
       run: |
-        cd pulmtln && tar -czvf tulip-windows.tar.gz dist/*
+        cd tulip && tar -czvf tulip-windows.tar.gz dist/*
 
 
     - name: Generating release
@@ -125,4 +125,4 @@ jobs:
         prerelease: false
         title: "${{ steps.date.outputs.date }} Windows TULIP"
         files: |
-          pulmtln/tulip-windows.tar.gz
+          tulip/tulip-windows.tar.gz

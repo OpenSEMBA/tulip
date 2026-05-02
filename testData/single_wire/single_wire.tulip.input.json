@@ -1,0 +1,18 @@
+{
+  "driverOptions": {
+    "exportFolder": "Results/single_wire/"
+  },
+  "materials": [
+    {
+      "id": 1,
+      "type": "conductor"
+    }
+  ],
+  "layers": [
+    {
+      "name": "Conductor",
+      "id": 0,
+      "materialId": 1
+    }
+  ]
+}

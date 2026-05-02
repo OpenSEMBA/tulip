@@ -1,0 +1,17 @@
+{
+  "driverOptions": {
+    "order": 3,
+    "exportParaViewSolution": true,
+    "exportFolder": "Results/lansink2024/"
+  },
+  "model": {
+    "materials": [
+      {"type": "conductor", "conductorId": 0, "attribute": 1},
+      {"type": "conductor", "conductorId": 1, "attribute": 2},
+      {"type": "open", "attribute": 3},
+      {"type": "dielectric", "attribute": 4},
+      {"type": "dielectric", "attribute": 5}
+    ],
+    "gmshFile": "lansink2024.msh"
+  }
+}

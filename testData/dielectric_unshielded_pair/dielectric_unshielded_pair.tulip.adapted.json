@@ -1,0 +1,42 @@
+{
+  "driverOptions": {
+    "exportFolder": "Results/dielectric_unshielded_pair/"
+  },
+  "model": {
+    "gmshFile": "dielectric_unshielded_pair.msh",
+    "materials": [
+      {
+        "attribute": 6,
+        "conductorId": 0,
+        "type": "conductor"
+      },
+      {
+        "attribute": 2,
+        "conductorId": 1,
+        "type": "conductor"
+      },
+      {
+        "attribute": 1,
+        "type": "dielectric"
+      },
+      {
+        "attribute": 3,
+        "relativePermittivity": 2.0,
+        "type": "dielectric"
+      },
+      {
+        "attribute": 5,
+        "type": "dielectric"
+      },
+      {
+        "attribute": 7,
+        "relativePermittivity": 2.0,
+        "type": "dielectric"
+      },
+      {
+        "attribute": 4,
+        "type": "open"
+      }
+    ]
+  }
+}

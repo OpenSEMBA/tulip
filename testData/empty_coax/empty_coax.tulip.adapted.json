@@ -1,0 +1,13 @@
+{
+  "driverOptions": {
+    "exportFolder": "Results/empty_coax/"
+  },
+  "model": {
+    "materials": [
+      {"type": "conductor", "conductorId": 0, "attribute": 1, "isShield": true },
+      {"type": "conductor", "conductorId": 1, "attribute": 2 },
+      {"type": "dielectric", "attribute": 3}
+    ],  
+    "gmshFile": "empty_coax.msh"
+  }
+}

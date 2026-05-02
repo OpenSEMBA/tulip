@@ -1,0 +1,49 @@
+{
+  "driverOptions": {
+    "exportFolder": "Results/agrawal1981/"
+  },
+  "model": {
+    "gmshFile": "agrawal1981.msh",
+    "materials": [
+      {
+        "attribute": 1,
+        "conductorId": 0,
+        "type": "conductor"
+      },
+      {
+        "attribute": 2,
+        "conductorId": 1,
+        "type": "conductor"
+      },
+      {
+        "attribute": 3,
+        "conductorId": 2,
+        "type": "conductor"
+      },
+      {
+        "attribute": 4,
+        "conductorId": 3,
+        "type": "conductor"
+      },
+      {
+        "attribute": 5,
+        "type": "dielectric",
+        "relativePermittivity": 2.26
+      },
+      {
+        "attribute": 6,
+        "type": "dielectric",
+        "relativePermittivity": 2.26
+      },
+      {
+        "attribute": 7,
+        "type": "dielectric",
+        "relativePermittivity": 2.26
+      },
+      {
+        "attribute": 8,
+        "type": "dielectric"
+      }
+    ]
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "driverOptions": {
+    "exportFolder": "Results/two_wires_open/"
+  },
+  "model": {
+    "materials": [
+      { "type": "conductor", "conductorId": 0, "attribute": 1 },
+      { "type": "conductor", "conductorId": 1, "attribute": 2 },
+      { "type": "dielectric", "attribute": 3 },
+      { "type": "dielectric", "attribute": 5 },
+      { "type": "open", "attribute": 4 }
+    ],
+    "gmshFile": "two_wires_open.msh"
+  }
+}

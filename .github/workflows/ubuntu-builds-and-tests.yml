@@ -1,4 +1,4 @@
-name: "Ubuntu | Build and tests"
+name: "Ubuntu | Tulip build and tests"
 
 permissions:
   actions: write
@@ -6,7 +6,7 @@ permissions:
 on:
   push:
     branches:
-      - master
+      - main
       - dev
   pull_request:
     branches:
@@ -15,7 +15,7 @@ on:
   workflow_dispatch:
 
 env:
-  PULMTLN_TOP_DIR: pulmtln
+  TULIP_TOP_DIR: tulip
   MFEM_TOP_DIR: mfem
 
 jobs:
@@ -30,33 +30,37 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     steps:
-    - name: checkout PULMTLN
+    - name: checkout TULIP
       uses: actions/checkout@v3
       with:
-        path: ${{ env.PULMTLN_TOP_DIR }}
+        path: ${{ env.TULIP_TOP_DIR }}
         ssh-key: ${{secrets.PULMTLN_SSH_KEY}}
         submodules: 'recursive'
 
     - name: getcmake
       uses: lukka/get-cmake@latest
 
-    - name: Setup vcpkg (it does not install any package yet)
+    - name: Install system packages
+      run: bash ${{ env.TULIP_TOP_DIR }}/scripts/install-packages.sh
+
+    - name: Setup vcpkg
       uses: lukka/run-vcpkg@v11
       with:
-        vcpkgGitCommitId: 42bb0d9e8d4cf33485afb9ee2229150f79f61a1f
-        vcpkgJsonGlob: 'pulmtln/vcpkg.json'
-      
-    - name: Configuring PULMTLN
-      env: 
-        MFEM_PACKAGE: ${{ github.workspace }}/${{env.MFEM_TOP_DIR}}/build
-      run: |
-        cmake --preset "gnu" -S pulmtln -B pulmtln/build
-    
-    - name: Building PULMTLN
-      run: |
-        cmake --build pulmtln/build/ 
+        vcpkgGitCommitId: eed289f6e06a5e7a5c9e6a729671b0a56af7dd69
+        vcpkgJsonGlob: 'tulip/vcpkg.json'
 
-    - name: test PULMTLN
-      run: cd pulmtln && build/bin/pulmtln_tests
+    - name: Configure TULIP
+      env:
+        MFEM_PACKAGE: ${{ github.workspace }}/${{ env.MFEM_TOP_DIR }}/build
+      run: |
+        cmake --preset "gnu" -S ${{ env.TULIP_TOP_DIR }} -B ${{ env.TULIP_TOP_DIR }}/build
+
+    - name: Build TULIP
+      run: |
+        cmake --build ${{ env.TULIP_TOP_DIR }}/build --parallel 2
+
+    - name: Test TULIP
+      run: |
+        ctest --test-dir ${{ env.TULIP_TOP_DIR }}/build --output-on-failure
         
     

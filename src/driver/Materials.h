@@ -1,0 +1,128 @@
+#pragma once
+
+#include "AttrToValueMap.h"
+
+#include <string>
+#include <list>
+#include <memory>
+#include <vector>
+
+namespace tulip {
+
+using ConductorId = int;
+using Attribute = int;
+
+// This are materials used by the solver. 
+// There are only three options: 
+// - Conductor (treated as PEC), 
+// - Dielectric.
+// - Open.
+class Material {
+public:
+	virtual ~Material() = default;
+	Attribute getAttribute() const { return attribute; }
+	virtual bool isDomainMaterial() const = 0;
+
+protected:
+	explicit Material(Attribute attr) : attribute(attr) {}
+	Material(const Material&) = default;
+	Material& operator=(const Material&) = default;
+	Material(Material&&) = default;
+	Material& operator=(Material&&) = default;
+
+private:
+	Attribute attribute = -1;
+};
+
+class Conductor : public Material {
+public:
+	explicit Conductor(Attribute attr,
+	                   ConductorId id,
+	                   double resistancePerMeter = 0.0,
+	                   bool isGround = false,
+	                   bool isShield = false,
+	                   double shieldResistancePerMeter = 0.0,
+	                   double shieldInductancePerMeter = 0.0,
+	                   std::string shieldDirection = "both")
+		: Material(attr),
+		  conductorId(id),
+		  resistancePerMeter(resistancePerMeter),
+		  isShield(isShield),
+		  shieldResistancePerMeter(shieldResistancePerMeter),
+		  shieldInductancePerMeter(shieldInductancePerMeter),
+		  shieldDirection(std::move(shieldDirection))
+	{}
+
+	ConductorId getConductorId() const {
+		return conductorId;
+	}
+	double getResistancePerMeter() const {
+		return resistancePerMeter;
+	}
+	bool getIsShield() const { return isShield; }
+	double getShieldResistancePerMeter() const { return shieldResistancePerMeter; }
+	double getShieldInductancePerMeter() const { return shieldInductancePerMeter; }
+	const std::string& getShieldDirection() const { return shieldDirection; }
+	bool isDomainMaterial() const { return false; }
+private:	
+	ConductorId conductorId = -1;
+	double resistancePerMeter = 0.0;
+	bool isShield = false;
+	double shieldResistancePerMeter = 0.0;
+	double shieldInductancePerMeter = 0.0;
+	std::string shieldDirection = "both";
+};
+
+class Dielectric : public Material {
+public:
+	explicit Dielectric(Attribute attr, double epsr = 1.0)
+		: Material(attr), relativePermittivity(epsr)
+	{}
+
+	double getRelativePermittivity() const {
+		return relativePermittivity;
+	}
+	bool isDomainMaterial() const { return true; }
+private:
+	double relativePermittivity = 1.0;
+};
+
+class Open : public Material {
+	public:
+	explicit Open(Attribute attr) : Material(attr) {}
+	bool isDomainMaterial() const { return false; }
+};
+
+
+class Materials {
+public: 
+	void addConductor(Attribute attribute,
+	                  ConductorId id,
+	                  double resistancePerMeter = 0.0,
+	                  bool isGround = false,
+	                  bool isShield = false,
+	                  double shieldResistancePerMeter = 0.0,
+	                  double shieldInductancePerMeter = 0.0,
+	                  const std::string& shieldDirection = "both");
+	void addDielectric(Attribute attribute, double relativePermittivity);
+	void addOpenBoundary(Attribute attribute);
+
+	void removeMaterialsNotInList(const NameToAttrMap allowedMaterials);
+	
+	// List of conductors sorted by their conductorId.
+	std::list<const Conductor*> getConductors() const;
+	const Conductor* getConductorWithId(ConductorId) const;
+
+	std::list<const Dielectric*> getDielectrics() const;
+	
+	std::list<const Open*> getOpenBoundaries() const;
+
+	std::list<const Material*> getAll() const;
+	
+	bool hasDielectrics() const;
+	
+private:
+	std::list<std::unique_ptr<Material>> materials_;
+};
+
+}

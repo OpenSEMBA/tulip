@@ -1,0 +1,52 @@
+{
+  "driverOptions": {
+    "exportFolder": "Results/three_wires_ribbon/"
+  },
+  "model": {
+    "gmshFile": "three_wires_ribbon.msh",
+    "materials": [
+      {
+        "attribute": 1,
+        "conductorId": 0,
+        "type": "conductor"
+      },
+      {
+        "attribute": 2,
+        "conductorId": 1,
+        "type": "conductor"
+      },
+      {
+        "attribute": 3,
+        "conductorId": 2,
+        "type": "conductor"
+      },
+      {
+        "attribute": 4,
+        "type": "dielectric",
+        "relativePermittivity": 3.5
+      },
+      {
+        "attribute": 5,
+        "type": "dielectric",
+        "relativePermittivity": 3.5
+      },
+      {
+        "attribute": 6,
+        "type": "dielectric",
+        "relativePermittivity": 3.5
+      },
+      {
+        "attribute": 7,
+        "type": "dielectric"
+      },
+      {
+        "attribute": 9,
+        "type": "dielectric"
+      },
+      {
+        "attribute": 8,
+        "type": "open"
+      }
+    ]
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "driverOptions": {
+    "order": 3,
+    "exportParaViewSolution": true,
+    "exportFolder": "Results/lansink2024_single_wire/"
+  },
+  "model": {
+    "materials": [
+      {"type": "conductor", "conductorId": 0, "attribute": 1},
+      {"type": "open", "attribute": 2},
+      {"type": "dielectric", "attribute": 3},
+      {"type": "dielectric", "attribute": 4},
+      {"type": "dielectric", "relativePermittivity": 3.2, "attribute": 5}
+    ],
+    "gmshFile": "lansink2024_single_wire.msh"
+  }
+}

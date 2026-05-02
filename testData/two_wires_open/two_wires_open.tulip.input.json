@@ -1,0 +1,12 @@
+{
+  "driverOptions": {
+    "exportFolder": "Results/two_wires_open/"
+  },
+  "materials": [
+    { "id": 1, "type": "conductor" }
+  ],
+  "layers": [
+    { "name": "Conductor_1", "id": 0, "materialId": 1 },
+    { "name": "Conductor_2", "id": 1, "materialId": 1 }
+  ]
+}

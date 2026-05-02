@@ -1,0 +1,121 @@
+name: "Ubuntu-automated-releases"
+
+permissions:
+  actions: write
+  contents: write
+
+on:
+  push:
+    branches:
+      - main
+      - automate-ubuntu-release
+
+env:
+  TULIP_TOP_DIR: tulip
+  MFEM_TOP_DIR: mfem
+
+
+jobs:
+  builds-and-tests:
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+        target: [opt]
+
+    name: ${{ matrix.os }}-${{ matrix.target }}
+
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 240
+
+    steps:
+    - name: Cancel Previous Runs
+      uses: styfle/cancel-workflow-action@0.11.0
+      with:
+        access_token: ${{ github.token }}
+
+    - name: checkout TULIP
+      uses: actions/checkout@v4
+      with:
+        path: ${{ env.TULIP_TOP_DIR }}
+        ssh-key: ${{secrets.PULMTLN_SSH_KEY}}
+        submodules: 'recursive'
+
+    - name: getcmake
+      uses: lukka/get-cmake@latest
+
+    - name: Install system packages
+      run: bash ${{ env.TULIP_TOP_DIR }}/scripts/install-packages.sh
+
+    - name: Setup vcpkg
+      uses: lukka/run-vcpkg@v11
+      with:
+        vcpkgGitCommitId: eed289f6e06a5e7a5c9e6a729671b0a56af7dd69
+        vcpkgJsonGlob: 'tulip/vcpkg.json'
+
+    - name: cache MFEM
+      uses: actions/cache@v3
+      id: mfem-cache
+      with:
+        path: ${{ env.MFEM_TOP_DIR }}
+        key: mfem-build-ubuntu-opt
+
+    - name: checkout MFEM
+      if: steps.mfem-cache.outputs.cache-hit != 'true'
+      uses: actions/checkout@v4
+      with:
+        repository: opensemba/mfem
+        path: ${{ env.MFEM_TOP_DIR }}
+
+    - name: build MFEM
+      if: steps.mfem-cache.outputs.cache-hit != 'true'
+      uses: mfem/github-actions/build-mfem@v2.4
+      env:
+        HYPRE_TOP_DIR: hypre-2.19.0
+        METIS_TOP_DIR: metis-4.0.3
+        VCPKG_DEFAULT_BINARY_CACHE: ${{ github.workspace }}/vcpkg_cache
+      with:
+        os: ubuntu-latest
+        target: opt
+        mpi: seq
+        build-system: cmake
+        hypre-dir: ${{ env.HYPRE_TOP_DIR }}
+        metis-dir: ${{ env.METIS_TOP_DIR }}
+        mfem-dir: ${{ env.MFEM_TOP_DIR }}
+
+    - name: Configuring TULIP
+      env:
+        MFEM_PACKAGE: ${{ github.workspace }}/${{env.MFEM_TOP_DIR}}/build
+      run: |
+        cmake --preset "gnu" -S tulip -B tulip/build
+
+    - name: Building TULIP
+      run: |
+        cmake --build tulip/build --parallel 2
+
+    - name: test TULIP
+      run: cd tulip && ctest --test-dir ./build --output-on-failure
+
+    - name: Get current date
+      id: date
+      run: echo "date=$(date +'%Y-%m-%d')" >> $GITHUB_OUTPUT
+
+    - name: Create dist folder
+      shell: bash
+      run: |
+        mkdir -p tulip/dist/bin tulip/dist/lib
+        cp -r tulip/build/bin/* tulip/dist/bin/ || true
+        cp -r tulip/build/lib/* tulip/dist/lib/ || true
+
+    - name: Create .tar file
+      run: |
+        cd tulip && tar -czvf tulip-ubuntu.tar.gz dist/*
+
+    - name: Generating release
+      uses: "marvinpinto/action-automatic-releases@latest"
+      with:
+        repo_token: "${{ secrets.GITHUB_TOKEN }}"
+        automatic_release_tag: "latest-ubuntu-tulip"
+        prerelease: false
+        title: "${{ steps.date.outputs.date }} Ubuntu TULIP"
+        files: |
+          tulip/tulip-ubuntu.tar.gz

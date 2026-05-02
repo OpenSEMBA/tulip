@@ -1,0 +1,14 @@
+{
+  "driverOptions": {
+    "exportFolder": "Results/two_wires_coax/"
+  },
+  "model": {
+    "materials": [
+      {"type": "conductor", "conductorId": 0, "attribute": 1, "isShield": true},
+      {"type": "conductor", "conductorId": 1, "attribute": 2},
+      {"type": "conductor", "conductorId": 2, "attribute": 3},
+      {"type": "dielectric", "attribute": 4}
+    ],
+    "gmshFile": "two_wires_coax.msh"
+  }
+}
