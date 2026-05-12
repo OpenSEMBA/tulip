@@ -334,6 +334,7 @@ bool ShapesClassification::isOpenProblem() const
 
     auto roots = nestedGraph.roots();
     if (open.size() == 1) return true;
+    if (roots.empty()) return true;
     if (roots.size() > 1) return true;
     if (!roots.empty()) {
         const auto& root = roots[0];
@@ -415,7 +416,15 @@ EntityMap ShapesClassification::buildVacuumDomain() {
 
 EntityMap ShapesClassification::buildClosedVacuumDomain() {
     const auto  roots   = nestedGraph.roots();
+    if (roots.empty()) {
+        throw std::runtime_error(
+            "Unable to build closed vacuum domain: no root entity found.");
+    }
     const auto& root    = roots[0];
+    if (!conductors.count(root)) {
+        throw std::runtime_error(
+            "Unable to build closed vacuum domain: root entity is not a conductor.");
+    }
     EntityList  dom     = conductors.at(root);
     EntityList  toRemove;
 

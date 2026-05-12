@@ -395,3 +395,20 @@ TEST_F(AdapterTest, overlapping_dielectrics_prioritize_higher_relative_permittiv
     EXPECT_NEAR(rightHighLeftMass, 4.0, 1e-9);
     EXPECT_NEAR(rightHighRightMass, 8.0, 1e-9);
 }
+
+TEST_F(AdapterTest, shapes_classification_without_roots_is_treated_as_open_problem)
+{
+    gmsh::clear();
+    gmsh::model::add("no_roots_case");
+
+    const EntityList shapes = {};
+    const nlohmann::json inputJson = {
+        {"materials", nlohmann::json::array()},
+        {"layers", nlohmann::json::array()}
+    };
+
+    ShapesClassification classification(shapes, inputJson);
+
+    EXPECT_TRUE(classification.isOpenCase);
+    EXPECT_TRUE(classification.isOpenProblem());
+}
