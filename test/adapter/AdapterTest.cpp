@@ -411,4 +411,5 @@ TEST_F(AdapterTest, shapes_classification_without_roots_is_treated_as_open_probl
 
     EXPECT_TRUE(classification.isOpenCase);
     EXPECT_TRUE(classification.isOpenProblem());
+    EXPECT_NO_THROW(classification.buildVacuumDomain());
 }
