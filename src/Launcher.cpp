@@ -63,8 +63,7 @@ Launcher::Launcher(const std::string& inputFile, const std::string& exportFolder
 void Launcher::run()
 {
     std::cout << "Loading input file: " << inputFile_ << std::endl;
-    const std::string outputPrefix = extractCaseName(inputFile_) + ".";
-    const std::string driverExportFolder = ensureTrailingSlash(exportFolder_) + outputPrefix;
+    const std::string driverExportFolder = ensureTrailingSlash(exportFolder_);
 
     if (isAdaptedJson(inputFile_)) {
         auto driver = Driver::loadFromAdaptedFile(inputFile_);
