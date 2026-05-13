@@ -43,7 +43,7 @@ MU0_SI      = 4.0e-7 * math.pi  # H/m
 # Configuration
 # ---------------------------------------------------------------------------
 DEFAULT_CASE_DIR = (
-    "/home/luis/tulip/tmp_cases/realistic_case_fdtd_cell_centered_in_0"
+    "/home/luis/workspace/tulip/tmp_cases/realistic_case_just_16_and_30"
 )
 
 def load_json(case_dir: str) -> dict:
@@ -75,6 +75,14 @@ def inductance(magnetic_solutions: list, i: int, j: int) -> float:
     return (A_i - avg_A_j) / I_j * MU0_SI
 
 
+def local_index_from_element_id(element_ids: list, element_id: int):
+    """Map a physical conductor id to the local multipolar solution index."""
+    try:
+        return element_ids.index(element_id)
+    except ValueError:
+        return None
+
+
 # ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
@@ -87,7 +95,7 @@ def main():
     I_REF = 16
 
     # Conductor indices j to evaluate
-    J_INDICES = [0, 16, 25, 30]
+    J_INDICES = [16, 30]
 
 
     print(f"Case directory : {case_dir}")
@@ -117,6 +125,10 @@ def main():
         assoc       = next((a for a in mat_assoc if a["materialId"] == mat_id), None)
         element_ids = assoc["elementIds"] if assoc else list(range(len(e_sols)))
 
+        i_local = local_index_from_element_id(element_ids, I_REF)
+        if i_local is None:
+            print(f"[warn] Material {mat_id}: reference conductor id {I_REF} not in {element_ids}, skipping.")
+            continue
         print(f"\n{'='*55}")
         print(f"  Material id={mat_id}  type={mat_type}")
         print(f"  Total conductors: {len(element_ids)}")
@@ -125,11 +137,12 @@ def main():
         print(f"  {'-'*4}  {'-'*18}  {'-'*18}")
 
         for j in J_INDICES:
-            if j >= len(e_sols):
-                print(f"  {j:>4}  [index out of range]")
+            j_local = local_index_from_element_id(element_ids, j)
+            if j_local is None:
+                print(f"  {j:>4}  [id not in materialAssociations.elementIds]")
                 continue
-            C_val = capacitance(e_sols, I_REF, j)
-            L_val = inductance(m_sols, I_REF, j)
+            C_val = capacitance(e_sols, i_local, j_local)
+            L_val = inductance(m_sols, i_local, j_local)
             print(f"  {j:>4}  {C_val:>+18.6e}  {L_val:>+18.6e}")
 
         print()
