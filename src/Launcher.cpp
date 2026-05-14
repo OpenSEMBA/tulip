@@ -64,11 +64,11 @@ void Launcher::run()
 {
     std::cout << "Loading input file: " << inputFile_ << std::endl;
     const std::string outputPrefix = extractCaseName(inputFile_) + ".";
-    const std::string driverExportFolder = ensureTrailingSlash(exportFolder_) + outputPrefix;
+    const std::string outputPathPrefix = ensureTrailingSlash(exportFolder_) + outputPrefix;
 
     if (isAdaptedJson(inputFile_)) {
         auto driver = Driver::loadFromAdaptedFile(inputFile_);
-        driver.setExportFolder(driverExportFolder);
+        driver.setExportFolder(outputPathPrefix);
         std::cout << "Running Tulip analysis..." << std::endl;
         driver.run();
     }
@@ -82,7 +82,7 @@ void Launcher::run()
             Adapter adapter(inputFile_);
             AdaptedInputParser parser(inputFile_, adapter.getAdaptedInputJSON());
             Driver driver(parser.readModel(), parser.readDriverOptions());
-            driver.setExportFolder(driverExportFolder);
+            driver.setExportFolder(outputPathPrefix);
             std::cout << "Running Tulip analysis..." << std::endl;
             driver.run();
         }
