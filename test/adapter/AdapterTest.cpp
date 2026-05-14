@@ -222,6 +222,39 @@ TEST_F(AdapterTest, dielectric_unshielded_pair_fails_if_step_layer_is_not_presen
         std::runtime_error);
 }
 
+TEST_F(AdapterTest, two_wires_open_fails_if_layers_section_is_missing)
+{
+    const std::string caseName = "two_wires_open";
+    nlohmann::json inputJson = readInputJsonFromCaseName(caseName);
+    inputJson.erase("layers");
+    inputJson["model"] = {{"materials", nlohmann::json::array()}};
+
+    try {
+        Adapter adapter(inputJson, caseName, inputFolderFromCaseName(caseName));
+        FAIL() << "Expected runtime_error";
+    } catch (const std::runtime_error& err) {
+        const std::string message = err.what();
+        EXPECT_NE(message.find("'layers'"), std::string::npos);
+        EXPECT_NE(message.find("top-level 'materials' and 'layers'"), std::string::npos);
+    }
+}
+
+TEST_F(AdapterTest, two_wires_open_fails_if_materials_section_is_missing)
+{
+    const std::string caseName = "two_wires_open";
+    nlohmann::json inputJson = readInputJsonFromCaseName(caseName);
+    inputJson.erase("materials");
+
+    try {
+        Adapter adapter(inputJson, caseName, inputFolderFromCaseName(caseName));
+        FAIL() << "Expected runtime_error";
+    } catch (const std::runtime_error& err) {
+        const std::string message = err.what();
+        EXPECT_NE(message.find("'materials'"), std::string::npos);
+        EXPECT_NE(message.find("top-level 'materials' and 'layers'"), std::string::npos);
+    }
+}
+
 TEST_F(AdapterTest, dielectric_unshielded_pair)
 {
     const std::string caseName = "dielectric_unshielded_pair";
@@ -394,4 +427,21 @@ TEST_F(AdapterTest, overlapping_dielectrics_prioritize_higher_relative_permittiv
     const auto [rightHighLeftMass, rightHighRightMass] = runCase(2.0, 4.0);
     EXPECT_NEAR(rightHighLeftMass, 4.0, 1e-9);
     EXPECT_NEAR(rightHighRightMass, 8.0, 1e-9);
+}
+
+TEST_F(AdapterTest, shapes_classification_without_roots_is_treated_as_open_problem)
+{
+    gmsh::clear();
+    gmsh::model::add("no_roots_case");
+
+    const EntityList shapes = {};
+    const nlohmann::json inputJson = {
+        {"materials", nlohmann::json::array()},
+        {"layers", nlohmann::json::array()}
+    };
+
+    ShapesClassification classification(shapes, inputJson);
+
+    EXPECT_TRUE(classification.isOpenCase);
+    EXPECT_TRUE(classification.isOpenProblem());
 }
