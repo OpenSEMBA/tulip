@@ -566,6 +566,38 @@ void validateLayerMaterialIds(const nlohmann::json& inputJson)
     }
 }
 
+void validateRequiredInputSections(const nlohmann::json& inputJson)
+{
+    const bool hasMaterials =
+        inputJson.contains("materials") && inputJson["materials"].is_array();
+    const bool hasLayers = inputJson.contains("layers") && inputJson["layers"].is_array();
+
+    if (hasMaterials && hasLayers) {
+        return;
+    }
+
+    std::string missingSections;
+    if (!hasMaterials) {
+        missingSections += "'materials'";
+    }
+    if (!hasLayers) {
+        if (!missingSections.empty()) {
+            missingSections += " and ";
+        }
+        missingSections += "'layers'";
+    }
+
+    std::string message =
+        "Invalid input JSON: missing required top-level array section(s): " +
+        missingSections + ".";
+    if (inputJson.contains("model")) {
+        message += " Found 'model'; expected top-level 'materials' and 'layers'.";
+    } else {
+        message += " Expected top-level 'materials' and 'layers'.";
+    }
+    throw std::runtime_error(message);
+}
+
 std::vector<std::string> buildAcceptedStepNamesForLayer(
     const nlohmann::json& layer,
     const std::map<int, std::string>& materialTypeById)
@@ -799,6 +831,7 @@ void Adapter::initialize(const nlohmann::json& inputJson,
     caseName_ = caseName;
     inputDir_ = inputDir;
 
+    validateRequiredInputSections(inputJson);
     validateLayerMaterialIds(inputJson);
 
     adapterOptions_ = parseAdapterOptions(inputJson, std::filesystem::path(inputDir_), caseName_);

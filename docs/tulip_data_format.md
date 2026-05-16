@@ -7,7 +7,7 @@
     - [`shield`](#shield)
     - [`dielectric`](#dielectric)
     - [`open`](#open)
-  - [`<model>`](#model)
+  - [`<layers>`](#layers)
 - [.tulip.adapted.json file format](#tulipadaptedjson-file-format)
     - [Example](#example)
     - [`materials` array](#materials-array)
@@ -21,11 +21,13 @@ Tulip uses three types of file formats:
 - `CASE_NAME.tulip.out.json` which is the solver output containing the $L$ and $C$ PUL matrices for shielded domains and the multipolar expansion coefficients for an open domain.
 
 # .tulip.input.json file format
-Tulip receives a JSON object as an input with the entries described below. Square brackets indicate that the entry is optional and a default value will be assumed, angle brackets indicate that the entry is mandatory. 
+Tulip receives a JSON object as an input with the entries described below. Square brackets indicate that the entry is optional and a default value will be assumed, angle brackets indicate that the entry is mandatory.
 
 Unless specified otherwise all units are assumed to be in SI-MKS.
 
 Filename should be in the format `CASE_NAME.tulip.input.json`.
+
+At minimum, the input JSON must include top-level `materials` and `layers` arrays.
 
 ## `[adapterOptions]`
  It can contain the following entries, as explained in [AdapterOption.h](../src/adapter/AdapterOptions.h) with their corresponding default values. An example is shown below.
@@ -49,7 +51,7 @@ Driver manages the solver`and generates outputs. Default options can be checked 
 ```
 
 ## `<materials>`
-These materials are associated with `model` `layers` to define regions with different material properties.
+These materials are associated with top-level `layers` to define regions with different material properties.
 They are defined by an array of JSON objects with:
 - `[name]` a string with a human readable name.
 - `<id>` an integer identifier with a unique number.
@@ -84,12 +86,11 @@ A dielectric is defined with a `[relativePermittivity]` which defaults to `1.0`.
 An `open` material serves to specify the computational boundary of the problem. It must intersect every other material layer. If no open boundary is specified for an open problem, one is computed automatically, together with _inner_ and _outer_ regions used to extract the unshielded multiwire coefficients.
 
 
-## `<model>`  
-This object can contain the following entries:
-+ `<layers>` which is an array which associates the layers present in the `.step` file with the different `materials`. Each layer is specified by:
-  - `<name>` which must match exactly the name of the corresponding layer within the `.step` file. It must be unique.
-  - `<id>` which is an integer non-negative unique identifier which will be used to order the results for the calculated PUL matrices.
-  - `<materialId>` which must match an `id` from a material in the list of `materials`
+## `<layers>`
+This top-level array associates the layers present in the `.step` file with the different `materials`. Each layer is specified by:
+- `<name>` which must match exactly the name of the corresponding layer within the `.step` file. It must be unique.
+- `<id>` which is an integer non-negative unique identifier which will be used to order the results for the calculated PUL matrices.
+- `<materialId>` which must match an `id` from a material in the list of `materials`
   
 
   # .tulip.adapted.json file format
