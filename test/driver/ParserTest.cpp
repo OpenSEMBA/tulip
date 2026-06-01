@@ -16,6 +16,7 @@ TEST_F(ParserTest, empty_coax)
 	};
 
 	auto opts{ parser.readDriverOptions() };
+	EXPECT_EQ(3, opts.multipolarExpansionOrder);
 	EXPECT_EQ(3, opts.solverOptions.order);
 	EXPECT_EQ(true, opts.exportParaViewSolution);
 
@@ -52,6 +53,7 @@ TEST_F(ParserTest, partially_filled_coax)
 	};
 
 	auto opts{ parser.readDriverOptions() };
+	EXPECT_EQ(3, opts.multipolarExpansionOrder);
 	EXPECT_EQ(3, opts.solverOptions.order);
 	EXPECT_EQ(true, opts.exportParaViewSolution);
 
@@ -104,5 +106,27 @@ TEST_F(ParserTest, hasDielectrics_returns_true_when_dielectric_present)
 	Parser parser{ casesFolder() + CASE + "/" + CASE + ".tulip.adapted.json" };
 	auto model{ parser.readModel() };
 	EXPECT_TRUE(model.getMaterials().hasDielectrics());
+}
+
+TEST_F(ParserTest, reads_custom_multipolar_expansion_order)
+{
+	nlohmann::json adaptedJson = {
+		{"driverOptions", {
+			{"multipolarExpansionOrder", 5},
+			{"order", 2},
+			{"printIterations", true},
+			{"exportParaViewSolution", false},
+			{"exportFolder", "Results/custom/"}
+		}}
+	};
+
+	Parser parser{ "unused.tulip.adapted.json", adaptedJson };
+	auto opts{ parser.readDriverOptions() };
+
+	EXPECT_EQ(5, opts.multipolarExpansionOrder);
+	EXPECT_EQ(2, opts.solverOptions.order);
+	EXPECT_EQ(true, opts.solverOptions.printIterations);
+	EXPECT_EQ(false, opts.exportParaViewSolution);
+	EXPECT_EQ("Results/custom/", opts.exportFolder);
 }
 
