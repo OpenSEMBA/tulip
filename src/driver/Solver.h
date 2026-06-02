@@ -49,6 +49,9 @@ public:
     Vector getCenterOfCharge() const;
     double getChargeMomentComponent(int order, int component, const Vector& center) const;
     multipolarCoefficients getMultipolarCoefficients(std::size_t order) const;
+    multipolarCoefficients getMultipolarCoefficients(
+        std::size_t order,
+        const Vector& center) const;
 
     SolverSolution getSolution() const;
     void setSolution(const SolverSolution&);

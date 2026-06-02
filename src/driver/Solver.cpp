@@ -372,13 +372,19 @@ multipolarCoefficients Solver::getMultipolarCoefficients(
     std::size_t order) const
 {
     auto centerOfCharge{ getCenterOfCharge() };
+    return getMultipolarCoefficients(order, centerOfCharge);
+}
 
+multipolarCoefficients Solver::getMultipolarCoefficients(
+    std::size_t order,
+    const Vector& center) const
+{
     multipolarCoefficients ab(order + 1);
     
     for (int n = 0; n < order + 1; n++) {
         ab[n] = {
-            getChargeMomentComponent(n, 0, centerOfCharge),
-            getChargeMomentComponent(n, 1, centerOfCharge)
+            getChargeMomentComponent(n, 0, center),
+            getChargeMomentComponent(n, 1, center)
         };
     }
     

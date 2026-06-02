@@ -4,11 +4,20 @@
 #include "AdaptedInputParser.h"
 #include "multipolarExpansion.h"
 
+#include <chrono>
+
 using namespace mfem;
 
 namespace tulip {
 
 namespace {
+
+using Clock = std::chrono::steady_clock;
+
+double elapsedSeconds(Clock::time_point start)
+{
+	return std::chrono::duration<double>(Clock::now() - start).count();
+}
 
 void configureMfemDeviceIfAvailable()
 {
@@ -123,6 +132,8 @@ Driver::Driver(Model&& model, const DriverOptions& opts) :
 		throw std::runtime_error("Model must have at least one conductor.");
 	}
 
+	const auto solveStart = Clock::now();
+
 	// Solve for all conductors.
 	std::cout << "Solving electrostatic problems:" << std::endl;
 	electric_ = solveForAllConductors(FieldType::electric);
@@ -134,6 +145,8 @@ Driver::Driver(Model&& model, const DriverOptions& opts) :
 	else {
 		std::cout << "No dielectrics found. Reusing electrostatic solution for magnetostatic." << std::endl;
 	}
+
+	timings_.solveSeconds = elapsedSeconds(solveStart);
 }
 
 mfem::DenseMatrix Driver::getCFromGeneralizedC(
@@ -364,10 +377,6 @@ MultiwireParametersByDomain Driver::getMultiwireParametersByDomains()
 	DomainTree domainTree{ idToDomain };
 	res.setDomainTree(domainTree);
 	const auto openness = model_.determineOpenness();
-	std::unique_ptr<InCellPotentials> openDomainPotentials;
-	if (openness == Model::Openness::open) {
-		openDomainPotentials = std::make_unique<InCellPotentials>(getInCellPotentials());
-	}
 
 	// Build mappings from conductor ID to model data.
 	auto conductors = model_.getMaterials().getConductors();
@@ -382,6 +391,12 @@ MultiwireParametersByDomain Driver::getMultiwireParametersByDomains()
 	// Get global generalized C matrices.
 	auto globalGC = getGeneralizedCMatrix(FieldType::electric);
 	auto globalGC0 = getGeneralizedCMatrix(FieldType::magnetic);
+
+	std::unique_ptr<InCellPotentials> openDomainPotentials;
+	if (openness == Model::Openness::open) {
+		openDomainPotentials = std::make_unique<InCellPotentials>(
+			getInCellPotentials(&globalGC, &globalGC0));
+	}
 
 	for (const auto& [domId, domain] : idToDomain) {
 		if (openness == Model::Openness::open &&
@@ -655,7 +670,8 @@ void Driver::loadFloatingPotentials(
 }
 
 std::map<ConductorId, FieldReconstruction> Driver::getFieldParameters(
-	FieldType fieldType)
+	FieldType fieldType,
+	const mfem::DenseMatrix* generalizedC)
 {
 	std::map<ConductorId, FieldReconstruction> res;
 
@@ -667,16 +683,21 @@ std::map<ConductorId, FieldReconstruction> Driver::getFieldParameters(
 		<< " field coefficients." << std::endl;
 	const auto conductors = model_.getMaterials().getConductors();
 
-	// Compute the C matrix once for all conductors to avoid
-	// reassembling operators N times (was O(N^2), now O(N)).
-	mfem::DenseMatrix C = getGeneralizedCMatrix(fieldType);
+	std::unique_ptr<mfem::DenseMatrix> computedC;
+	if (generalizedC == nullptr) {
+		// Compute the C matrix once for all conductors to avoid
+		// reassembling operators N times (was O(N^2), now O(N)).
+		computedC = std::make_unique<mfem::DenseMatrix>(
+			getGeneralizedCMatrix(fieldType));
+		generalizedC = computedC.get();
+	}
 
 	for (const auto& cI : conductors) {
 		
 		auto condI = cI->getConductorId();
 
 		std::cout << "- Conductor #" << condI << "... " << std::flush;
-		auto fp = computeFloatingPotentialsFromC(condI, C);
+		auto fp = computeFloatingPotentialsFromC(condI, *generalizedC);
 		
 		loadFloatingPotentials(sP, fp);
 
@@ -688,7 +709,9 @@ std::map<ConductorId, FieldReconstruction> Driver::getFieldParameters(
 		std::copy(
 			centerOfCharge.begin(), centerOfCharge.end(), 
 			res[condI].expansionCenter.begin());
-		res[condI].ab = s.getMultipolarCoefficients(opts_.multipolarExpansionOrder);
+		res[condI].ab = s.getMultipolarCoefficients(
+			opts_.multipolarExpansionOrder,
+			centerOfCharge);
 		for (const auto& cJ : conductors) {
 			auto condJ = cJ->getConductorId();
 			res[condI].conductorPotentials[condJ] = fp.at(condJ);
@@ -701,15 +724,31 @@ std::map<ConductorId, FieldReconstruction> Driver::getFieldParameters(
 
 InCellPotentials Driver::getInCellPotentials()
 {
+	return getInCellPotentials(nullptr, nullptr);
+}
+
+InCellPotentials Driver::getInCellPotentials(
+	const mfem::DenseMatrix* electricGeneralizedC,
+	const mfem::DenseMatrix* magneticGeneralizedC)
+{
 	if (model_.determineOpenness() != Model::Openness::open) {
 		throw std::runtime_error("In cell potentials can only be determined for open problems.");
 	}
 
+	const auto multipolarStart = Clock::now();
+
 	InCellPotentials res;
 	res.getInnerRegionBox() = model_.getInnerRegionBoundingBox();
 
-	res.getElectric() = getFieldParameters(FieldType::electric);
-	res.getMagnetic() = getFieldParameters(FieldType::magnetic);
+	res.getElectric() = getFieldParameters(
+		FieldType::electric,
+		electricGeneralizedC);
+	res.getMagnetic() = getFieldParameters(
+		FieldType::magnetic,
+		magneticGeneralizedC);
+
+	timings_.multipolarSeconds += elapsedSeconds(multipolarStart);
+	timings_.multipolarComputed = true;
 
 	return res;
 }
