@@ -11,8 +11,6 @@
 namespace tulip {
 
 namespace {
-constexpr double innerRegionBoxScalingFactor = 1.15;
-constexpr double farRegionBoxScalingFactor = 4.0;
 constexpr double defaultRelativePermittivity = 1.0;
 constexpr double relativePermittivityTolerance = 1e-12;
 constexpr double intersectionAreaTolerance = 1e-18;
@@ -164,7 +162,9 @@ bool anyPairOfConductorsOverlap(const EntityMap& conductors)
 }
 
 ShapesClassification::ShapesClassification(const EntityList& shapes,
-                                           const std::string& jsonFile)
+                                           const std::string& jsonFile,
+                                           double innerRegionBoxScalingFactor,
+                                           double farRegionDiskScalingFactor)
     : ShapesClassification(shapes, [&jsonFile]() {
         std::ifstream f(jsonFile);
         if (!f.is_open()) {
@@ -173,11 +173,15 @@ ShapesClassification::ShapesClassification(const EntityList& shapes,
         nlohmann::json jsonData;
         f >> jsonData;
         return jsonData;
-    }())
+    }(), innerRegionBoxScalingFactor, farRegionDiskScalingFactor)
 {}
 
 ShapesClassification::ShapesClassification(const EntityList& shapes,
-                                           const nlohmann::json& jsonData)
+                                           const nlohmann::json& jsonData,
+                                           double innerRegionBoxScalingFactor,
+                                           double farRegionDiskScalingFactor)
+    : innerRegionBoxScalingFactor_(innerRegionBoxScalingFactor),
+      farRegionDiskScalingFactor_(farRegionDiskScalingFactor)
 {
     gmsh::model::occ::synchronize();
 
@@ -475,7 +479,7 @@ EntityMap ShapesClassification::buildOpenVacuumDomain() {
         auto lengths     = boundingBox.getLengths();
         double bbMaxLen  = *std::max_element(lengths.begin(), lengths.end());
 
-        double nearBoxSize = bbMaxLen * innerRegionBoxScalingFactor;
+        double nearBoxSize = bbMaxLen * innerRegionBoxScalingFactor_;
         auto   center      = boundingBox.getCenter();
         double nVX = center[0] - nearBoxSize / 2.0;
         double nVY = center[1] - nearBoxSize / 2.0;
@@ -485,7 +489,7 @@ EntityMap ShapesClassification::buildOpenVacuumDomain() {
             nVX, nVY, nVZ, nearBoxSize, nearBoxSize);
         EntityList nearVacuum = {{2, nearRectTag}};
 
-        double farDiameter = farRegionBoxScalingFactor * boundingBox.getDiagonal();
+        double farDiameter = farRegionDiskScalingFactor_ * boundingBox.getDiagonal();
         int    farDiskTag  = gmsh::model::occ::addDisk(
             center[0], center[1], center[2], farDiameter, farDiameter);
         EntityList farVacuum = {{2, farDiskTag}};

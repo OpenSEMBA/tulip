@@ -1,6 +1,6 @@
 {
   "driverOptions": {    
-    "multipolarExpansionOrder": 5,
+    "multipolarExpansionOrder": 3,
     "exportFolder": "Results/realistic_case_with_dielectrics_inner_region/",
     "exportParaViewSolution": false
   },
