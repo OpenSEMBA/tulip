@@ -14,6 +14,12 @@ struct SolvedProblem {
     std::map<ConductorId,SolverSolution> solutions;
 };
 
+struct DriverTimings {
+    double solveSeconds{ 0.0 };
+    double multipolarSeconds{ 0.0 };
+    bool multipolarComputed{ false };
+};
+
 class Driver {
 public:
     enum class FieldType {
@@ -47,6 +53,7 @@ public:
     DenseMatrix getLMatrix();
 
     const Model& getModel() const { return model_; }
+    const DriverTimings& getTimings() const { return timings_; }
 
     static Driver loadFromAdaptedFile(const std::string& filename);
     static Driver adaptFromFile(const std::string& filename);
@@ -63,6 +70,7 @@ private:
     Model model_;
     DriverOptions opts_;
     SolvedProblem electric_, magnetic_;
+    DriverTimings timings_;
 
     SolvedProblem solveForAllConductors(
         FieldType fieldType);
@@ -71,8 +79,12 @@ private:
     double getInnerRegionAveragePotential(
         const Solver& s,
         bool includeConductors);
+    InCellPotentials getInCellPotentials(
+        const mfem::DenseMatrix* electricGeneralizedC,
+        const mfem::DenseMatrix* magneticGeneralizedC);
     std::map<ConductorId, FieldReconstruction> getFieldParameters(
-        FieldType fieldType);
+        FieldType fieldType,
+        const mfem::DenseMatrix* generalizedC = nullptr);
     std::map<ConductorId, double> computeFloatingPotentialsFromC(
         ConductorId prescribedId,
         const mfem::DenseMatrix& C) const;

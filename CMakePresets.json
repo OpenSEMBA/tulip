@@ -44,13 +44,15 @@
       "cacheVariables": {
         "TULIP_USE_MFEM_AS_SUBDIRECTORY": true,
         "MFEM_ENABLE_TESTING": false,
-        "MFEM_USE_OPENMP": false
+        "MFEM_USE_OPENMP": true,
+        "CMAKE_BUILD_TYPE": "Release"
       }
     },
     {
       "name": "gnu-dbg",
       "displayName": "GNU g++ compiler",
       "inherits": "default",
+      "binaryDir": "${sourceDir}/build-dbg",
       "cacheVariables": {
         "TULIP_USE_MFEM_AS_SUBDIRECTORY": true,
         "MFEM_ENABLE_TESTING": false,

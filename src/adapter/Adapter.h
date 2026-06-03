@@ -17,9 +17,6 @@ class Adapter {
 public:
     using MeshingOptions = std::map<std::string, double>;
 
-    // Baseline gmsh options used by adapter tests and CLI code.
-    static const MeshingOptions DEFAULT_MESHING_OPTIONS;
-
     Adapter(const std::string& inputFile);
     Adapter(const nlohmann::json& inputJson,
         const std::string& caseName,

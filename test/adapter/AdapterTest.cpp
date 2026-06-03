@@ -13,6 +13,7 @@
 #include "Mesher.h"
 #include "ShapesClassification.h"
 #include "TestUtils.h"
+#include "AdapterOptions.h"
 
 using namespace tulip;
 
@@ -410,7 +411,14 @@ TEST_F(AdapterTest, overlapping_dielectrics_prioritize_higher_relative_permittiv
             })}
         };
 
-        ShapesClassification classification(shapes, inputJson);
+        AdapterOptions opts;
+
+        ShapesClassification classification(
+            shapes, 
+            inputJson,
+            opts.innerRegionBoxScalingFactor,
+            opts.farRegionDiskScalingFactor
+        );
         classification.ensureDielectricsDoNotOverlap();
         gmsh::model::occ::synchronize();
 
@@ -440,7 +448,14 @@ TEST_F(AdapterTest, shapes_classification_without_roots_is_treated_as_open_probl
         {"layers", nlohmann::json::array()}
     };
 
-    ShapesClassification classification(shapes, inputJson);
+    AdapterOptions opts;
+
+    ShapesClassification classification(
+        shapes, 
+        inputJson,
+        opts.innerRegionBoxScalingFactor,
+        opts.farRegionDiskScalingFactor
+    );
 
     EXPECT_TRUE(classification.isOpenCase);
     EXPECT_TRUE(classification.isOpenProblem());

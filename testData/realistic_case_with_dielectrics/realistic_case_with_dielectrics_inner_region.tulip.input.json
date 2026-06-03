@@ -1,7 +1,8 @@
 {
   "driverOptions": {    
+    "multipolarExpansionOrder": 3,
     "exportFolder": "Results/realistic_case_with_dielectrics_inner_region/",
-    "exportParaViewSolution": true
+    "exportParaViewSolution": false
   },
   "materials": [
     {"id": 1, "type": "conductor"},

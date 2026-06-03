@@ -166,6 +166,7 @@ DriverOptions Parser::readDriverOptions() const
 	const auto& j = json_.at("driverOptions");
 	
 	DriverOptions res;
+	setIfExists<int>(j, res.multipolarExpansionOrder, "multipolarExpansionOrder");
 	setIfExists<int>(j,  res.solverOptions.order, "order");
 	setIfExists<bool>(j, res.solverOptions.printIterations, "printIterations");
 	

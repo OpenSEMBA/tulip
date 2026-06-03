@@ -33,41 +33,11 @@
             ]
         },
         {
-            "name": "pulmtln_tests (gdb)",
+            "name": "tulip (gdb)",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/build-dbg/bin/pulmtln_tests",
-            "args": [],
-            "stopAtEntry": false,
-            "cwd": "${workspaceFolder}",
-            "environment": [],
-            "externalConsole": false,
-            "MIMode": "gdb",
-            "visualizerFile": [
-                "${workspaceFolder}/resources/Eigen.natvis",
-                "${workspaceFolder}/resources/mfem.natvis",
-                "${workspaceFolder}/resources/nlohmann_json.natvis"
-            ],
-            "showDisplayString": true,
-            "setupCommands": [
-                {
-                    "description": "Enable pretty-printing for gdb",
-                    "text": "-enable-pretty-printing",
-                    "ignoreFailures": true
-                },
-                {
-                    "description": "Set Disassembly Flavor to Intel",
-                    "text": "-gdb-set disassembly-flavor intel",
-                    "ignoreFailures": true
-                }
-            ]
-        },
-        {
-            "name": "pulmtln (gdb)",
-            "type": "cppdbg",
-            "request": "launch",
-            "program": "${workspaceFolder}/build-dbg/bin/pulmtln",
-            "args": [],
+            "program": "${workspaceFolder}/build-dbg/bin/tulip",
+            "args": ["-i", "${workspaceFolder}/testData/realistic_case_with_dielectrics/realistic_case_with_dielectrics_fdtd_cell.tulip.input.json"],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
             "environment": [],

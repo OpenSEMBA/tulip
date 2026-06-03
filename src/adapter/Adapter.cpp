@@ -16,15 +16,6 @@
 
 namespace tulip {
 
-const Adapter::MeshingOptions Adapter::DEFAULT_MESHING_OPTIONS{
-    {"Mesh.MshFileVersion", 2.2},
-    {"Mesh.MeshSizeFromCurvature", 50.0},
-    {"Mesh.ElementOrder", 3.0},
-    {"Mesh.ScalingFactor", 1e-3},
-    {"Mesh.SurfaceFaces", 1.0},
-    {"Mesh.MeshSizeMax", 40.0},
-};
-
 std::pair<bool,
           std::map<std::tuple<double, double, double>,
                    std::vector<std::size_t>>>
@@ -799,7 +790,6 @@ nlohmann::json buildAdaptedJson(const std::string& caseName,
 } // namespace
 
 Adapter::Adapter(const std::string& inputFile)
-    : allShapes(EntityList{}, nlohmann::json::object())
 {
     const std::filesystem::path inputPath(inputFile);
     if (!hasSuffix(inputPath.filename().string(), ".tulip.input.json")) {
@@ -813,7 +803,6 @@ Adapter::Adapter(const std::string& inputFile)
 Adapter::Adapter(const nlohmann::json& inputJson,
                  const std::string& caseName,
                  const std::string& inputDir)
-    : allShapes(EntityList{}, inputJson)
 {
     initialize(inputJson, caseName, inputDir);
 }
@@ -846,7 +835,11 @@ void Adapter::initialize(const nlohmann::json& inputJson,
     gmsh::model::occ::synchronize();
     validateLayerNamesMatchStep(inputJson, shapes);
 
-    allShapes = ShapesClassification(shapes, inputJson);
+    allShapes = ShapesClassification(
+        shapes,
+        inputJson,
+        adapterOptions_.innerRegionBoxScalingFactor,
+        adapterOptions_.farRegionDiskScalingFactor);
 
     allShapes.ensureDielectricsDoNotOverlap();
     allShapes.vacuum = allShapes.buildVacuumDomain();
@@ -874,7 +867,6 @@ void Adapter::initialize(const nlohmann::json& inputJson,
     for (const auto& [opt, val] : adapterOptions_.gmshOptions) {
         gmsh::option::setNumber(opt, val);
     }
-
     
     gmsh::model::mesh::generate(2);
     gmsh::model::mesh::removeDuplicateNodes();

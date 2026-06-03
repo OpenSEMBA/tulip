@@ -4,14 +4,23 @@
 #include "AdaptedInputParser.h"
 #include "Driver.h"
 
+#include <chrono>
 #include <filesystem>
 #include <gmsh.h>
+#include <iomanip>
 #include <iostream>
 #include <stdexcept>
 
 namespace tulip {
 
 namespace {
+
+using Clock = std::chrono::steady_clock;
+
+double elapsedSeconds(Clock::time_point start)
+{
+    return std::chrono::duration<double>(Clock::now() - start).count();
+}
 
 bool hasSuffix(const std::string& value, const std::string& suffix)
 {
@@ -49,6 +58,28 @@ std::string extractCaseName(const std::string& inputFile)
     return std::filesystem::path(filename).stem().string();
 }
 
+void printTimingSummary(
+    bool hasMeshTiming,
+    double meshSeconds,
+    const DriverTimings& timings)
+{
+    std::cout << "Timing summary:" << std::endl;
+    std::cout << std::fixed << std::setprecision(3);
+    if (hasMeshTiming) {
+        std::cout << "  mesh:       " << meshSeconds << " s" << std::endl;
+    }
+    else {
+        std::cout << "  mesh:       N/A" << std::endl;
+    }
+    std::cout << "  solve:      " << timings.solveSeconds << " s" << std::endl;
+    if (timings.multipolarComputed) {
+        std::cout << "  multipolar: " << timings.multipolarSeconds << " s" << std::endl;
+    }
+    else {
+        std::cout << "  multipolar: N/A" << std::endl;
+    }
+}
+
 } // namespace
 
 Launcher::Launcher(const std::string& inputFile, const std::string& exportFolder)
@@ -65,12 +96,15 @@ void Launcher::run()
     std::cout << "Loading input file: " << inputFile_ << std::endl;
     const std::string caseNamePrefix = extractCaseName(inputFile_) + ".";
     const std::string outputPathPrefix = ensureTrailingSlash(exportFolder_) + caseNamePrefix;
+    bool hasMeshTiming = false;
+    double meshSeconds = 0.0;
 
     if (isAdaptedJson(inputFile_)) {
         auto driver = Driver::loadFromAdaptedFile(inputFile_);
         driver.setExportFolder(outputPathPrefix);
         std::cout << "Running Tulip analysis..." << std::endl;
         driver.run();
+        printTimingSummary(hasMeshTiming, meshSeconds, driver.getTimings());
     }
     else if (isInputJson(inputFile_)) {
         const bool initializedHere = !gmsh::isInitialized();
@@ -79,12 +113,16 @@ void Launcher::run()
         }
 
         try {
+            const auto meshStart = Clock::now();
             Adapter adapter(inputFile_);
+            meshSeconds = elapsedSeconds(meshStart);
+            hasMeshTiming = true;
             AdaptedInputParser parser(inputFile_, adapter.getAdaptedInputJSON());
             Driver driver(parser.readModel(), parser.readDriverOptions());
             driver.setExportFolder(outputPathPrefix);
             std::cout << "Running Tulip analysis..." << std::endl;
             driver.run();
+            printTimingSummary(hasMeshTiming, meshSeconds, driver.getTimings());
         }
         catch (...) {
             if (initializedHere) {

@@ -27,8 +27,15 @@ public:
     EntityList allShapes;
     Graph nestedGraph;
 
-    ShapesClassification(const EntityList& shapes, const std::string& jsonFile);
-    ShapesClassification(const EntityList& shapes, const nlohmann::json& jsonData);
+    ShapesClassification() = default;
+    ShapesClassification(const EntityList& shapes,
+                         const std::string& jsonFile,
+                         double innerRegionBoxScalingFactor,
+                         double farRegionDiskScalingFactor);
+    ShapesClassification(const EntityList& shapes,
+                         const nlohmann::json& jsonData,
+                         double innerRegionBoxScalingFactor,
+                         double farRegionDiskScalingFactor);
 
     static int getNumberFromName(const std::string& entityName,
                                  const std::string& label);
@@ -53,6 +60,8 @@ public:
 
 private:
     nlohmann::json crossSectionData_;
+    double innerRegionBoxScalingFactor_;
+    double farRegionDiskScalingFactor_;
 
     double getDielectricRelativePermittivity(const std::string& geometryName) const;
     bool dielectricHasPriorityOver(const std::string& lhs,
