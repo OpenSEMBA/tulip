@@ -10,12 +10,9 @@
       {"type": "conductor", "conductorId": 3, "attribute": 3},
       {"type": "conductor", "conductorId": 4, "attribute": 4},
       {"type": "conductor", "conductorId": 5, "attribute": 5},
-      {"type": "dielectric", "relativePermittivity": 2.0, "attribute": 7},
-      {"type": "dielectric", "relativePermittivity": 2.0, "attribute": 8},
-      {"type": "dielectric", "relativePermittivity": 2.0, "attribute": 9},
-      {"type": "dielectric", "relativePermittivity": 2.0, "attribute": 10},
-      {"type": "dielectric", "relativePermittivity": 2.0, "attribute": 11},
-      {"type": "dielectric", "attribute": 12}
+      {"type": "dielectric", "attribute": 7},
+      {"type": "dielectric", "attribute": 9},
+      {"type": "open", "attribute": 8}
     ],
     "gmshFile": "five_wires.msh"
   }

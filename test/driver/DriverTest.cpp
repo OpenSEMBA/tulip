@@ -239,9 +239,10 @@ TEST_F(DriverTest, five_wires)
 	};
 	couplingExpected.UseExternalData(couplingExpectedData, 5, 5);
 
-	auto out{
-		Driver::loadFromAdaptedFile(fn).getPULMTL().getCapacitiveCouplingCoefficients()
-	};
+	auto parameters = Driver::loadFromAdaptedFile(fn).getMultiwireParametersByDomains();
+	ASSERT_NE(nullptr, parameters.getInCellPotentials());
+	ASSERT_EQ(1, parameters.getPULParameters().size());
+	auto out = parameters.getPULParameters().begin()->second->getCapacitiveCouplingCoefficients();
 
 	ASSERT_EQ(couplingExpected.NumRows(), out.NumRows());
 	ASSERT_EQ(couplingExpected.NumCols(), out.NumCols());

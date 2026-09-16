@@ -148,6 +148,7 @@ TEST_F(AdapterTest, five_wires)
 {
     const std::string caseName = "five_wires";
     Adapter adapter(inputFileFromCaseName(caseName));
+    EXPECT_TRUE(adapter.isOpenProblem());
     assertAdaptedJsonMatchesExpected(caseName, adapter);
 }
 
