@@ -9,7 +9,6 @@ builds
 dist
 Results
 Testing
-testData
 tmp_cases
 tmpFolder
 venv
@@ -17,3 +16,8 @@ __pycache__
 *.areas.json
 *.msh
 *.vtk
+
+# Test fixtures are needed by CTest even when their extension is otherwise
+# excluded from the build context.
+!testData/**
+testData/*/*.tulip-output.*

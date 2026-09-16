@@ -39,6 +39,50 @@ Once compiled, test cases can be launched from the project root folder, with
 Most cases will store results in the `Results` folder. 
 Please check the codes in `test` folder for information on the validation cases and their expected tolerances.
 
+### Container commands
+
+These commands require a working Docker installation and permission to create
+directories beside the input file. Run `make help` to see the commands from the
+terminal.
+
+Build the reusable container images and export the runnable bundle to `dist`:
+
+```shell
+make build
+```
+
+This creates the runtime image `tulip:latest`, the test image
+`tulip-test:latest`, and the standalone binary bundle in `dist/`.
+
+Run the complete test suite from the prebuilt image:
+
+```shell
+make test
+```
+
+Run an input file in the container. A new results directory is created beside
+the input file and its path is printed when execution finishes. The input's
+directory is copied inside the container so relative CAD and mesh references
+continue to work.
+
+```shell
+make run FILE=testData/empty_coax/empty_coax.tulip.input.json
+```
+
+For paths without spaces, the input can also be passed positionally:
+
+```shell
+make run testData/empty_coax/empty_coax.tulip.input.json
+```
+
+The generated directory is named `<case>.tulip-output.XXXXXX` and contains all
+Tulip output, including the results JSON and the `Results/` directory. After
+`make build`, both `make test` and `make run` use the already compiled images
+and do not rebuild Tulip.
+
+If the source code, Dockerfile, dependencies, or test fixtures change, run
+`make build` again to refresh the images before running tests or analyses.
+
 ## Usage example
 Call `tulip` from command line as,
 

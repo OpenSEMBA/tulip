@@ -67,14 +67,41 @@ RUN "$VCPKG_ROOT/vcpkg" install --triplet x64-linux --overlay-triplets=/src/trip
 COPY . .
 
 RUN cmake --preset gnu -DCMAKE_BUILD_TYPE=Release \
-    && cmake --build build --target tulip --parallel "$BUILD_JOBS"
+    && cmake --build build --parallel "$BUILD_JOBS"
 
-# Package the executable with every shared library resolved by the dynamic linker.
-RUN mkdir -p /bundle/bin /bundle/lib \
-    && cp build/bin/tulip /bundle/bin/ \
-    && ldd build/bin/tulip | awk '/=> \/[^ ]+/ { print $3 } /^\// { print $1 }' | sort -u | xargs -r -I{} cp {} /bundle/lib/ \
-    && patchelf --set-rpath '$ORIGIN/../lib' /bundle/bin/tulip \
-    && for library in /bundle/lib/*; do patchelf --set-rpath '$ORIGIN' "$library" || true; done
+# Bundle project dependencies, relying on the Ubuntu 26.04 runtime for its
+# standard C/C++ and desktop libraries.
+RUN set -eux; \
+    mkdir -p /bundle/bin /bundle/lib; \
+    cp build/bin/tulip /bundle/bin/; \
+    ldd build/bin/tulip | awk '/=> \/[^ ]+/ { print $3 } /^\// { print $1 }' | sort -u | \
+    while IFS= read -r library; do \
+        case "$(basename "$library")" in \
+            libc.so.*|libm.so.*|libresolv.so.*|libstdc++.so.*|libgcc_s.so.*|libgomp.so.*|\
+            libGL.so.*|libGLdispatch.so.*|libGLX.so.*|libGLU.so.*|libOpenGL.so.*|libglut.so.*|\
+            libX11.so.*|libXau.so.*|libxcb.so.*|libXcursor.so.*|libXdmcp.so.*|libXext.so.*|\
+            libXfixes.so.*|libXft.so.*|libXi.so.*|libXinerama.so.*|libXrender.so.*|libXxf86vm.so.*|\
+            libfontconfig.so.*|libfreetype.so.*|libexpat.so.*|libjpeg.so.*|libpng*.so.*|\
+            libbz2.so.*|libz.so.*|libzstd.so.*) continue ;; \
+        esac; \
+        cp "$library" /bundle/lib/; \
+    done; \
+    patchelf --set-rpath '$ORIGIN/../lib' /bundle/bin/tulip; \
+    for library in /bundle/lib/*; do patchelf --set-rpath '$ORIGIN' "$library" || true; done; \
+    printf '%s\n' \
+        'Runtime target: Ubuntu 26.04 with its standard C/C++ and desktop libraries installed.' \
+        'The lib directory contains only bundled third-party dependencies.' \
+        > /bundle/RUNTIME-REQUIREMENTS.txt
+
+# This target retains the compiled executable and CTest suite so that `make
+# test` can run without rebuilding the project.
+FROM build AS test
+
+FROM public.ecr.aws/docker/library/ubuntu:26.04 AS runtime
+RUN apt-get update && apt-get install --yes --no-install-recommends libgmsh4.14 \
+    && rm -rf /var/lib/apt/lists/*
+COPY --from=build /bundle/ /opt/tulip/
+ENTRYPOINT ["/opt/tulip/bin/tulip"]
 
 FROM scratch AS artifact
 COPY --from=build /bundle/ /

@@ -17,6 +17,7 @@ mesh.mesh
 *.mtx
 
 testData/*/*.vtk
+testData/*/*.tulip-output.*
 
 __pycache__/
 
