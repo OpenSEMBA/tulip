@@ -1,16 +1,19 @@
-.PHONY: help build test run
+.PHONY: help build release-ubuntu test run
 
 DOCKER ?= docker
 ARTIFACT_DIR ?= dist
 BUILD_JOBS ?= 2
 IMAGE ?= tulip:latest
 TEST_IMAGE ?= tulip-test:latest
+VERSION ?= $(shell git describe --tags --always --dirty 2>/dev/null || printf '%s' dev)
+RELEASE_DIR ?= release
 RUN_FILE ?= $(or $(FILE),$(filter-out run,$(MAKECMDGOALS)))
 
 help:
 	@printf '%s\n' \
 		'Available commands:' \
 		'  make build                       Build the runtime and test images, and export dist/.' \
+		'  make release-ubuntu              Package the Ubuntu bundle as release/tulip-<version>-ubuntu-26.04.tar.gz.' \
 		'  make test                        Run all CTest tests from the prebuilt test image.' \
 		'  make run FILE=path/to/input.json Run Tulip in a container and create a results folder beside the input.' \
 		'  make help                        Show this help.'
@@ -21,6 +24,13 @@ build:
 	$(DOCKER) build --build-arg BUILD_JOBS=$(BUILD_JOBS) --file Dockerfile --target runtime --tag $(IMAGE) .
 	$(DOCKER) build --build-arg BUILD_JOBS=$(BUILD_JOBS) --file Dockerfile --target test --tag $(TEST_IMAGE) .
 	$(DOCKER) build --build-arg BUILD_JOBS=$(BUILD_JOBS) --file Dockerfile --target artifact --output type=local,dest=$(ARTIFACT_DIR) .
+
+# Create a distributable archive. Override VERSION for a release identifier,
+# for example: make release-ubuntu VERSION=1.2.3
+release-ubuntu: build
+	@mkdir -p "$(RELEASE_DIR)"
+	tar --create --gzip --file "$(RELEASE_DIR)/tulip-$(VERSION)-ubuntu-26.04.tar.gz" --directory "$(ARTIFACT_DIR)" .
+	@printf 'Ubuntu release written to: %s\n' "$(RELEASE_DIR)/tulip-$(VERSION)-ubuntu-26.04.tar.gz"
 
 # Runs every CTest test from the already-built image. Build it on first use.
 test:

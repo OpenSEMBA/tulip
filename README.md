@@ -54,6 +54,17 @@ make build
 This creates the runtime image `tulip:latest`, the test image
 `tulip-test:latest`, and the standalone binary bundle in `dist/`.
 
+Create a compressed Ubuntu 26.04 release bundle. By default it uses the
+current Git tag or commit as its version; set `VERSION` to provide the release
+version explicitly:
+
+```shell
+make release-ubuntu VERSION=1.2.3
+```
+
+The resulting archive is written to
+`release/tulip-1.2.3-ubuntu-26.04.tar.gz`.
+
 Run the complete test suite from the prebuilt image:
 
 ```shell
