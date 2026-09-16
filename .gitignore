@@ -81,6 +81,7 @@ vcpkg_installed/
 *.vtk
 *.areas.json
 build
+dist/
 Testing/Temporary/CTestCostData.txt
 Testing/Temporary/LastTest.log
 debug_state.geo_unrolled
