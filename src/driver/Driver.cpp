@@ -666,17 +666,6 @@ std::map<ConductorId, FieldReconstruction> Driver::getFieldParameters(
 	std::cout << "- Computing " << getFieldTypeName(fieldType)
 		<< " field coefficients." << std::endl;
 	const auto conductors = model_.getMaterials().getConductors();
-	std::set<ConductorId> openDomainConductors;
-	std::set<ConductorId> shieldsGroundingInnerDomains;
-	for (const auto& [domainId, domain] : model_.getDomains()) {
-		(void)domainId;
-		if (domain.ground == Domain::UNDEFINED_GROUND) {
-			openDomainConductors.insert(
-				domain.conductorIds.begin(), domain.conductorIds.end());
-		} else {
-			shieldsGroundingInnerDomains.insert(domain.ground);
-		}
-	}
 
 	// Compute the C matrix once for all conductors to avoid
 	// reassembling operators N times (was O(N^2), now O(N)).
@@ -685,22 +674,9 @@ std::map<ConductorId, FieldReconstruction> Driver::getFieldParameters(
 	for (const auto& cI : conductors) {
 		
 		auto condI = cI->getConductorId();
-		if (!openDomainConductors.count(condI)) {
-			continue;
-		}
 
 		std::cout << "- Conductor #" << condI << "... " << std::flush;
-		auto fp = std::map<ConductorId, double>{};
-		if (shieldsGroundingInnerDomains.count(condI)) {
-			// The shield is the only conductor in its exterior domain. The
-			// enclosed conductors do not contribute to the exterior field.
-			for (const auto& cJ : conductors) {
-				fp[cJ->getConductorId()] = 0.0;
-			}
-			fp[condI] = 1.0;
-		} else {
-			fp = computeFloatingPotentialsFromC(condI, C);
-		}
+		auto fp = computeFloatingPotentialsFromC(condI, C);
 		
 		loadFloatingPotentials(sP, fp);
 

@@ -1,6 +1,5 @@
 #include "Model.h"
 
-#include <algorithm>
 #include <cmath>
 #include <set>
 #include <assert.h>
@@ -151,31 +150,6 @@ Domain::IdToDomain Model::buildDomains() const
 			std::inserter(common, common.begin())
 		);
 		res[edge.second].ground = *common.begin();
-	}
-
-	// A conductor shell shares mesh vertices with the regions on both sides,
-	// so graph connectivity alone cannot separate its exterior domain. Treat a
-	// single shield in an open model as the exterior conductor and use it as
-	// the ground for all enclosed conductors.
-	if (!materials_.getOpenBoundaries().empty()) {
-		const auto conductors = materials_.getConductors();
-		const auto shieldIt = std::find_if(
-			conductors.begin(), conductors.end(), [](const Conductor* conductor) {
-				return conductor->getIsShield();
-			});
-		if (shieldIt != conductors.end() &&
-			std::find_if(std::next(shieldIt), conductors.end(),
-				[](const Conductor* conductor) { return conductor->getIsShield(); }) == conductors.end() &&
-			conductors.size() > 1) {
-			Domain exterior;
-			exterior.conductorIds.insert((*shieldIt)->getConductorId());
-			Domain interior;
-			for (const auto* conductor : conductors) {
-				interior.conductorIds.insert(conductor->getConductorId());
-			}
-			interior.ground = (*shieldIt)->getConductorId();
-			res = {{0, exterior}, {1, interior}};
-		}
 	}
 
 	return res;
