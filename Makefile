@@ -35,7 +35,7 @@ release-ubuntu: build
 # Runs every CTest test from the already-built image. Build it on first use.
 test:
 	@$(DOCKER) image inspect $(TEST_IMAGE) >/dev/null 2>&1 || $(MAKE) build
-	$(DOCKER) run --rm --entrypoint ctest $(TEST_IMAGE) --test-dir /src/build --output-on-failure
+	$(DOCKER) run --rm --entrypoint ctest $(TEST_IMAGE) --test-dir /src/build --verbose
 
 # Usage: make run FILE=path/to/case.tulip.input.json
 # `make run path/to/case.tulip.input.json` is also accepted for paths without spaces.

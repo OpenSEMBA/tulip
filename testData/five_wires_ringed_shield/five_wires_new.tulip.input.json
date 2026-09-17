@@ -1,0 +1,85 @@
+{
+    "driverOptions": {
+        "exportFolder": "../five_wires_new"
+    },
+    "materials": [
+        {
+            "id": 0,
+            "name": "Perfect Conductor Material",
+            "type": "conductor"
+        },
+        {
+            "id": 1,
+            "name": "Dielectric Material",
+            "type": "dielectric",
+            "relativePermittivity": 1.0
+        },
+        {
+            "id": 2,
+            "name": "Shield Conductor Material",
+            "type": "shield",
+            "transferImpedancePerMeter": {
+                "resistiveTerm": 1.0,
+                "inductiveTerm": 1.0,
+                "direction": "BOTH"
+            }
+        }
+    ],
+    "layers": [
+        {
+            "name": "Dielectric_005",
+            "id": 0,
+            "materialId": 1
+        },
+        {
+            "name": "Conductor_005",
+            "id": 1,
+            "materialId": 0
+        },
+        {
+            "name": "Dielectric_002",
+            "id": 2,
+            "materialId": 1
+        },
+        {
+            "name": "Conductor_002",
+            "id": 3,
+            "materialId": 0
+        },
+        {
+            "name": "Dielectric_1",
+            "id": 4,
+            "materialId": 1
+        },
+        {
+            "name": "Conductor_1",
+            "id": 5,
+            "materialId": 0
+        },
+        {
+            "name": "Shield",
+            "id": 6,
+            "materialId": 2
+        },
+        {
+            "name": "Conductor_004",
+            "id": 7,
+            "materialId": 0
+        },
+        {
+            "name": "Dielectric_004",
+            "id": 8,
+            "materialId": 1
+        },
+        {
+            "name": "Conductor_003",
+            "id": 9,
+            "materialId": 0
+        },
+        {
+            "name": "Dielectric_003",
+            "id": 10,
+            "materialId": 1
+        }
+    ]
+}
