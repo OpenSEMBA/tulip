@@ -1,4 +1,4 @@
-.PHONY: help build release-ubuntu test run
+.PHONY: help build release-ubuntu test test-one run
 
 DOCKER ?= docker
 ARTIFACT_DIR ?= dist
@@ -15,6 +15,7 @@ help:
 		'  make build                       Build the runtime and test images, and export dist/.' \
 		'  make release-ubuntu              Package the Ubuntu bundle as release/tulip-<version>-ubuntu-26.04.tar.gz.' \
 		'  make test                        Run all CTest tests from the prebuilt test image.' \
+		'  make test-one TEST=Suite.Case    Run one GoogleTest case from the prebuilt test image.' \
 		'  make run FILE=path/to/input.json Run Tulip in a container and create a results folder beside the input.' \
 		'  make help                        Show this help.'
 
@@ -36,6 +37,12 @@ release-ubuntu: build
 test:
 	@$(DOCKER) image inspect $(TEST_IMAGE) >/dev/null 2>&1 || $(MAKE) build
 	$(DOCKER) run --rm --entrypoint ctest $(TEST_IMAGE) --test-dir /src/build --verbose
+
+# Usage: make test-one TEST=SuiteName.TestName
+test-one:
+	@test -n "$(TEST)" || { printf '%s\n' 'Usage: make test-one TEST=SuiteName.TestName'; exit 2; }
+	@$(DOCKER) image inspect $(TEST_IMAGE) >/dev/null 2>&1 || $(MAKE) build
+	$(DOCKER) run --rm --env "GTEST_FILTER=$(TEST)" --entrypoint ctest $(TEST_IMAGE) --test-dir /src/build --verbose
 
 # Usage: make run FILE=path/to/case.tulip.input.json
 # `make run path/to/case.tulip.input.json` is also accepted for paths without spaces.

@@ -71,6 +71,12 @@ Run the complete test suite from the prebuilt image:
 make test
 ```
 
+Run one GoogleTest case using its fully qualified name:
+
+```shell
+make test-one TEST=SuiteName.TestName
+```
+
 Run an input file in the container. A new results directory is created beside
 the input file and its path is printed when execution finishes. The input's
 directory is copied inside the container so relative CAD and mesh references
