@@ -1,0 +1,50 @@
+{
+    "driverOptions": {
+        "exportFolder": "../two_conductors_with_dielectric"
+    },
+    "materials": [
+        {
+            "id": 0,
+            "name": "Perfect Conductor Material",
+            "type": "conductor"
+        },
+        {
+            "id": 1,
+            "name": "Dielectric Material",
+            "type": "dielectric",
+            "relativePermittivity": 1.0
+        },
+        {
+            "id": 2,
+            "name": "Shield Conductor Material",
+            "type": "shield",
+            "transferImpedancePerMeter": {
+                "resistiveTerm": 1.0,
+                "inductiveTerm": 1.0,
+                "direction": "BOTH"
+            }
+        }
+    ],
+    "layers": [
+        {
+            "name": "Left_wire",
+            "id": 0,
+            "materialId": 0
+        },
+        {
+            "name": "Shield",
+            "id": 1,
+            "materialId": 2
+        },
+        {
+            "name": "Right_wire",
+            "id": 2,
+            "materialId": 0
+        },
+        {
+            "name": "Left_dielectric",
+            "id": 3,
+            "materialId": 1
+        }
+    ]
+}
