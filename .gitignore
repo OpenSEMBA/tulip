@@ -17,6 +17,7 @@ mesh.mesh
 *.mtx
 
 testData/*/*.vtk
+testData/*/*.tulip-output.*
 
 __pycache__/
 
@@ -81,6 +82,7 @@ vcpkg_installed/
 *.vtk
 *.areas.json
 build
+dist/
 Testing/Temporary/CTestCostData.txt
 Testing/Temporary/LastTest.log
 debug_state.geo_unrolled

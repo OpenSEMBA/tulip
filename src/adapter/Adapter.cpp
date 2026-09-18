@@ -373,14 +373,19 @@ std::map<std::string, nlohmann::json> buildLayerConductorPropertiesMapping(
         if (materialType == "shield") {
             properties["isShield"] = true;
             nlohmann::json transferImpedance = nlohmann::json::object();
-            if (material.contains("resistancePerMeter")) {
-                transferImpedance["resistiveTerm"] = material["resistancePerMeter"];
+            if (material.contains("transferImpedancePerMeter")) {
+                transferImpedance = material["transferImpedancePerMeter"];
             }
-            if (material.contains("inductancePerMeter")) {
-                transferImpedance["inductiveTerm"] = material["inductancePerMeter"];
-            }
-            if (material.contains("direction")) {
-                transferImpedance["direction"] = material["direction"];
+            else {
+                if (material.contains("resistancePerMeter")) {
+                    transferImpedance["resistiveTerm"] = material["resistancePerMeter"];
+                }
+                if (material.contains("inductancePerMeter")) {
+                    transferImpedance["inductiveTerm"] = material["inductancePerMeter"];
+                }
+                if (material.contains("direction")) {
+                    transferImpedance["direction"] = material["direction"];
+                }
             }
             if (!transferImpedance.empty()) {
                 properties["transferImpedancePerMeter"] = transferImpedance;

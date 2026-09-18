@@ -39,6 +39,67 @@ Once compiled, test cases can be launched from the project root folder, with
 Most cases will store results in the `Results` folder. 
 Please check the codes in `test` folder for information on the validation cases and their expected tolerances.
 
+### Container commands
+
+These commands require a working Docker installation and permission to create
+directories beside the input file. Run `make help` to see the commands from the
+terminal.
+
+Build the reusable container images and export the runnable bundle to `dist`:
+
+```shell
+make build
+```
+
+This creates the runtime image `tulip:latest`, the test image
+`tulip-test:latest`, and the standalone binary bundle in `dist/`.
+
+Create a compressed Ubuntu 26.04 release bundle. By default it uses the
+current Git tag or commit as its version; set `VERSION` to provide the release
+version explicitly:
+
+```shell
+make release-ubuntu VERSION=1.2.3
+```
+
+The resulting archive is written to
+`release/tulip-1.2.3-ubuntu-26.04.tar.gz`.
+
+Run the complete test suite from the prebuilt image:
+
+```shell
+make test
+```
+
+Run one GoogleTest case using its fully qualified name:
+
+```shell
+make test-one TEST=SuiteName.TestName
+```
+
+Run an input file in the container. A new results directory is created beside
+the input file and its path is printed when execution finishes. The input's
+directory is copied inside the container so relative CAD and mesh references
+continue to work.
+
+```shell
+make run FILE=testData/empty_coax/empty_coax.tulip.input.json
+```
+
+For paths without spaces, the input can also be passed positionally:
+
+```shell
+make run testData/empty_coax/empty_coax.tulip.input.json
+```
+
+The generated directory is named `<case>.tulip-output.XXXXXX` and contains all
+Tulip output, including the results JSON and the `Results/` directory. After
+`make build`, both `make test` and `make run` use the already compiled images
+and do not rebuild Tulip.
+
+If the source code, Dockerfile, dependencies, or test fixtures change, run
+`make build` again to refresh the images before running tests or analyses.
+
 ## Usage example
 Call `tulip` from command line as,
 

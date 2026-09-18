@@ -1,0 +1,72 @@
+{
+    "materialAssociations": [
+        {
+            "elementIds": [],
+            "materialId": 1
+        },
+        {
+            "elementIds": [],
+            "materialId": 2
+        },
+        {
+            "elementIds": [],
+            "materialId": 3
+        },
+        {
+            "elementIds": [],
+            "materialId": 4
+        },
+        {
+            "elementIds": [],
+            "materialId": 5
+        },
+        {
+            "elementIds": [],
+            "materialId": 6
+        }
+    ],
+    "materials": [
+        {
+            "capacitancePerMeter": [],
+            "id": 1,
+            "inductancePerMeter": [],
+            "resistancePerMeter": [],
+            "type": "shieldedMultiwire"
+        },
+        {
+            "capacitancePerMeter": [],
+            "id": 2,
+            "inductancePerMeter": [],
+            "resistancePerMeter": [],
+            "type": "shieldedMultiwire"
+        },
+        {
+            "capacitancePerMeter": [],
+            "id": 3,
+            "inductancePerMeter": [],
+            "resistancePerMeter": [],
+            "type": "shieldedMultiwire"
+        },
+        {
+            "capacitancePerMeter": [],
+            "id": 4,
+            "inductancePerMeter": [],
+            "resistancePerMeter": [],
+            "type": "shieldedMultiwire"
+        },
+        {
+            "capacitancePerMeter": [],
+            "id": 5,
+            "inductancePerMeter": [],
+            "resistancePerMeter": [],
+            "type": "shieldedMultiwire"
+        },
+        {
+            "capacitancePerMeter": [],
+            "id": 6,
+            "inductancePerMeter": [],
+            "resistancePerMeter": [],
+            "type": "shieldedMultiwire"
+        }
+    ]
+}

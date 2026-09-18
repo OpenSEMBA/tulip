@@ -151,6 +151,28 @@ TEST_F(AdapterTest, five_wires)
     assertAdaptedJsonMatchesExpected(caseName, adapter);
 }
 
+TEST_F(AdapterTest, five_wires_ringed_shield)
+{
+    const std::string caseName = "five_wires_new";
+    const std::string caseFolder = testDataPath() + "five_wires_ringed_shield";
+    std::ifstream inputFile(caseFolder + "/" + caseName + ".tulip.input.json");
+    ASSERT_TRUE(inputFile.is_open());
+    nlohmann::json inputJson;
+    inputFile >> inputJson;
+
+    Adapter adapter(inputJson, caseName, caseFolder);
+
+    EXPECT_TRUE(adapter.isOpenProblem());
+
+    const auto shieldMaterial =
+        findAdaptedConductorMaterialById(adapter.getAdaptedInputJSON(), 6);
+    ASSERT_TRUE(shieldMaterial.contains("transferImpedancePerMeter"));
+    const auto& transferImpedance = shieldMaterial.at("transferImpedancePerMeter");
+    EXPECT_DOUBLE_EQ(1.0, transferImpedance.at("resistiveTerm").get<double>());
+    EXPECT_DOUBLE_EQ(1.0, transferImpedance.at("inductiveTerm").get<double>());
+    EXPECT_EQ("BOTH", transferImpedance.at("direction").get<std::string>());
+}
+
 TEST_F(AdapterTest, two_wires_open)
 {
     const std::string caseName = "two_wires_open";
