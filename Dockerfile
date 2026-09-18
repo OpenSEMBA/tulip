@@ -72,9 +72,9 @@ RUN cmake --preset gnu -DCMAKE_BUILD_TYPE=Release \
 # Bundle project dependencies, relying on the Ubuntu 26.04 runtime for its
 # standard C/C++ and desktop libraries.
 RUN set -eux; \
-    mkdir -p /bundle/bin /bundle/lib; \
-    cp build/bin/tulip /bundle/bin/; \
-    ldd build/bin/tulip | awk '/=> \/[^ ]+/ { print $3 } /^\// { print $1 }' | sort -u | \
+    mkdir -p /bundle /bundle/lib; \
+    cp build/tulip /bundle/; \
+    ldd build/tulip | awk '/=> \/[^ ]+/ { print $3 } /^\// { print $1 }' | sort -u | \
     while IFS= read -r library; do \
         case "$(basename "$library")" in \
             libc.so.*|libm.so.*|libresolv.so.*|libstdc++.so.*|libgcc_s.so.*|libgomp.so.*|\
@@ -86,7 +86,7 @@ RUN set -eux; \
         esac; \
         cp "$library" /bundle/lib/; \
     done; \
-    patchelf --set-rpath '$ORIGIN/../lib' /bundle/bin/tulip; \
+    patchelf --set-rpath '$ORIGIN/lib' /bundle/tulip; \
     for library in /bundle/lib/*; do patchelf --set-rpath '$ORIGIN' "$library" || true; done; \
     printf '%s\n' \
         'Runtime target: Ubuntu 26.04 with its standard C/C++ and desktop libraries installed.' \
@@ -101,7 +101,7 @@ FROM public.ecr.aws/docker/library/ubuntu:26.04 AS runtime
 RUN apt-get update && apt-get install --yes --no-install-recommends libgmsh4.14 \
     && rm -rf /var/lib/apt/lists/*
 COPY --from=build /bundle/ /opt/tulip/
-ENTRYPOINT ["/opt/tulip/bin/tulip"]
+ENTRYPOINT ["/opt/tulip/tulip"]
 
 FROM scratch AS artifact
 COPY --from=build /bundle/ /

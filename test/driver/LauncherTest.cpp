@@ -72,6 +72,46 @@ TEST_F(LauncherTest, coax_and_bare_wire_from_adapted)
 	expectFDTDOutput(outputFolder, caseName, 2, 2);
 }
 
+TEST_F(LauncherTest, two_conductors_with_dielectric_material_associations)
+{
+	const std::string caseName = "two_conductors_with_dielectric";
+	const std::string inputFile =
+		casesFolder() + caseName + "/" + caseName + ".tulip.input.json";
+	const std::string outputFolder =
+		outFolder() + "LauncherTest.two_conductors_with_dielectric/";
+
+	Launcher tulip(inputFile, outputFolder);
+	ASSERT_NO_THROW(tulip.run());
+
+	const auto outJson = readJSON(outputFolder + caseName + ".tulip.out.json");
+	ASSERT_EQ(2, outJson["materials"].size());
+	ASSERT_EQ(2, outJson["materialAssociations"].size());
+
+	const nlohmann::json* unshielded = nullptr;
+	const nlohmann::json* shielded = nullptr;
+	for (const auto& material : outJson["materials"]) {
+		if (material["type"] == "unshieldedMultiwire") {
+			unshielded = &material;
+		} else if (material["type"] == "shieldedMultiwire") {
+			shielded = &material;
+		}
+	}
+	ASSERT_NE(nullptr, unshielded);
+	ASSERT_NE(nullptr, shielded);
+
+	for (const auto& association : outJson["materialAssociations"]) {
+		if (association["materialId"] == (*unshielded)["id"]) {
+			EXPECT_EQ(nlohmann::json::array({1}), association["elementIds"]);
+			EXPECT_FALSE(association.contains("containedWithinElementId"));
+		} else if (association["materialId"] == (*shielded)["id"]) {
+			EXPECT_EQ(nlohmann::json::array({0, 2}), association["elementIds"]);
+			EXPECT_EQ(1, association["containedWithinElementId"]);
+		} else {
+			FAIL() << "Unexpected material association.";
+		}
+	}
+}
+
 TEST_F(LauncherTest, nested_shield_resistance_and_transfer_impedance_written_to_output_json)
 {
 	const std::string caseName = "coax_and_bare_wire";
@@ -94,6 +134,7 @@ TEST_F(LauncherTest, nested_shield_resistance_and_transfer_impedance_written_to_
 		casesFolder() + caseName + "/" + caseName + ".step";
 	const std::string tempStepFile =
 		outFolder() + "LauncherTest.coax_and_bare_wire_with_shield_transfer.step";
+	std::filesystem::create_directories(outFolder());
 	ASSERT_TRUE(std::filesystem::exists(sourceStepFile));
 	std::filesystem::copy_file(
 		sourceStepFile,
@@ -150,7 +191,7 @@ TEST_F(LauncherTest, nested_shield_resistance_and_transfer_impedance_written_to_
 	ASSERT_TRUE(containedMaterial->contains("transferImpedancePerMeter"));
 	const auto& transferImpedance = (*containedMaterial)["transferImpedancePerMeter"];
 	ASSERT_TRUE(transferImpedance.contains("resistiveTerm"));
-	EXPECT_DOUBLE_EQ(8.0e-3, transferImpedance["resistiveTerm"]);
-	EXPECT_DOUBLE_EQ(0.0, transferImpedance["inductiveTerm"]);
-	EXPECT_EQ("both", transferImpedance["direction"]);
+	EXPECT_DOUBLE_EQ(1.5e-3, transferImpedance["resistiveTerm"]);
+	EXPECT_DOUBLE_EQ(3.0e-9, transferImpedance["inductiveTerm"]);
+	EXPECT_EQ("outwards", transferImpedance["direction"]);
 }

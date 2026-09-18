@@ -61,7 +61,7 @@ run:
 		--mount "type=bind,src=$$output_dir,dst=/output" \
 		--workdir /output \
 		-e INPUT_NAME="$$input_name" \
-		--entrypoint sh $(IMAGE) -ec 'mkdir -p /tmp/input && cp -a /source/. /tmp/input/ && exec /opt/tulip/bin/tulip -i "/tmp/input/$$INPUT_NAME" -o /output' && \
+		--entrypoint sh $(IMAGE) -ec 'mkdir -p /tmp/input && cp -a /source/. /tmp/input/ && exec /opt/tulip/tulip -i "/tmp/input/$$INPUT_NAME" -o /output' && \
 	printf 'Results written to: %s\n' "$$output_dir"
 
 # Treat a positional input-file argument as data for the run target.
