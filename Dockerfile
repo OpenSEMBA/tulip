@@ -75,8 +75,8 @@ RUN cmake --preset gnu -DCMAKE_BUILD_TYPE=Release \
 # standard C/C++ and desktop libraries.
 RUN set -eux; \
     mkdir -p /bundle /bundle/lib; \
-    cp build/tulip /bundle/; \
-    ldd build/tulip | awk '/=> \/[^ ]+/ { print $3 } /^\// { print $1 }' | sort -u | \
+    cp build/bin/tulip /bundle/; \
+    ldd build/bin/tulip | awk '/=> \/[^ ]+/ { print $3 } /^\// { print $1 }' | sort -u | \
     while IFS= read -r library; do \
         case "$(basename "$library")" in \
             libc.so.*|libm.so.*|libresolv.so.*|libstdc++.so.*|libgcc_s.so.*|libgomp.so.*|\
