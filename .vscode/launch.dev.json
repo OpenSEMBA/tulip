@@ -5,7 +5,7 @@
             "name": "LauncherTest (Docker gdb)",
             "type": "cppdbg",
             "request": "launch",
-            "program": "/build-dbg/driver_tests",
+            "program": "/build-dbg/bin/driver_tests",
             "args": [
                 "--gtest_filter=LauncherTest.two_conductors_with_dielectric_material_associations"
             ],
@@ -45,7 +45,7 @@
             "name": "Tulip input case (Docker gdb)",
             "type": "cppdbg",
             "request": "launch",
-            "program": "/build-dbg/tulip",
+            "program": "/build-dbg/bin/tulip",
             "args": [
                 "-i",
                 "testData/two_conductors_with_dielectric/two_conductors_with_dielectric.tulip.input.json",
@@ -88,7 +88,7 @@
             "name": "adapter_tests (gdb)",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/build-dbg/bin/adapter_tests",
+            "program": "${workspaceFolder}/build/bin/adapter_tests",
             "args": [],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
@@ -116,10 +116,10 @@
             ]
         },
         {
-            "name": "pulmtln_tests (gdb)",
+            "name": "driver_tests (gdb)",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/build-dbg/bin/pulmtln_tests",
+            "program": "${workspaceFolder}/build/bin/driver_tests",
             "args": [],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
@@ -146,10 +146,10 @@
             ]
         },
         {
-            "name": "pulmtln (gdb)",
+            "name": "tulip (gdb)",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/build-dbg/bin/pulmtln",
+            "program": "${workspaceFolder}/build/bin/tulip",
             "args": [],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",

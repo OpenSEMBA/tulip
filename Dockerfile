@@ -104,14 +104,14 @@ FROM build AS test
 FROM build-base AS test-debug
 RUN apt-get update && apt-get install --yes --no-install-recommends gdb \
     && rm -rf /var/lib/apt/lists/* \
-    && cmake -S /src -B /build-debug -G Ninja \
+    && cmake -S /src -B /build-dbg -G Ninja \
         -DCMAKE_BUILD_TYPE=Debug \
         -DCMAKE_TOOLCHAIN_FILE="$VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake" \
         -DVCPKG_OVERLAY_TRIPLETS=/src/triplets \
         -DTULIP_USE_MFEM_AS_SUBDIRECTORY=ON \
         -DMFEM_ENABLE_TESTING=OFF \
         -DMFEM_USE_OPENMP=OFF \
-    && cmake --build /build-debug --parallel "$BUILD_JOBS"
+    && cmake --build /build-dbg --parallel "$BUILD_JOBS"
 
 FROM public.ecr.aws/docker/library/ubuntu:26.04 AS runtime
 RUN apt-get update && apt-get install --yes --no-install-recommends libgmsh4.14 \

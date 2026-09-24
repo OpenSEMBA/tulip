@@ -69,7 +69,7 @@ docker run --rm \
   --mount "type=bind,src=$(pwd),dst=/workspace" \
   --workdir /workspace \
   tulip-test-debug:latest \
-  gdb /build-debug/driver_tests
+  gdb /build-dbg/driver_tests
 ```
 
 In GDB, start the case with:
