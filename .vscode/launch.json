@@ -2,6 +2,89 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "LauncherTest (Docker gdb)",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "/build-debug/driver_tests",
+            "args": [
+                "--gtest_filter=LauncherTest.two_conductors_with_dielectric_material_associations"
+            ],
+            "cwd": "/workspace",
+            "stopAtEntry": false,
+            "MIMode": "gdb",
+            "preLaunchTask": "Build debug image",
+            "sourceFileMap": {
+                "/src": "${workspaceFolder}"
+            },
+            "pipeTransport": {
+                "pipeProgram": "docker",
+                "pipeArgs": [
+                    "run",
+                    "--rm",
+                    "-i",
+                    "--cap-add=SYS_PTRACE",
+                    "--security-opt",
+                    "seccomp=unconfined",
+                    "--mount",
+                    "type=bind,src=${workspaceFolder},dst=/workspace",
+                    "--workdir",
+                    "/workspace",
+                    "tulip-test-debug:latest"
+                ],
+                "debuggerPath": "/usr/bin/gdb"
+            },
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ]
+        },
+        {
+            "name": "Tulip input case (Docker gdb)",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "/build-debug/tulip",
+            "args": [
+                "-i",
+                "testData/two_conductors_with_dielectric/two_conductors_with_dielectric.tulip.input.json",
+                "-o",
+                "/tmp/tulip-debug-output"
+            ],
+            "cwd": "/workspace",
+            "stopAtEntry": false,
+            "MIMode": "gdb",
+            "preLaunchTask": "Build debug image",
+            "sourceFileMap": {
+                "/src": "${workspaceFolder}"
+            },
+            "pipeTransport": {
+                "pipeProgram": "docker",
+                "pipeArgs": [
+                    "run",
+                    "--rm",
+                    "-i",
+                    "--cap-add=SYS_PTRACE",
+                    "--security-opt",
+                    "seccomp=unconfined",
+                    "--mount",
+                    "type=bind,src=${workspaceFolder},dst=/workspace",
+                    "--workdir",
+                    "/workspace",
+                    "tulip-test-debug:latest"
+                ],
+                "debuggerPath": "/usr/bin/gdb"
+            },
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ]
+        },
+        {
             "name": "adapter_tests (gdb)",
             "type": "cppdbg",
             "request": "launch",
