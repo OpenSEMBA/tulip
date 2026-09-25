@@ -151,6 +151,70 @@ TEST_F(AdapterTest, five_wires)
     assertAdaptedJsonMatchesExpected(caseName, adapter);
 }
 
+TEST_F(AdapterTest, five_wires_ringed_shield)
+{
+    const std::string caseName = "five_wires_ringed_shield";
+    const auto inputJson = readInputJsonFromCaseName(caseName);
+
+    Adapter adapter(inputJson, caseName, inputFolderFromCaseName(caseName));
+
+    EXPECT_TRUE(adapter.isOpenProblem());
+
+    const auto shieldMaterial =
+        findAdaptedConductorMaterialById(adapter.getAdaptedInputJSON(), 6);
+    ASSERT_TRUE(shieldMaterial.contains("transferImpedancePerMeter"));
+    const auto& transferImpedance = shieldMaterial.at("transferImpedancePerMeter");
+    EXPECT_DOUBLE_EQ(1.0, transferImpedance.at("resistiveTerm").get<double>());
+    EXPECT_DOUBLE_EQ(1.0, transferImpedance.at("inductiveTerm").get<double>());
+    EXPECT_EQ("both", transferImpedance.at("direction").get<std::string>());
+}
+
+TEST_F(AdapterTest, shield_propagates_each_valid_transfer_impedance_combination)
+{
+    const std::string caseName = "empty_coax";
+    struct TransferImpedanceCase {
+        const char* name;
+        nlohmann::json properties;
+    };
+    const std::vector<TransferImpedanceCase> transferImpedanceCases = {
+        {"resistive_term_only", {{"resistiveTerm", 1.5e-3}}},
+        {"inductive_term_only", {{"inductiveTerm", 3.0e-9}}},
+        {"inwards_direction_only", {{"direction", "inwards"}}},
+        {"resistive_and_inductive_terms",{{"resistiveTerm", 1.5e-3}, {"inductiveTerm", 3.0e-9}}},
+        {"resistive_term_and_outwards_direction",{{"resistiveTerm", 1.5e-3}, {"direction", "outwards"}}},
+        {"inductive_term_and_both_direction",{{"inductiveTerm", 3.0e-9}, {"direction", "both"}}},
+        {"all_properties",{{"resistiveTerm", 1.5e-3}, {"inductiveTerm", 3.0e-9},{"direction", "inwards"}}}
+    };
+
+    for (const auto& testCase : transferImpedanceCases) {
+        SCOPED_TRACE(testCase.name);
+        auto inputJson = readInputJsonFromCaseName(caseName);
+        inputJson["materials"][0]["transferImpedancePerMeter"] = testCase.properties;
+
+        Adapter adapter(inputJson, caseName, inputFolderFromCaseName(caseName));
+        const auto shield =
+            findAdaptedConductorMaterialById(adapter.getAdaptedInputJSON(), 0);
+
+        EXPECT_TRUE(shield.value("isShield", false));
+        ASSERT_TRUE(shield.contains("transferImpedancePerMeter"));
+        EXPECT_EQ(testCase.properties, shield.at("transferImpedancePerMeter"));
+    }
+}
+
+TEST_F(AdapterTest, shield_resistance_is_not_inferred_as_transfer_impedance)
+{
+    const std::string caseName = "empty_coax";
+    auto inputJson = readInputJsonFromCaseName(caseName);
+    inputJson["materials"][0]["resistancePerMeter"] = 12.5;
+
+    Adapter adapter(inputJson, caseName, inputFolderFromCaseName(caseName));
+    const auto shield = findAdaptedConductorMaterialById(adapter.getAdaptedInputJSON(), 0);
+
+    EXPECT_TRUE(shield.value("isShield", false));
+    EXPECT_DOUBLE_EQ(12.5, shield.at("resistancePerMeter").get<double>());
+    EXPECT_FALSE(shield.contains("transferImpedancePerMeter"));
+}
+
 TEST_F(AdapterTest, two_wires_open)
 {
     const std::string caseName = "two_wires_open";

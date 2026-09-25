@@ -1,0 +1,45 @@
+name: Build Ubuntu
+
+on:
+  pull_request:
+    branches:
+      - main
+    types:
+      - closed
+
+permissions:
+  contents: read
+
+concurrency:
+  group: build-ubuntu-main
+  cancel-in-progress: false
+
+jobs:
+  build:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    timeout-minutes: 240
+
+    steps:
+      - name: Check out merged main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          submodules: recursive
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Ubuntu bundle
+        env:
+          DOCKER: docker buildx
+          DOCKER_BUILD_FLAGS: --load --cache-from=type=gha,scope=tulip-docker
+          DOCKER_ARTIFACT_BUILD_FLAGS: --cache-from=type=gha,scope=tulip-docker --cache-to=type=gha,scope=tulip-docker,mode=max
+        run: make release-ubuntu VERSION="${GITHUB_SHA::7}" BUILD_JOBS=2
+
+      - name: Upload Ubuntu bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: tulip-ubuntu-26.04-${{ github.sha }}
+          path: release/tulip-*-ubuntu-26.04.tar.gz
+          if-no-files-found: error

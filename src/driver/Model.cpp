@@ -1,7 +1,11 @@
 #include "Model.h"
 
+#include <algorithm>
 #include <cmath>
+#include <iterator>
+#include <map>
 #include <set>
+#include <vector>
 #include <assert.h>
 
 #include "DirectedGraph.h"
@@ -126,9 +130,70 @@ Domain::IdToDomain Model::buildDomains() const
 	Domain::IdToDomain res;
 	Domain::Id id{ 0 };
 
-	// Determine conductors in domain.
-	for (const auto& domainMeshGraph : buildMeshGraph().split()) {
-		const auto vsInDomain{ domainMeshGraph.getVertices() };
+	using Edge = std::pair<int, int>;
+	auto makeEdge = [](int first, int second) {
+		return Edge{std::min(first, second), std::max(first, second)};
+	};
+
+	std::set<Edge> conductorBoundaryEdges;
+	for (const auto* conductor : getMaterials().getConductors()) {
+		for (auto boundaryId{ 0 }; boundaryId < mesh_->GetNBE(); ++boundaryId) {
+			const auto* boundary = mesh_->GetBdrElement(boundaryId);
+			if (boundary->GetAttribute() != conductor->getAttribute() ||
+				boundary->GetNVertices() != 2) {
+				continue;
+			}
+			const int* vertices = boundary->GetVertices();
+			conductorBoundaryEdges.insert(makeEdge(vertices[0], vertices[1]));
+		}
+	}
+
+	std::map<Edge, std::vector<int>> edgeToElements;
+	for (auto elementId{ 0 }; elementId < mesh_->GetNE(); ++elementId) {
+		const auto* element = mesh_->GetElement(elementId);
+		const int* vertices = element->GetVertices();
+		for (auto vertexId{ 0 }; vertexId < element->GetNVertices(); ++vertexId) {
+			edgeToElements[makeEdge(
+				vertices[vertexId], vertices[(vertexId + 1) % element->GetNVertices()])]
+				.push_back(elementId);
+		}
+	}
+
+	std::vector<int> parents(mesh_->GetNE());
+	for (auto elementId{ 0 }; elementId < mesh_->GetNE(); ++elementId) {
+		parents[elementId] = elementId;
+	}
+	auto findRoot = [&parents](int elementId) {
+		int root = elementId;
+		while (parents[root] != root) {
+			root = parents[root];
+		}
+		while (parents[elementId] != elementId) {
+			const int parent = parents[elementId];
+			parents[elementId] = root;
+			elementId = parent;
+		}
+		return root;
+	};
+	for (const auto& [edge, elementIds] : edgeToElements) {
+		if (conductorBoundaryEdges.count(edge) || elementIds.size() < 2) {
+			continue;
+		}
+		const int root = findRoot(elementIds.front());
+		for (auto it = std::next(elementIds.begin()); it != elementIds.end(); ++it) {
+			parents[findRoot(*it)] = root;
+		}
+	}
+
+	std::map<int, IdSet> verticesByDomain;
+	for (auto elementId{ 0 }; elementId < mesh_->GetNE(); ++elementId) {
+		const auto* element = mesh_->GetElement(elementId);
+		auto& vertices = verticesByDomain[findRoot(elementId)];
+		vertices.insert(
+			element->GetVertices(), element->GetVertices() + element->GetNVertices());
+	}
+
+	for (const auto& [_, vsInDomain] : verticesByDomain) {
 		Domain domain;
 		for (const auto* pec : getMaterials().getConductors()) {
 			auto bdrElems = getBdrElemsInDomain(pec, vsInDomain, *mesh_);

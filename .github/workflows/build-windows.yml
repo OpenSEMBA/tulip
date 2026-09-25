@@ -1,0 +1,115 @@
+name: Build Windows
+
+on:
+  pull_request:
+    branches:
+      - main
+    types:
+      - closed
+
+permissions:
+  contents: read
+
+concurrency:
+  group: build-windows-main
+  cancel-in-progress: false
+
+env:
+  VCPKG_ROOT: ${{ github.workspace }}/vcpkg
+  VCPKG_DEFAULT_BINARY_CACHE: ${{ github.workspace }}/vcpkg-binary-cache
+  VCPKG_BINARY_SOURCES: clear;files,${{ github.workspace }}/vcpkg-binary-cache,readwrite
+  MFEM_TOP_DIR: external/mfem-geg
+
+jobs:
+  build:
+    if: github.event.pull_request.merged == true
+    runs-on: windows-2022
+    timeout-minutes: 240
+
+    steps:
+      - name: Check out merged main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          submodules: recursive
+
+      - name: Restore vcpkg packages
+        uses: actions/cache@v4
+        with:
+          path: |
+            ${{ env.VCPKG_ROOT }}/installed
+            ${{ env.VCPKG_DEFAULT_BINARY_CACHE }}
+          key: vcpkg-windows-2022-eed289f6e06a5e7a5c9e6a729671b0a56af7dd69-${{ hashFiles('vcpkg.json', 'triplets/**') }}
+          restore-keys: |
+            vcpkg-windows-2022-eed289f6e06a5e7a5c9e6a729671b0a56af7dd69-
+
+      - name: Set up vcpkg
+        uses: lukka/run-vcpkg@v11
+        with:
+          vcpkgDirectory: ${{ env.VCPKG_ROOT }}
+          vcpkgGitCommitId: eed289f6e06a5e7a5c9e6a729671b0a56af7dd69
+          vcpkgJsonGlob: vcpkg.json
+
+      - name: Download Boost license with retries
+        shell: pwsh
+        run: |
+          $url = 'https://raw.githubusercontent.com/boostorg/boost/refs/tags/boost-1.90.0/LICENSE_1_0.txt'
+          $destination = Join-Path $env:VCPKG_ROOT 'downloads/boost-1.90.0-LICENSE_1_0.txt'
+          New-Item -ItemType Directory -Force -Path (Split-Path $destination) | Out-Null
+          for ($attempt = 1; $attempt -le 5; $attempt++) {
+            try {
+              Invoke-WebRequest -Uri $url -OutFile $destination
+              exit 0
+            } catch {
+              if ($attempt -eq 5) { throw }
+              Start-Sleep -Seconds (5 * $attempt)
+            }
+          }
+
+      - name: Get MFEM revision
+        id: mfem-revision
+        shell: pwsh
+        run: |
+          $mfemRevision = git -C ${{ env.MFEM_TOP_DIR }} rev-parse HEAD
+          "sha=$mfemRevision" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+
+      - name: Restore MFEM
+        id: mfem-cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.MFEM_TOP_DIR }}/build
+          key: mfem-windows-2022-opt-v2.4-${{ steps.mfem-revision.outputs.sha }}
+
+      - name: Build MFEM
+        if: steps.mfem-cache.outputs.cache-hit != 'true'
+        uses: mfem/github-actions/build-mfem@v2.4
+        env:
+          HYPRE_TOP_DIR: hypre-2.19.0
+          METIS_TOP_DIR: metis-4.0.3
+        with:
+          os: windows-2022
+          target: opt
+          mpi: seq
+          build-system: cmake
+          hypre-dir: ${{ env.HYPRE_TOP_DIR }}
+          metis-dir: ${{ env.METIS_TOP_DIR }}
+          mfem-dir: ${{ env.MFEM_TOP_DIR }}
+
+      - name: Ensure GNU Make is available
+        shell: pwsh
+        run: |
+          if (-not (Get-Command make -ErrorAction SilentlyContinue)) {
+            choco install make --yes --no-progress
+          }
+
+      - name: Build with Make
+        env:
+          MFEM_PACKAGE: ${{ env.MFEM_TOP_DIR }}/build
+        run: make build-windows BUILD_JOBS=2
+
+      - name: Upload Windows build
+        uses: actions/upload-artifact@v4
+        with:
+          name: tulip-windows-${{ github.sha }}
+          path: builds/msbuild-vcpkg/Release/
+          if-no-files-found: error

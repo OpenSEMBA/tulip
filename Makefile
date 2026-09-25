@@ -1,0 +1,88 @@
+.PHONY: help build build-debug build-windows release-ubuntu test test-one test-windows run
+
+DOCKER ?= docker
+DOCKER_BUILD_FLAGS ?=
+DOCKER_ARTIFACT_BUILD_FLAGS ?=
+ARTIFACT_DIR ?= dist
+BUILD_JOBS ?= 2
+IMAGE ?= tulip:latest
+TEST_IMAGE ?= tulip-test:latest
+DEBUG_TEST_IMAGE ?= tulip-test-debug:latest
+WINDOWS_BUILD_DIR ?= builds/msbuild-vcpkg
+VERSION ?= $(shell git describe --tags --always --dirty 2>/dev/null || printf '%s' dev)
+RELEASE_DIR ?= release
+RUN_FILE ?= $(or $(FILE),$(filter-out run,$(MAKECMDGOALS)))
+
+help:
+	@printf '%s\n' \
+		'Available commands:' \
+		'  make build                       Build the runtime and test images, and export dist/.' \
+		'  make build-debug                 Build the GDB-enabled debug test image.' \
+		'  make build-windows               Configure and build the native Windows Release target.' \
+		'  make release-ubuntu              Package the Ubuntu bundle as release/tulip-<version>-ubuntu-26.04.tar.gz.' \
+		'  make test                        Run all CTest tests from the prebuilt test image.' \
+		'  make test-one TEST=Suite.Case    Run one GoogleTest case from the prebuilt test image.' \
+		'  make test-windows                Run CTest for the native Windows Release target.' \
+		'  make run FILE=path/to/input.json Run Tulip in a container and create a results folder beside the input.' \
+		'  make help                        Show this help.'
+
+# Builds the reusable container image and exports a runnable Ubuntu 26.04
+# binary bundle to $(ARTIFACT_DIR).
+build:
+	$(DOCKER) build $(DOCKER_BUILD_FLAGS) --build-arg BUILD_JOBS=$(BUILD_JOBS) --file Dockerfile --target runtime --tag $(IMAGE) .
+	$(DOCKER) build $(DOCKER_BUILD_FLAGS) --build-arg BUILD_JOBS=$(BUILD_JOBS) --file Dockerfile --target test --tag $(TEST_IMAGE) .
+	$(DOCKER) build $(DOCKER_ARTIFACT_BUILD_FLAGS) --build-arg BUILD_JOBS=$(BUILD_JOBS) --file Dockerfile --target artifact --output type=local,dest=$(ARTIFACT_DIR) .
+
+# Builds the image used by VS Code to run GDB inside Docker.
+build-debug:
+	$(DOCKER) build --build-arg BUILD_JOBS=$(BUILD_JOBS) --file Dockerfile --target test-debug --tag $(DEBUG_TEST_IMAGE) .
+
+# Requires VCPKG_ROOT and MFEM_PACKAGE to be set by the Windows environment.
+build-windows:
+	cmake --preset msbuild-vcpkg
+	cmake --build $(WINDOWS_BUILD_DIR) --config Release --parallel $(BUILD_JOBS)
+
+test-windows:
+	ctest --test-dir $(WINDOWS_BUILD_DIR) --build-config Release --output-on-failure
+
+# Create a distributable archive. Override VERSION for a release identifier,
+# for example: make release-ubuntu VERSION=1.2.3
+release-ubuntu: build
+	@mkdir -p "$(RELEASE_DIR)"
+	tar --create --gzip --file "$(RELEASE_DIR)/tulip-$(VERSION)-ubuntu-26.04.tar.gz" --directory "$(ARTIFACT_DIR)" .
+	@printf 'Ubuntu release written to: %s\n' "$(RELEASE_DIR)/tulip-$(VERSION)-ubuntu-26.04.tar.gz"
+
+# Runs every CTest test from the already-built image. Build it on first use.
+test:
+	@$(DOCKER) image inspect $(TEST_IMAGE) >/dev/null 2>&1 || $(MAKE) build
+	$(DOCKER) run --rm --entrypoint ctest $(TEST_IMAGE) --test-dir /src/build --verbose
+
+# Usage: make test-one TEST=SuiteName.TestName
+test-one:
+	@test -n "$(TEST)" || { printf '%s\n' 'Usage: make test-one TEST=SuiteName.TestName'; exit 2; }
+	@$(DOCKER) image inspect $(TEST_IMAGE) >/dev/null 2>&1 || $(MAKE) build
+	$(DOCKER) run --rm --env "GTEST_FILTER=$(TEST)" --entrypoint ctest $(TEST_IMAGE) --test-dir /src/build --verbose
+
+# Usage: make run FILE=path/to/case.tulip.input.json
+# `make run path/to/case.tulip.input.json` is also accepted for paths without spaces.
+run:
+	@test -n "$(RUN_FILE)" || { printf '%s\n' 'Usage: make run FILE=path/to/case.tulip.input.json'; exit 2; }
+	@test -f "$(RUN_FILE)" || { printf 'Input file not found: %s\n' "$(RUN_FILE)"; exit 2; }
+	@$(DOCKER) image inspect $(IMAGE) >/dev/null 2>&1 || $(MAKE) build
+	@input_file="$$(realpath "$(RUN_FILE)")"; \
+	input_dir="$$(dirname "$$input_file")"; \
+	input_name="$$(basename "$$input_file")"; \
+	case_name="$${input_name%.tulip.input.json}"; \
+	case_name="$${case_name%.tulip.adapted.json}"; \
+	output_dir="$$(mktemp -d "$$input_dir/$${case_name}.tulip-output.XXXXXX")"; \
+	$(DOCKER) run --rm --user "$$(id -u):$$(id -g)" \
+		--mount "type=bind,src=$$input_dir,dst=/source,readonly" \
+		--mount "type=bind,src=$$output_dir,dst=/output" \
+		--workdir /output \
+		-e INPUT_NAME="$$input_name" \
+		--entrypoint sh $(IMAGE) -ec 'mkdir -p /tmp/input && cp -a /source/. /tmp/input/ && exec /opt/tulip/tulip -i "/tmp/input/$$INPUT_NAME" -o /output' && \
+	printf 'Results written to: %s\n' "$$output_dir"
+
+# Treat a positional input-file argument as data for the run target.
+%:
+	@:

@@ -10,11 +10,12 @@ VCPKG_PACKAGES=(
     tar
 )
 
-# -- Build-time requirements for vcpkg ports (gmsh, opencascade, etc.) --
+# -- Build-time requirements and Linux development packages --
 PORT_PACKAGES=(
     autoconf
     autoconf-archive
     automake
+    libgmsh-dev
     libtool
 )
 

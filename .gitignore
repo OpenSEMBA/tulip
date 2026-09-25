@@ -17,6 +17,7 @@ mesh.mesh
 *.mtx
 
 testData/*/*.vtk
+testData/*/*.tulip-output.*
 
 __pycache__/
 
@@ -69,7 +70,8 @@ __pycache__/
 *.inCellPotentials.out.json
 *.FCStd1
 *.pyc
-.vscode/
+.vscode/launch.json
+.vscode/tasks.json
 .pytest_cache/
 .idea/
 tmpFolder/
