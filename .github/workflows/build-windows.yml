@@ -111,5 +111,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: tulip-windows-${{ github.sha }}
-          path: builds/msbuild-vcpkg/Release/
+          path: builds/msbuild-vcpkg/bin/Release/tulip.exe
           if-no-files-found: error
