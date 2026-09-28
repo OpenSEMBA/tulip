@@ -11,6 +11,7 @@ DEBUG_TEST_IMAGE ?= tulip-test-debug:latest
 WINDOWS_BUILD_DIR ?= builds/msbuild-vcpkg
 VERSION ?= $(shell git describe --tags --always --dirty 2>/dev/null || printf '%s' dev)
 RELEASE_DIR ?= release
+RELEASE_ARCHIVE ?= $(RELEASE_DIR)/tulip-$(VERSION)-ubuntu-26.04.tar.gz
 RUN_FILE ?= $(or $(FILE),$(filter-out run,$(MAKECMDGOALS)))
 
 help:
@@ -49,8 +50,8 @@ test-windows:
 # for example: make release-ubuntu VERSION=1.2.3
 release-ubuntu: build
 	@mkdir -p "$(RELEASE_DIR)"
-	tar --create --gzip --file "$(RELEASE_DIR)/tulip-$(VERSION)-ubuntu-26.04.tar.gz" --directory "$(ARTIFACT_DIR)" .
-	@printf 'Ubuntu release written to: %s\n' "$(RELEASE_DIR)/tulip-$(VERSION)-ubuntu-26.04.tar.gz"
+	tar --create --gzip --file "$(RELEASE_ARCHIVE)" --directory "$(ARTIFACT_DIR)" .
+	@printf 'Ubuntu release written to: %s\n' "$(RELEASE_ARCHIVE)"
 
 # Runs every CTest test from the already-built image. Build it on first use.
 test:

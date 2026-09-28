@@ -8,7 +8,7 @@ on:
       - closed
 
 permissions:
-  contents: read
+  contents: write
 
 concurrency:
   group: build-windows-main
@@ -107,9 +107,45 @@ jobs:
           MFEM_PACKAGE: ${{ env.MFEM_TOP_DIR }}/build
         run: make build-windows BUILD_JOBS=2
 
-      - name: Upload Windows build
-        uses: actions/upload-artifact@v4
+      # The former Windows release copied the complete bin/Release directory.
+      # Keep that layout so the executable, test binaries, and runtime DLLs
+      # are released together.
+      - name: Package Windows release
+        id: package
+        shell: pwsh
+        run: |
+          $contents = 'builds/msbuild-vcpkg/bin/Release'
+          if (-not (Test-Path "$contents/tulip.exe")) {
+            throw "Expected Tulip executable was not built: $contents/tulip.exe"
+          }
+
+          $archive = 'release/tulip-windows.tar.gz'
+          New-Item -ItemType Directory -Force -Path release | Out-Null
+          tar --create --gzip --file $archive --directory $contents .
+          "archive=$archive" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          $releaseDate = Get-Date -Format 'yyyy-MM-dd'
+          "release_date=$releaseDate" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          "release_tag=$releaseDate-tulip-windows" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          "commit=$(git rev-parse HEAD)" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+
+      # A repeated build on the same day refreshes only that day's release.
+      - name: Update today's Windows release tag
+        shell: pwsh
+        env:
+          RELEASE_TAG: ${{ steps.package.outputs.release_tag }}
+        run: |
+          git tag --force $env:RELEASE_TAG ${{ steps.package.outputs.commit }}
+          git push --force origin "refs/tags/$env:RELEASE_TAG"
+
+      - name: Publish Windows release
+        uses: softprops/action-gh-release@v2
         with:
-          name: tulip-windows-${{ github.sha }}
-          path: builds/msbuild-vcpkg/bin/Release/tulip.exe
-          if-no-files-found: error
+          tag_name: ${{ steps.package.outputs.release_tag }}
+          target_commitish: ${{ steps.package.outputs.commit }}
+          name: ${{ steps.package.outputs.release_date }} Windows TULIP
+          prerelease: false
+          make_latest: false
+          files: ${{ steps.package.outputs.archive }}
+          fail_on_unmatched_files: true
+          overwrite_files: true
+
